@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organizador - Torneo Inter Tio Cucho</title>
+<style>
+:root{--gold:#e0b85f;--bg:#070707;--card:#121212;--line:#4d4028;--muted:#bbb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f7f3ea;font-family:Arial,sans-serif}
+main{max-width:760px;margin:auto;padding:18px}h1,h2{color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:15px 0}
+input,button,select{width:100%;padding:12px;margin:5px 0;border-radius:10px;font-size:16px}
+input,select{background:#080808;color:white;border:1px solid #55472c}
+button{background:var(--gold);color:#100d06;border:0;font-weight:bold}
+button.secondary{background:#2a2418;color:#f7f3ea;border:1px solid #66552f}
+button.danger{background:#6b2020;color:white}.green{background:#315a3a!important;color:white!important}
+.item{border-top:1px solid #403520;padding:16px 0}.info{color:var(--muted);line-height:1.7}
+.error{color:#ff9f9f}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#0b0b0b;border:1px solid #403520;border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:22px;color:var(--gold);margin-top:4px}.row{display:flex;gap:6px}.row>*{flex:1}
+.rank{display:flex;justify-content:space-between;border-top:1px solid #403520;padding:9px 0}
+.small{padding:9px;font-size:14px}.note{font-size:13px;color:#999}
+@media(max-width:520px){.grid{grid-template-columns:1fr 1fr}.row{flex-wrap:wrap}.row>*{min-width:45%}}
+</style>
+</head>
+<body><main>
+<h1>🏆 Panel del Organizador</h1>
+<p>TORNEO INTER TIO CUCHO · 18 PUESTOS</p>
+<div id="loginBox" class="card"><h2>Acceso del organizador</h2>
+<input id="email" type="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
+<button id="login">INGRESAR</button><p id="loginError" class="error"></p></div>
+<div id="panel" style="display:none">
+<div class="card"><h2>📊 Resumen</h2><div class="grid">
+<div class="stat">Ocupados<b id="ocupados">0</b></div>
+<div class="stat">Disponibles<b id="disponibles">18</b></div>
+<div class="stat">Recaudación<b id="recaudacion">0 Gs.</b></div></div>
+<button id="salir" class="secondary">CERRAR SESIÓN</button></div>
+<div class="card"><h2>👥 Participantes</h2><p class="note">Solo el organizador puede administrar pagos, estados y puntos.</p><div id="lista">Cargando...</div></div>
+<div class="card"><h2>🏆 Clasificación</h2><div id="ranking">Cargando...</div></div>
+</div></main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",authDomain:"torneo-tio-cucho.firebaseapp.com",databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",projectId:"torneo-tio-cucho",storageBucket:"torneo-tio-cucho.firebasestorage.app",messagingSenderId:"468748796216",appId:"1:468748796216:web:2aef532476f612e96801cd"};
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database(),players=db.ref("players");
+const loginBox=document.getElementById("loginBox"),panel=document.getElementById("panel");
+document.getElementById("login").onclick=async()=>{try{await auth.signInWithEmailAndPassword(document.getElementById("email").value.trim(),document.getElementById("password").value);document.getElementById("loginError").textContent=""}catch(e){document.getElementById("loginError").textContent="No se pudo ingresar: "+e.message}};
+document.getElementById("salir").onclick=()=>auth.signOut();
+auth.onAuthStateChanged(u=>{loginBox.style.display=u?"none":"block";panel.style.display=u?"block":"none";if(u)cargarDatos()});
+function puntosTotales(p){return (p.points||[]).reduce((a,b)=>a+(Number(b)||0),0)}
+function actualizar(p,c){return players.child(String(p)).update(c)}
+function bonus(p,c,m){return players.child(String(p)).once("value").then(s=>{let x=s.val();if(!x)return;let pts=[...(x.points||[])];if(!pts.length)pts=[0];pts[0]=(Number(pts[0])||0)+c;return players.child(String(p)).update({points:pts,lastBonus:{motivo:m,puntos:c,at:firebase.database.ServerValue.TIMESTAMP}})})}
+function cargarDatos(){players.on("value",s=>{let d=s.val()||{},ks=Object.keys(d).filter(k=>+k>=1&&+k<=18);document.getElementById("ocupados").textContent=ks.length;document.getElementById("disponibles").textContent=18-ks.length;document.getElementById("recaudacion").textContent=(ks.length*100000).toLocaleString("es-PY")+" Gs.";render(d,ks);ranking(d,ks)})}
+function render(d,ks){let l=document.getElementById("lista");l.innerHTML="";ks.sort((a,b)=>a-b);if(!ks.length){l.innerHTML="<p>No hay puestos apartados.</p>";return}
+ks.forEach(k=>{let p=d[k]||{},names=p.names||[],pts=p.points||[],box=document.createElement("div");box.className="item";
+let title=document.createElement("h3");title.textContent="Puesto "+String(k).padStart(2,"0");box.appendChild(title);
+let info=document.createElement("div");info.className="info";info.innerHTML="<b>Participante:</b> "+names.join(" + ")+"<br><b>Puntos:</b> "+pts.join(" + ")+"<br><b>Estado:</b> "+(p.status||"held")+"<br><b>Pago:</b> "+(p.paid?"PAGADO":"PENDIENTE");box.appendChild(info);
+let a=document.createElement("div");
+let pay=document.createElement("button");pay.className="green small";pay.textContent=p.paid?"MARCAR PAGO PENDIENTE":"CONFIRMAR PAGO";pay.onclick=()=>actualizar(k,{paid:!p.paid,status:p.paid?"held":"confirmed"});a.appendChild(pay);
+let st=document.createElement("button");st.className="small";st.textContent=p.status==="confirmed"?"DEJAR APARTADO":"CONFIRMAR PUESTO";st.onclick=()=>actualizar(k,{status:p.status==="confirmed"?"held":"confirmed"});a.appendChild(st);
+let sp=document.createElement("button");sp.className="secondary small";sp.textContent="🃏 +2 ESPECIAL";sp.onclick=()=>bonus(k,2,"carta especial");a.appendChild(sp);
+let fe=sp.cloneNode(true);fe.textContent="💥 +2 1º ELIM.";fe.onclick=()=>bonus(k,2,"primer eliminado");a.appendChild(fe);
+let ch=sp.cloneNode(true);ch.textContent="🏆 +2 CAMPEÓN";ch.onclick=()=>bonus(k,2,"campeón");a.appendChild(ch);
+let row=document.createElement("div");row.className="row";let sel=document.createElement("select");names.forEach((n,i)=>{let o=document.createElement("option");o.value=i;o.textContent=n||("Participante "+(i+1));sel.appendChild(o)});let inp=document.createElement("input");inp.type="number";inp.placeholder="+2 o -1";let ap=document.createElement("button");ap.className="secondary small";ap.textContent="APLICAR";ap.onclick=async()=>{let delta=Number(inp.value),i=Number(sel.value);if(!delta)return alert("Escribe un número, por ejemplo 2 o -1.");let next=[...(p.points||[])];while(next.length<=i)next.push(0);next[i]=(Number(next[i])||0)+delta;await actualizar(k,{points:next});inp.value=""};row.append(sel,inp,ap);a.appendChild(row);
+let del=document.createElement("button");del.className="danger";del.textContent="🔴 LIBERAR PUESTO";del.onclick=async()=>{if(confirm("¿Liberar el puesto "+String(k).padStart(2,"0")+"? Se borrará la reserva."))await players.child(String(k)).remove()};a.appendChild(del);
+box.appendChild(a);l.appendChild(box)})}
+function ranking(d,ks){let a=[];ks.forEach(k=>{let p=d[k]||{};(p.names||[]).forEach((n,i)=>a.push({n,p:+(p.points||[])[i]||0,k}))});a.sort((x,y)=>y.p-x.p);let r=document.getElementById("ranking");r.innerHTML=a.length?"":"<p>Sin participantes.</p>";a.forEach((x,i)=>r.innerHTML+="<div class='rank'><span>"+(i+1)+". "+x.n+" (puesto "+String(x.k).padStart(2,"0")+")</span><b>"+x.p+" pts</b></div>")}
+</script></body></html>
