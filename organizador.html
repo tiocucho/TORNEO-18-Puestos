@@ -18,50 +18,35 @@ button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}
 .ok{color:#9cc9a6}
 </style>
 </head>
-
 <body>
 <main>
-
 <h1>🏆 Panel del Organizador</h1>
 <p>TORNEO INTER TIO CUCHO · 18 PUESTOS</p>
-
 <div id="loginBox" class="card">
 <h2>Acceso del organizador</h2>
-
 <input id="email" type="email" placeholder="Correo electrónico">
 <input id="password" type="password" placeholder="Contraseña">
-
 <button id="login">INGRESAR</button>
-
 <p id="loginError" class="error"></p>
 </div>
-
 <div id="panel" style="display:none">
-
 <div class="card">
 <h2>Resumen</h2>
 <p>Puestos ocupados: <b id="ocupados">0</b></p>
 <p>Puestos disponibles: <b id="disponibles">18</b></p>
 <p>Recaudación: <b id="recaudacion">0 Gs.</b></p>
-
 <button id="salir">CERRAR SESIÓN</button>
 </div>
-
 <div class="card">
 <h2>Participantes</h2>
 <div id="lista">Cargando...</div>
 </div>
-
 </div>
-
 </main>
-
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-
 <script>
-
 const firebaseConfig={
 apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",
 authDomain:"torneo-tio-cucho.firebaseapp.com",
@@ -71,110 +56,53 @@ storageBucket:"torneo-tio-cucho.firebasestorage.app",
 messagingSenderId:"468748796216",
 appId:"1:468748796216:web:2aef532476f612e96801cd"
 };
-
 firebase.initializeApp(firebaseConfig);
-
 const auth=firebase.auth();
 const db=firebase.database();
 const players=db.ref("players");
-
 const loginBox=document.getElementById("loginBox");
 const panel=document.getElementById("panel");
-
 document.getElementById("login").onclick=async()=>{
-
 const email=document.getElementById("email").value.trim();
 const password=document.getElementById("password").value;
-
 try{
-
 await auth.signInWithEmailAndPassword(email,password);
-
 document.getElementById("loginError").textContent="";
-
 }catch(e){
-
-document.getElementById("loginError").textContent=
-"No se pudo ingresar: "+e.message;
-
+document.getElementById("loginError").textContent="No se pudo ingresar: "+e.message;
 }
-
 };
-
-document.getElementById("salir").onclick=()=>{
-auth.signOut();
-};
-
+document.getElementById("salir").onclick=()=>{auth.signOut();};
 auth.onAuthStateChanged(user=>{
-
-if(user){
-
-loginBox.style.display="none";
-panel.style.display="block";
-cargarDatos();
-
-}else{
-
-loginBox.style.display="block";
-panel.style.display="none";
-
-}
-
+if(user){loginBox.style.display="none";panel.style.display="block";cargarDatos();}
+else{loginBox.style.display="block";panel.style.display="none";}
 });
-
 function cargarDatos(){
-
 players.on("value",snapshot=>{
-
 const data=snapshot.val()||{};
 const puestos=Object.keys(data);
-
 document.getElementById("ocupados").textContent=puestos.length;
 document.getElementById("disponibles").textContent=18-puestos.length;
-document.getElementById("recaudacion").textContent=
-(puestos.length*100000).toLocaleString("es-PY")+" Gs.";
-
+document.getElementById("recaudacion").textContent=(puestos.length*100000).toLocaleString("es-PY")+" Gs.";
 const lista=document.getElementById("lista");
-
-if(puestos.length===0){
-
-lista.innerHTML="<p>No hay puestos apartados.</p>";
-return;
-
-}
-
+if(puestos.length===0){lista.innerHTML="<p>No hay puestos apartados.</p>";return;}
 lista.innerHTML="";
-
 puestos.sort((a,b)=>Number(a)-Number(b));
-
 puestos.forEach(puesto=>{
-
 const p=data[puesto];
-
 const nombres=(p.names||[]).join(" + ");
 const puntos=(p.points||[]).join(" + ");
-
 const div=document.createElement("div");
 div.className="item";
-
-div.innerHTML=
-"<h3>Puesto "+String(puesto).padStart(2,"0")+"</h3>"+
-"<div class='info'>"+
-"<b>Participante:</b> "+nombres+"<br>"+
+div.innerHTML="<h3>Puesto "+String(puesto).padStart(2,"0")+"</h3>"+
+"<div class='info'><b>Participante:</b> "+nombres+"<br>"+
 "<b>Puntos:</b> "+puntos+"<br>"+
 "<b>Estado:</b> "+(p.status||"apartado")+"<br>"+
-"<b>Pago:</b> "+(p.paid?"PAGADO":"PENDIENTE")+
-"</div>";
-
+"<b>Pago:</b> "+(p.paid?"PAGADO":"PENDIENTE")+"</div>";
 lista.appendChild(div);
-
 });
-
 });
-
 }
-
 </script>
-
 </body>
 </html>
