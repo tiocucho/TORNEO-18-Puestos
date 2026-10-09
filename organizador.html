@@ -9,25 +9,27 @@ body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}
 main{max-width:760px;margin:auto;padding:18px}
 .card{background:#121212;border:1px solid #4d4028;border-radius:18px;padding:18px;margin:15px 0}
 h1,h2,h3{color:#e0b85f}
-input,select,button{width:100%;box-sizing:border-box;padding:13px;margin:6px 0;border-radius:10px;font-size:16px}
-input,select{background:#080808;color:white;border:1px solid #55472c}
+input,button{width:100%;box-sizing:border-box;padding:12px;margin:5px 0;border-radius:10px;font-size:15px}
+input{background:#080808;color:white;border:1px solid #55472c}
 button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}
-button.secondary{background:#29251d;color:#f7f3ea;border:1px solid #55472c}
-button.danger{background:#8f2f2f;color:white}
-.item{border-top:1px solid #403520;padding:18px 0}
-.info{color:#bbb;line-height:1.7}
-.error{color:#ff9f9f}.ok{color:#9cc9a6}
-.edit{display:none;margin-top:14px;padding-top:14px;border-top:1px solid #403520}
+button.secondary{background:#2a2418;color:#f7f3ea}
+button.danger{background:#6b2020;color:white}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media(max-width:520px){.grid{grid-template-columns:1fr}}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#29251d;color:#e0b85f;font-size:13px}
-.small{font-size:13px;color:#999}
+.item{border-top:1px solid #403520;padding:16px 0}
+.info{color:#bbb;line-height:1.6}
+.error{color:#ff9f9f}.ok{color:#9cc9a6}
+.stat{display:inline-block;width:31%;text-align:center;background:#0b0b0b;border:1px solid #403520;border-radius:12px;padding:10px;margin:2px}
+.stat b{display:block;font-size:20px;color:#e0b85f}
+.badge{display:inline-block;padding:5px 9px;border-radius:8px;background:#332b18;color:#f1cd7a;margin:2px}
+.small{font-size:13px;color:#aaa}
+.rank{display:flex;justify-content:space-between;border-top:1px solid #403520;padding:10px 0}
+@media(max-width:520px){.stat{width:29%}}
 </style>
 </head>
 <body>
 <main>
 <h1>🏆 Panel del Organizador</h1>
-<p>TORNEO INTER TIO CUCHO · 18 PUESTOS</p>
+<p>TORNEO INTER TIO CUCHO · 15 PUESTOS VISIBLES · PUESTOS EXTRA SOLO PARA ORGANIZADOR</p>
 
 <div id="loginBox" class="card">
 <h2>Acceso del organizador</h2>
@@ -37,20 +39,70 @@ button.danger{background:#8f2f2f;color:white}
 <p id="loginError" class="error"></p>
 </div>
 
-<div id="panel" style="display:none">
+<div id="panel" style="display:none"><div class="card">
+<h2>⚙️ Configuración del torneo</h2>
+<label>MONTO</label>
+<select id="amount"><option value="100000">100.000 Gs.</option><option value="220000">220.000 Gs.</option><option value="330000">330.000 Gs.</option></select>
+<label>ALIAS PARA TRANSFERENCIA</label>
+<select id="alias"></select>
+<button id="saveSettings">💾 GUARDAR CONFIGURACIÓN</button>
+<p id="settingsMsg" class="ok"></p>
+<p class="small">Solo el organizador puede cambiar el monto y el alias.</p>
+</div>
+
 <div class="card">
-<h2>Resumen</h2>
-<p>Puestos ocupados: <b id="ocupados">0</b></p>
-<p>Puestos disponibles: <b id="disponibles">18</b></p>
-<p>Recaudación: <b id="recaudacion">0 Gs.</b></p>
+<h2>🎯 Control de jornadas</h2>
+<p>Jornada del día: <b id="dailyTournament">1</b>/10</p>
+<p>Estado: <b id="roundState">PUESTOS ABIERTOS</b></p>
+<div class="grid">
+<button onclick="iniciarTorneo()">🏁 INICIAR TORNEO</button>
+<button onclick="primerEliminadoYHabilitar()">💥 PRIMER ELIMINADO · HABILITAR PUESTOS</button>
+</div>
+<button class="secondary" onclick="finalizarYLiberar()">🔄 FINALIZAR TORNEO Y LIBERAR PUESTOS</button>
+<p class="small">Liberar puestos solo limpia la ocupación de la jornada. Los puntos acumulados, cartas especiales, pérdidas especiales y campeonatos se conservan.</p>
+</div>
+
+<div class="card">
+<h2>🏆 Acciones de puntos</h2>
+<input id="pointName" placeholder="Nombre exacto del participante">
+<div class="grid">
+<button onclick="extraPuntos('carta especial')">🃏 +2 CARTA ESPECIAL</button>
+<button onclick="extraPuntos('pérdida con carta especial')">🃏 +2 PÉRDIDA ESPECIAL</button>
+<button onclick="primerEliminadoYHabilitar()">💥 PRIMER ELIMINADO · +2 Y HABILITAR PUESTOS</button>
+<button onclick="campeon()">🏆 REGISTRAR CAMPEÓN</button>
+</div>
+<button class="secondary" onclick="ajustarManual()">✏️ AJUSTAR PUNTOS</button>
+</div>
+
+<div class="card">
+<h2>📊 Resumen de la jornada</h2>
+<div class="stat"><b id="ocupados">0</b>Ocupados</div>
+<div class="stat"><b id="disponibles">15</b>Disponibles</div>
+<div class="stat"><b id="recaudacion">0</b>Gs.</div>
 <button id="salir">CERRAR SESIÓN</button>
 </div>
 
 <div class="card">
-<h2>Participantes</h2>
-<p class="small">Puedes editar nombre, puntos, estado y pago. Los cambios se guardan directamente en Firebase.</p>
-<div id="mensaje"></div>
+<h2>🏆 Clasificación acumulada</h2>
+<p>Los puntos se acumulan entre jornadas.</p>
+<p><b>ORO:</b> primeros 15 jugadores que lleguen a 140 puntos · Premio total 3.000.000 Gs.</p>
+<p><b>PLATA:</b> siguientes 15 jugadores que lleguen a 140 puntos · Premio total 2.000.000 Gs.</p>
+<p>Clasificados ORO: <b id="goldCount">0</b>/15 · PLATA: <b id="silverCount">0</b>/15</p>
+<div id="ranking">Cargando ranking...</div>
+</div>
+
+<div class="card">
+<h2>👥 Participantes de esta jornada</h2>
 <div id="lista">Cargando...</div>
+<button onclick="agregarPuestoExtra()">➕ AGREGAR PUESTO EXTRA</button>
+<p class="small">Los puestos 01 al 15 son los puestos públicos. Los puestos extra solo los puede crear y administrar el organizador.</p>
+</div>
+
+<div class="card">
+<h2>🔄 Reinicio del torneo</h2>
+<p class="small">El reinicio queda bloqueado hasta completar 15 ORO + 15 PLATA (30 clasificados).</p>
+<p>Clasificados: <b id="restartQualified">0</b>/30</p>
+<button id="restartTournament" class="danger" onclick="reiniciarTorneo()" disabled>🔄 REINICIAR TORNEO</button>
 </div>
 </div>
 </main>
@@ -69,86 +121,468 @@ messagingSenderId:"468748796216",
 appId:"1:468748796216:web:2aef532476f612e96801cd"
 };
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.database(), players=db.ref("players");
-const loginBox=document.getElementById("loginBox"), panel=document.getElementById("panel");
+const auth=firebase.auth(),db=firebase.database(),players=db.ref("players"),participants=db.ref("participants"),qualification=db.ref("qualification");
+const loginBox=document.getElementById("loginBox"),panel=document.getElementById("panel");const settings=db.ref("settings/tournament");
+const ALIASES=[
+{alias:"0971367727",name:"José Alfredo Alfonso",bank:"Familiar"},
+{alias:"4029694",name:"Patricia Benítez",bank:"Familiar"},
+{alias:"0992879107",name:"Rodolfo Richard Oliveira",bank:"Familiar"}
+];
+
 
 document.getElementById("login").onclick=async()=>{
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
-try{await auth.signInWithEmailAndPassword(email,password);document.getElementById("loginError").textContent="";}
-catch(e){document.getElementById("loginError").textContent="No se pudo ingresar: "+e.message;}
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ try{await auth.signInWithEmailAndPassword(email,password);document.getElementById("loginError").textContent=""}
+ catch(e){document.getElementById("loginError").textContent="No se pudo ingresar: "+e.message}
 };
 document.getElementById("salir").onclick=()=>auth.signOut();
 
 auth.onAuthStateChanged(user=>{
-if(user){loginBox.style.display="none";panel.style.display="block";cargarDatos();}
-else{loginBox.style.display="block";panel.style.display="none";}
+ if(user){loginBox.style.display="none";panel.style.display="block";cargarConfiguracion();cargarDatos();cargarRanking();cargarEstadoJornada()}
+ else{loginBox.style.display="block";panel.style.display="none"}
 });
 
-function esc(v){
-return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function cargarConfiguracion(){
+ settings.once("value").then(s=>{
+  const x=s.val()||{};
+  document.getElementById("amount").value=String(x.amount||100000);
+  const sel=document.getElementById("alias");sel.innerHTML="";
+  ALIASES.forEach(a=>{const o=document.createElement("option");o.value=a.alias;o.textContent=a.alias+" · "+a.name+" · "+a.bank;sel.appendChild(o)});
+  sel.value=String(x.alias||ALIASES[0].alias);
+ });
 }
-function mostrarMensaje(texto,ok=true){
-const m=document.getElementById("mensaje");
-m.className=ok?"ok":"error";m.textContent=texto;
-setTimeout(()=>m.textContent="",2500);
+document.getElementById("saveSettings").onclick=async()=>{
+ const a=ALIASES.find(x=>x.alias===document.getElementById("alias").value)||ALIASES[0];
+ await settings.update({amount:Number(document.getElementById("amount").value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});
+ document.getElementById("settingsMsg").textContent="Configuración guardada.";
+ setTimeout(()=>document.getElementById("settingsMsg").textContent="",2500);
+ cargarDatos();
+};
+function safeName(s){return String(s||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[.#$\[\]\/]/g,"_").replace(/\s+/g,"_").slice(0,80)||"sin_nombre"}
+function esc(s){return String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function puntosDe(p,i){return Number((p.points||[])[i]||0)}
+
+async function asegurarParticipante(nombre){
+ const buscados=await participants.once("value"),existentes=buscados.val()||{};
+ const encontrado=Object.keys(existentes).find(k=>String((existentes[k]||{}).name||"")===String(nombre));
+ if(encontrado)return encontrado;
+ const key=safeName(nombre);if(!key)return null;
+ const snap=await participants.child(key).once("value");
+ if(!snap.exists())await participants.child(key).set({name:nombre,totalPoints:0,qualificationOrder:null,tier:null});
+ return key;
 }
+
+async function calificarSiCorresponde(key){
+ const pSnap=await participants.child(key).once("value");if(!pSnap.exists())return;
+ const p=pSnap.val();if(Number(p.totalPoints||0)<140||p.qualificationOrder)return;
+ const qSnap=await qualification.once("value"),q=qSnap.val()||{};
+ let gold=Number(q.goldCount||0),silver=Number(q.silverCount||0);
+ if(gold<15){gold++;await qualification.update({goldCount:gold});await participants.child(key).update({qualificationOrder:gold,tier:"ORO"});}
+ else if(silver<15){silver++;await qualification.update({silverCount:silver});await participants.child(key).update({qualificationOrder:15+silver,tier:"PLATA"});}
+}
+
+async function sumar(nombre,cantidad){
+ const key=await asegurarParticipante(nombre);if(!key)return;
+ const ref=participants.child(key);
+ const antesSnap=await ref.once("value");
+ const antes=Number((antesSnap.val()||{}).totalPoints||0);
+ const suma=Number(cantidad||0);
+ await ref.transaction(p=>{p=p||{name:nombre,totalPoints:0};p.name=p.name||nombre;p.totalPoints=Number(p.totalPoints||0)+suma;return p});
+ const despuesSnap=await ref.once("value");
+ const despues=Number((despuesSnap.val()||{}).totalPoints||0);
+ if(despues!==antes+suma){
+   await ref.update({name:nombre,totalPoints:antes+suma});
+   const ver=await ref.once("value");
+   if(Number((ver.val()||{}).totalPoints||0)!==antes+suma) throw new Error("No se pudieron guardar los puntos de "+nombre);
+ }
+ await calificarSiCorresponde(key);
+}
+
+async function ajustar(nombre,cantidad){
+ const key=await asegurarParticipante(nombre);if(!key)return;
+ const ref=participants.child(key);
+ const antesSnap=await ref.once("value");
+ const antes=Number((antesSnap.val()||{}).totalPoints||0);
+ const cambio=Number(cantidad||0);
+ const objetivo=antes+cambio;
+ await ref.update({name:nombre,totalPoints:objetivo});
+ const verSnap=await ref.once("value");
+ const guardado=Number((verSnap.val()||{}).totalPoints||0);
+ if(guardado!==objetivo){
+   throw new Error("No se pudieron guardar los puntos de "+nombre);
+ }
+ await calificarSiCorresponde(key);
+}
+
+function cargarEstadoJornada(){
+ settings.off("value",window.__estadoJornadaListener);
+ window.__estadoJornadaListener=snap=>{
+  const x=snap.val()||{};
+  const torneo=Math.min(10,Math.max(1,Number(x.dailyTournament||1)));
+  const estado=x.roundState||"open";
+  document.getElementById("dailyTournament").textContent=torneo+"/10";
+  const labels={open:"PUESTOS ABIERTOS",started:"TORNEO EN CURSO · PUESTOS CERRADOS",reopened:"PUESTOS HABILITADOS · PRIMER ELIMINADO REGISTRADO"};
+  document.getElementById("roundState").textContent=labels[estado]||labels.open;
+ };
+ settings.on("value",window.__estadoJornadaListener);
+}
+async function iniciarTorneo(){
+ const s=await settings.once("value"); const x=s.val()||{}; const estado=x.roundState||"open";
+ if(estado==="started"){alert("El torneo ya está en curso.");return}
+ if(estado==="reopened"){alert("El primer eliminado ya habilitó los puestos.");return}
+ if(!confirm("¿Iniciar este torneo? Los puestos quedarán cerrados hasta que se registre el primer eliminado."))return;
+ try{
+  await settings.update({roundState:"started",roundStateUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
+  const ver=await settings.child("roundState").once("value");
+  if(ver.val()!=="started")throw new Error("Firebase no confirmó el cambio de estado.");
+ }catch(e){
+  alert("No se pudo guardar el estado del torneo. No se realizó ningún cambio.\n\n"+(e.message||e));
+  console.error(e);
+  return;
+ }
+ cargarEstadoJornada();
+}
+async function primerEliminadoYHabilitar(){
+ const s=await settings.once("value"); const x=s.val()||{};
+ if((x.roundState||"open")!=="started"){alert("Primero debes iniciar el torneo.");return}
+ if(x.firstEliminated){alert("El primer eliminado ya fue registrado en esta jornada.");return}
+ const nombre=document.getElementById("pointName").value.trim();
+ if(!nombre){alert("Escribe el nombre del primer eliminado.");return}
+ try{
+  const bloqueo=await settings.child("firstEliminated").transaction(v=>v===true?undefined:true);
+  if(!bloqueo.committed){alert("El primer eliminado ya fue registrado en esta jornada.");return}
+  const detalle=await aplicarBonusNombre(nombre,"primer eliminado",2);
+  await settings.update({roundState:"reopened",firstEliminatedName:nombre,firstEliminatedAt:firebase.database.ServerValue.TIMESTAMP});
+  const ver=await settings.child("roundState").once("value");
+  if(ver.val()!=="reopened")throw new Error("Firebase no confirmó la habilitación de puestos.");
+  alert("Primer eliminado registrado: "+detalle+". Los puestos ya están habilitados.");
+ }catch(e){
+  alert("No se pudo completar el registro del primer eliminado. Revisa el estado antes de volver a intentarlo.\n\n"+(e.message||e));
+  console.error(e);
+  return;
+ }
+ cargarEstadoJornada(); cargarRanking();
+}
+
+async function finalizarYLiberar(){
+ const s=await settings.once("value"); const x=s.val()||{};
+ const torneo=Math.min(10,Math.max(1,Number(x.dailyTournament||1)));
+ if(!confirm("¿Finalizar el torneo "+torneo+" y liberar los puestos?\n\nNO se borrarán los puntos acumulados. Se limpiará solamente la ocupación de esta jornada."))return;
+ const snap=await players.once("value"); const data=snap.val()||{}; const updates={};
+ Object.keys(data).forEach(k=>{updates[k]=null;});
+ if(Object.keys(updates).length)await players.update(updates);
+ const siguiente=torneo<10?torneo+1:10;
+ await settings.update({dailyTournament:siguiente,roundState:"open",firstEliminated:false,firstEliminatedName:null,firstEliminatedAt:null,roundStateUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
+ alert(torneo<10?"Torneo finalizado. Los puestos están disponibles para el torneo "+siguiente+"/10. Los puntos acumulados se conservaron.":"Décimo torneo finalizado. Los puestos están disponibles y todos los puntos acumulados se conservaron.");
+ cargarDatos(); cargarEstadoJornada();
+}
+
+async function aplicarBonusNombre(nombre,tipo,cantidad=2){
+ const snap=await players.once("value");
+ const data=snap.val()||{};
+ let nombres=[];
+ Object.keys(data).some(k=>{
+   const ns=(data[k]&&data[k].names)||[];
+   if(ns.includes(nombre)){nombres=ns.filter(Boolean);return true;}
+   return false;
+ });
+ if(nombres.length===2){
+   const mitad=cantidad/2;
+   await sumar(nombres[0],mitad);
+   await sumar(nombres[1],mitad);
+   return "repartidos: +"+mitad+" para "+nombres[0]+" y +"+mitad+" para "+nombres[1];
+ }
+ await sumar(nombre,cantidad);
+ return "+"+cantidad+" para "+nombre;
+}
+async function extraPuntos(tipo){
+ const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
+ try{
+  const detalle=await aplicarBonusNombre(n,tipo,2);
+  alert("Puntos por "+tipo+": "+detalle+".");
+  cargarRanking();
+ }catch(e){alert("No se pudieron guardar los puntos. Revisa la conexión e inténtalo una vez.");console.error(e)}
+}
+
+async function ajustarManual(){
+ const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
+ const v=prompt("Puntos a sumar o restar. Ejemplo: 2 o -2","2");
+ if(v===null||v.trim()===""||isNaN(Number(v)))return;
+ await ajustar(n,Number(v)); cargarRanking();
+}
+async function calcularCampeon(nombre,otroNombre=""){
+ const modo=prompt("CAMPEÓN DE "+nombre+":\n1 = 3 o más jugadores → 2 puntos\n2 = 2 jugadores → 3 puntos (2 para quien terminó jugando, 1 para el otro)\n3 = campeón solo → 4 puntos","1");
+ if(!modo)return null;
+ if(!["1","2","3"].includes(modo)){alert("Opción inválida.");return null}
+ const total=modo==="1"?2:(modo==="2"?3:4);
+ if(otroNombre){
+   const mitad=total/2;
+   await sumar(nombre,mitad);
+   await sumar(otroNombre,mitad);
+   return {pts:mitad,modo,otroPts:mitad};
+ }
+ await sumar(nombre,total);
+ return {pts:total,modo,otroPts:0};
+}
+async function campeon(){
+ const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
+ const r=await calcularCampeon(n); if(!r)return;
+ alert("Campeón: +"+r.pts+" puntos."); cargarRanking();
+}
+async function campeonParticipante(nombre){
+ const snap=await players.once("value");
+ const data=snap.val()||{};
+ let otro="";
+ Object.keys(data).some(k=>{
+   const names=(data[k]&&data[k].names)||[];
+   if(names.includes(nombre)){
+     otro=names.find(x=>x!==nombre)||"";
+     return true;
+   }
+   return false;
+ });
+ const r=await calcularCampeon(nombre,otro); if(!r)return;
+ if(r.modo==="2" && otro){
+   alert("Campeón compartido: "+nombre+" +"+r.pts+" y "+otro+" +"+r.otroPts+" puntos.");
+ }else{
+   alert("Campeón: "+nombre+" +"+r.pts+" puntos.");
+ }
+ cargarRanking();
+}
+
+async function aplicarPuntos(puesto){
+ const ref=players.child(String(puesto)),snap=await ref.once("value");if(!snap.exists())return;
+ const p=snap.val();
+ if(p.pointsApplied){alert("Los puntos de este puesto ya fueron aplicados.");return}
+ const nombres=(p.names||[]).filter(Boolean);
+ const s=await settings.once("value"),cfg=s.val()||{},monto=Number(cfg.amount||100000);
+ const base=monto===330000?(nombres.length===2?2:4):(nombres.length===2?1:2);
+ for(let i=0;i<nombres.length;i++)await sumar(nombres[i],base);
+ await ref.update({pointsApplied:true});
+ cargarDatos();cargarRanking();
+ alert("Puntos de la jornada aplicados al acumulado: "+base+" por persona.");
+}
+
+async function cambiarEstado(puesto){
+ const snap=await players.child(String(puesto)).once("value");
+ const actual=(snap.val()||{}).status||"held";
+ await players.child(String(puesto)).update({status:actual==="confirmed"?"held":"confirmed"});
+}
+async function cambiarPago(puesto){
+ const ref=players.child(String(puesto)),snap=await ref.once("value");if(!snap.exists())return;
+ await ref.update({paid:!snap.val().paid});cargarDatos();
+}
+async function liberar(puesto){
+ if(!confirm("¿Liberar el puesto "+String(puesto).padStart(2,"0")+"?"))return;
+ await players.child(String(puesto)).remove();cargarDatos();
+}
+
+async function bonus(nombre,tipo){
+ try{
+  const detalle=await aplicarBonusNombre(nombre,tipo,2);
+  alert("Puntos por "+tipo+": "+detalle+".");
+  cargarRanking();
+ }catch(e){alert("No se pudieron guardar los puntos. Revisa la conexión e inténtalo una vez.");console.error(e)}
+}
+
+async function primerEliminadoDesdeParticipante(nombre){
+ document.getElementById("pointName").value=nombre;
+ await primerEliminadoYHabilitar();
+}
+async function editarPuntos(nombre){
+ const valor=prompt("¿Cuántos puntos quieres sumar o restar?\nEjemplo: 2 o -2","2");
+ if(valor===null||valor.trim()===""||isNaN(Number(valor)))return;
+ try{
+   await ajustar(nombre,Number(valor));
+   alert("Puntos de "+nombre+" actualizados correctamente.");
+   cargarRanking();
+ }catch(e){
+   alert("No se pudieron guardar los puntos. No se hizo ningún cambio.");
+   console.error(e);
+ }
+}
+
 function cargarDatos(){
-players.on("value",snapshot=>{
-const data=snapshot.val()||{}, puestos=Object.keys(data).sort((a,b)=>Number(a)-Number(b));
-document.getElementById("ocupados").textContent=puestos.length;
-document.getElementById("disponibles").textContent=Math.max(0,18-puestos.length);
-document.getElementById("recaudacion").textContent=(puestos.length*100000).toLocaleString("es-PY")+" Gs.";
-const lista=document.getElementById("lista");
-if(!puestos.length){lista.innerHTML="<p>No hay puestos apartados.</p>";return;}
-lista.innerHTML="";
-puestos.forEach(puesto=>{
-const p=data[puesto]||{}, names=Array.isArray(p.names)?p.names:[], points=Array.isArray(p.points)?p.points:[];
-const div=document.createElement("div");div.className="item";
-div.innerHTML=
-"<h3>Puesto "+String(puesto).padStart(2,"0")+" <span class='badge'>"+esc(p.status||"apartado")+"</span></h3>"+
-"<div class='info'><b>Participante:</b> "+esc(names.join(" + ")||"Sin nombre")+"<br>"+
-"<b>Puntos:</b> "+esc(points.join(" + ")||"0")+"<br>"+
-"<b>Pago:</b> "+(p.paid?"PAGADO":"PENDIENTE")+"</div>"+
-"<button class='secondary' onclick='toggleEdit("+JSON.stringify(puesto)+")'>✏️ EDITAR</button>"+
-"<div class='edit' id='edit-"+esc(puesto)+"'>"+
-"<div class='grid'><div><label>Nombre 1</label><input id='n1-"+esc(puesto)+"' value='"+esc(names[0]||"")+"'></div>"+
-"<div><label>Nombre 2 (opcional)</label><input id='n2-"+esc(puesto)+"' value='"+esc(names[1]||"")+"'></div></div>"+
-"<div class='grid'><div><label>Puntos 1</label><input id='p1-"+esc(puesto)+"' type='number' min='0' value='"+esc(points[0]??2)+"'></div>"+
-"<div><label>Puntos 2 (si corresponde)</label><input id='p2-"+esc(puesto)+"' type='number' min='0' value='"+esc(points[1]??1)+"'></div></div>"+
-"<label>Estado</label><select id='s-"+esc(puesto)+"'><option value='held'>held</option><option value='apartado'>apartado</option><option value='confirmado'>confirmado</option><option value='finalizado'>finalizado</option></select>"+
-"<label>Pago</label><select id='paid-"+esc(puesto)+"'><option value='false'>PENDIENTE</option><option value='true'>PAGADO</option></select>"+
-"<button onclick='guardar("+JSON.stringify(puesto)+")'>💾 GUARDAR CAMBIOS</button>"+
-"<button class='danger' onclick='eliminar("+JSON.stringify(puesto)+")'>🗑️ ELIMINAR PUESTO</button>"+
-"</div>";
-lista.appendChild(div);
-document.getElementById("s-"+puesto).value=p.status||"apartado";
-document.getElementById("paid-"+puesto).value=String(!!p.paid);
-});
-});
+ players.on("value",snapshot=>{
+  const data=snapshot.val()||{},todos=Object.keys(data).filter(k=>Number(k)>=1);
+  const visibles=todos.filter(k=>Number(k)<=15);
+  const extras=todos.filter(k=>Number(k)>15);
+  document.getElementById("ocupados").textContent=todos.length;
+  document.getElementById("disponibles").textContent=Math.max(0,15-visibles.length);
+  settings.once("value").then(s=>{
+   const cfg=s.val()||{},monto=Number(cfg.amount||100000);
+   document.getElementById("recaudacion").textContent=(todos.length*monto).toLocaleString("es-PY");
+  });
+  const lista=document.getElementById("lista");
+  if(!todos.length){lista.innerHTML="<p>No hay puestos apartados.</p>";return}
+  lista.innerHTML="";
+  todos.sort((a,b)=>Number(a)-Number(b));
+  if(extras.length){
+   const aviso=document.createElement("div");
+   aviso.className="small";
+   aviso.style="padding:10px;margin-bottom:8px;border:1px solid #4d4028;border-radius:10px;color:#e0b85f";
+   aviso.textContent="Puestos extra agregados: "+extras.length+" · no aparecen en la pantalla pública.";
+   lista.appendChild(aviso);
+  }
+  todos.forEach(puesto=>{
+   const p=data[puesto],nombres=(p.names||[]).filter(Boolean),puntos=p.points||[];
+   const div=document.createElement("div");div.className="item";
+   let personas="";
+   if(!nombres.length){
+    personas="<div class='small'>Puesto extra vacío. Usa LIBERAR PUESTO para eliminarlo.</div>";
+   } else {
+    nombres.forEach((n,i)=>{
+     personas+="<div style='margin:8px 0;padding:8px;background:#0b0b0b;border-radius:8px'><b>"+esc(n)+"</b> · "+puntosDe(p,i)+" pts"+
+     "<button onclick='editarPuntos("+JSON.stringify(n)+")' class='secondary'>✏️ AJUSTAR PUNTOS</button>"+
+     "<div class='grid'><button onclick='bonus("+JSON.stringify(n)+","+JSON.stringify("carta especial")+" )'>🃏 +2 CARTA</button><button onclick='bonus("+JSON.stringify(n)+","+JSON.stringify("pérdida con carta especial")+" )'>🃏 +2 PÉRDIDA ESPECIAL</button><button onclick='bonus("+JSON.stringify(n)+","+JSON.stringify("primer eliminado")+" )'>💥 +2 1° ELIMINADO</button><button onclick='campeonParticipante("+JSON.stringify(n)+")'>🏆 CAMPEÓN</button></div></div>";
+    });
+   }
+   const esExtra=Number(puesto)>15;
+   div.innerHTML="<h3>Puesto "+String(puesto).padStart(2,"0")+(esExtra?" · EXTRA":"")+"</h3><div class='info'><b>Participante:</b> "+esc(nombres.join(" + ")||"Sin asignar")+"<br><b>Puntos jornada:</b> "+esc(puntos.join(" + "))+"<br><b>Estado:</b> "+esc(p.status||"apartado")+"<br><b>Pago:</b> "+(p.paid?"<span class='ok'>PAGADO</span>":"PENDIENTE")+"<br><b>Acumulado:</b> aplicar una sola vez por jornada.</div>"+personas+
+   "<div class='grid'><button onclick='cambiarEstado("+puesto+")'>✅ CONFIRMAR / APARTAR</button><button onclick='cambiarPago("+puesto+")'>💰 "+(p.paid?"MARCAR PENDIENTE":"CONFIRMAR PAGO")+"</button><button onclick='aplicarPuntos("+puesto+")' class='secondary'>➕ APLICAR PUNTOS AL ACUMULADO</button><button onclick='liberar("+puesto+")' class='danger'>🗑️ LIBERAR PUESTO</button></div>";
+   lista.appendChild(div);
+  });
+ });
 }
-function toggleEdit(puesto){
-const e=document.getElementById("edit-"+puesto);e.style.display=e.style.display==="block"?"none":"block";
+
+async function agregarPuestoExtra(){
+ const snap=await players.once("value");
+ const data=snap.val()||{};
+ const nums=Object.keys(data).map(Number).filter(n=>Number.isFinite(n)&&n>=1);
+ let nuevo=16;
+ while(nums.includes(nuevo))nuevo++;
+ const nombre1=prompt("Nombre del participante del puesto "+nuevo+" (Cancelar para no crear):");
+ if(nombre1===null)return;
+ const n1=nombre1.trim();
+ if(!n1){alert("Escribe un nombre.");return}
+ const nombre2=prompt("Segundo participante (opcional). Toca Cancelar o deja vacío si es solo una persona:");
+ const n2=nombre2===null?"":nombre2.trim();
+ const names=n2?[n1,n2]:[n1];
+ const amountSnap=await settings.once("value"),cfg=amountSnap.val()||{},monto=Number(cfg.amount||100000);
+ const base=monto===330000?(names.length===2?2:4):(names.length===2?1:2);
+ await players.child(String(nuevo)).set({
+  names,
+  points:names.map(()=>base),
+  status:"held",
+  paid:false,
+  pointsApplied:false,
+  modalidad:names.length===2?"familia":"solo",
+  createdAt:firebase.database.ServerValue.TIMESTAMP
+ });
+ alert("Puesto extra "+String(nuevo).padStart(2,"0")+" creado.");
+ cargarDatos();
 }
-async function guardar(puesto){
-try{
-const n1=document.getElementById("n1-"+puesto).value.trim();
-const n2=document.getElementById("n2-"+puesto).value.trim();
-const names=[n1,n2].filter(Boolean);
-const p1=Number(document.getElementById("p1-"+puesto).value||0);
-const p2=Number(document.getElementById("p2-"+puesto).value||0);
-const points=n2?[p1,p2]:[p1];
-const status=document.getElementById("s-"+puesto).value;
-const paid=document.getElementById("paid-"+puesto).value==="true";
-await players.child(puesto).update({names,points,status,paid});
-mostrarMensaje("Puesto "+puesto+" actualizado correctamente.");
-}catch(e){mostrarMensaje("No se pudo guardar: "+e.message,false);}
+
+async function actualizarEstadoReinicio(){
+ const qSnap=await qualification.once("value");
+ const q=qSnap.val()||{};
+ const gold=Number(q.goldCount||0),silver=Number(q.silverCount||0);
+ const total=gold+silver;
+ const contador=document.getElementById("restartQualified");
+ const boton=document.getElementById("restartTournament");
+ if(contador)contador.textContent=total;
+ if(boton)boton.disabled=!(gold>=15 && silver>=15);
 }
-async function eliminar(puesto){
-if(!confirm("¿Seguro que quieres eliminar el puesto "+puesto+"?"))return;
-try{await players.child(puesto).remove();mostrarMensaje("Puesto "+puesto+" eliminado.");}
-catch(e){mostrarMensaje("No se pudo eliminar: "+e.message,false);}
+
+async function reiniciarTorneo(){
+ const qSnap=await qualification.once("value");
+ const q=qSnap.val()||{};
+ const gold=Number(q.goldCount||0),silver=Number(q.silverCount||0);
+ if(gold<15 || silver<15){
+   alert("El reinicio está bloqueado. Primero deben existir 15 ORO y 15 PLATA.");
+   return;
+ }
+ if(!confirm("¿CONFIRMAS REINICIAR EL TORNEO?\\n\\nSe borrarán los nombres y puntos de la jornada y se liberarán los puestos.\\nLos clasificados ORO/PLATA y la configuración del torneo se conservarán."))return;
+
+ const snap=await players.once("value");
+ const data=snap.val()||{};
+
+ // El ranking acumulado de participantes y la clasificación ORO/PLATA
+ // se conservan. Solo se limpia la jornada actual y se liberan los puestos.
+ const updates={};
+ Object.keys(data).forEach(k=>{updates[k]=null;});
+ if(Object.keys(updates).length)await players.update(updates);
+
+ alert("Torneo reiniciado correctamente. La jornada fue limpiada y los 15 puestos públicos están nuevamente disponibles. El ranking acumulado se conservó.");
+ cargarDatos();
+ cargarRanking();
+ actualizarEstadoReinicio();
 }
-</script>
+
+async function editarParticipante(key){
+ const snap=await participants.child(key).once("value");
+ if(!snap.exists()){alert("El participante ya no existe.");return}
+ const p=snap.val()||{},entrada=prompt("Corregir nombre del participante:",String(p.name||""));
+ if(entrada===null)return;
+ const nuevo=entrada.trim();
+ if(!nuevo){alert("El nombre no puede quedar vacío.");return}
+ try{
+  // Conservamos la clave de Firebase para mantener el historial y la clasificación.
+  await participants.child(key).update({name:nuevo});
+  const puestos=await players.once("value"),data=puestos.val()||{},updates={};
+  Object.keys(data).forEach(k=>{
+   const pto=data[k]||{},names=Array.isArray(pto.names)?pto.names.slice():[];
+   let changed=false;
+   names.forEach((n,i)=>{if(n===p.name){names[i]=nuevo;changed=true}});
+   if(changed)updates[k+"/names"]=names;
+  });
+  if(Object.keys(updates).length)await players.update(updates);
+  const cfg=await settings.once("value"),cx=cfg.val()||{};
+  if(cx.firstEliminatedName===p.name)await settings.update({firstEliminatedName:nuevo});
+  alert("Nombre actualizado. Los puntos y la clasificación se conservaron.");
+  cargarDatos();cargarRanking();
+ }catch(e){alert("No se pudo actualizar el nombre. Revisá la conexión e intentá de nuevo.");console.error(e)}
+}
+
+async function editarPuntosAcumulados(key){
+ const snap=await participants.child(key).once("value");
+ if(!snap.exists()){alert("El participante ya no existe.");return}
+ const p=snap.val()||{},valor=prompt("Nuevo total de puntos acumulados para "+String(p.name||"este participante")+":",String(Number(p.totalPoints||0)));
+ if(valor===null)return;
+ if(valor.trim()===""||!Number.isFinite(Number(valor))||Number(valor)<0){alert("Ingresá un total válido (0 o más).");return}
+ try{
+  await participants.child(key).update({totalPoints:Number(valor)});
+  await calificarSiCorresponde(key);
+  alert("Puntos acumulados actualizados.");cargarRanking();
+ }catch(e){alert("No se pudieron actualizar los puntos.");console.error(e)}
+}
+
+async function eliminarParticipante(key){
+ const snap=await participants.child(key).once("value");
+ if(!snap.exists()){alert("El participante ya no existe.");return}
+ const p=snap.val()||{};
+ if(p.qualificationOrder||p.tier){alert("Este participante ya está clasificado en "+String(p.tier||"Oro/Plata")+". No se puede eliminar desde aquí porque afectaría la clasificación.");return}
+ if(!confirm("¿Eliminar solamente a "+String(p.name||key)+" y sus puntos acumulados? Si comparte un puesto, la otra persona y el puesto se conservarán."))return;
+ try{
+  const puestos=await players.once("value"),data=puestos.val()||{},updates={};
+  Object.keys(data).forEach(k=>{
+   const pto=data[k]||{},names=Array.isArray(pto.names)?pto.names:[],idx=names.indexOf(p.name);
+   if(idx!==-1){
+    const nn=names.slice(),pts=Array.isArray(pto.points)?pto.points.slice():[];
+    nn.splice(idx,1);pts.splice(idx,1);
+    updates[k+"/names"]=nn;updates[k+"/points"]=pts;
+    if(nn.length===1)updates[k+"/modalidad"]="solo";
+    if(nn.length===0){updates[k+"/modalidad"]=null;updates[k+"/pointsApplied"]=false;}
+   }
+  });
+  if(Object.keys(updates).length)await players.update(updates);
+  await participants.child(key).remove();
+  const cfg=await settings.once("value"),cx=cfg.val()||{};
+  if(cx.firstEliminatedName===p.name)await settings.update({firstEliminatedName:null,firstEliminated:false});
+  alert("Participante eliminado. Los demás jugadores y puestos se conservaron.");
+  cargarDatos();cargarRanking();
+ }catch(e){alert("No se pudo eliminar al participante. Revisá la conexión.");console.error(e)}
+}
+
+function cargarRanking(){
+ participants.on("value",snapshot=>{
+  const data=snapshot.val()||{};
+  const arr=Object.keys(data).map(k=>({key:k,...data[k]}));
+  arr.sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name)));
+  document.getElementById("ranking").innerHTML=arr.length?arr.map((p,i)=>"<div class='rank' style='gap:8px;align-items:center;flex-wrap:wrap'><span><b>"+(i+1)+".</b> "+esc(p.name)+" "+(p.tier?"<span class='badge'>"+esc(p.tier)+"</span>":"")+(p.qualificationOrder?" <span class='small'>#"+p.qualificationOrder+"</span>":"")+"</span><span><b>"+Number(p.totalPoints||0)+" pts</b></span><div class='grid' style='width:100%'><button class='secondary' onclick='editarParticipante("+JSON.stringify(p.key)+")'>✏️ EDITAR NOMBRE</button><button class='secondary' onclick='editarPuntosAcumulados("+JSON.stringify(p.key)+")'>🔢 EDITAR PUNTOS</button><button class='danger' onclick='eliminarParticipante("+JSON.stringify(p.key)+")'>🗑️ ELIMINAR JUGADOR</button></div></div>").join(""):"<p>No hay puntos acumulados todavía.</p>";
+  qualification.once("value").then(s=>{const q=s.val()||{};document.getElementById("goldCount").textContent=Number(q.goldCount||0);document.getElementById("silverCount").textContent=Number(q.silverCount||0);actualizarEstadoReinicio()});
+ });
+}</script>
 </body>
 </html>
