@@ -143,13 +143,22 @@ auth.onAuthStateChanged(user=>{
  else{loginBox.style.display="block";panel.style.display="none"}
 });
 
-function cargarConfiguracion(){
+ function cargarConfiguracion(){
+ const sel=document.getElementById("alias");
+ sel.innerHTML="";
+ ALIASES.forEach(a=>{
+  const o=document.createElement("option");
+  o.value=a.alias;
+  o.textContent=a.alias+" · "+a.name+" · "+a.bank;
+  sel.appendChild(o);
+ });
+ sel.value=ALIASES[0].alias;
  settings.once("value").then(s=>{
   const x=s.val()||{};
   document.getElementById("amount").value=String(x.amount||100000);
-  const sel=document.getElementById("alias");sel.innerHTML="";
-  ALIASES.forEach(a=>{const o=document.createElement("option");o.value=a.alias;o.textContent=a.alias+" · "+a.name+" · "+a.bank;sel.appendChild(o)});
   sel.value=String(x.alias||ALIASES[0].alias);
+ }).catch(e=>{
+  console.error("Error de configuración:",e);
  });
 }
 document.getElementById("saveSettings").onclick=async()=>{
