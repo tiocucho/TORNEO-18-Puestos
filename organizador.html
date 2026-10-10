@@ -51,24 +51,12 @@ button.danger{background:#6b2020;color:white}
 </div>
 
 <div class="card">
-<h2>🎯 Control de jornadas</h2>
-<p>Jornada del día: <b id="dailyTournament">1</b>/10</p>
-<p>Estado: <b id="roundState">PUESTOS ABIERTOS</b></p>
-<div class="grid">
-<button onclick="iniciarTorneo()">🏁 INICIAR TORNEO</button>
-<button onclick="primerEliminadoYHabilitar()">💥 PRIMER ELIMINADO · HABILITAR PUESTOS</button>
-</div>
-<button class="secondary" onclick="finalizarYLiberar()">🔄 FINALIZAR TORNEO Y LIBERAR PUESTOS</button>
-<p class="small">Liberar puestos solo limpia la ocupación de la jornada. Los puntos acumulados, cartas especiales, pérdidas especiales y campeonatos se conservan.</p>
-</div>
-
-<div class="card">
 <h2>🏆 Acciones de puntos</h2>
 <input id="pointName" placeholder="Nombre exacto del participante">
 <div class="grid">
 <button onclick="extraPuntos('carta especial')">🃏 +2 CARTA ESPECIAL</button>
 <button onclick="extraPuntos('pérdida con carta especial')">🃏 +2 PÉRDIDA ESPECIAL</button>
-<button onclick="primerEliminadoYHabilitar()">💥 PRIMER ELIMINADO · +2 Y HABILITAR PUESTOS</button>
+<button onclick="extraPuntos('primer eliminado')">💥 +2 PRIMER ELIMINADO</button>
 <button onclick="campeon()">🏆 REGISTRAR CAMPEÓN</button>
 </div>
 <button class="secondary" onclick="ajustarManual()">✏️ AJUSTAR PUNTOS</button>
@@ -139,26 +127,17 @@ document.getElementById("login").onclick=async()=>{
 document.getElementById("salir").onclick=()=>auth.signOut();
 
 auth.onAuthStateChanged(user=>{
- if(user){loginBox.style.display="none";panel.style.display="block";cargarConfiguracion();cargarDatos();cargarRanking();cargarEstadoJornada()}
+ if(user){loginBox.style.display="none";panel.style.display="block";cargarConfiguracion();cargarDatos();cargarRanking()}
  else{loginBox.style.display="block";panel.style.display="none"}
 });
 
- function cargarConfiguracion(){
- const sel=document.getElementById("alias");
- sel.innerHTML="";
- ALIASES.forEach(a=>{
-  const o=document.createElement("option");
-  o.value=a.alias;
-  o.textContent=a.alias+" · "+a.name+" · "+a.bank;
-  sel.appendChild(o);
- });
- sel.value=ALIASES[0].alias;
+function cargarConfiguracion(){
  settings.once("value").then(s=>{
   const x=s.val()||{};
   document.getElementById("amount").value=String(x.amount||100000);
+  const sel=document.getElementById("alias");sel.innerHTML="";
+  ALIASES.forEach(a=>{const o=document.createElement("option");o.value=a.alias;o.textContent=a.alias+" · "+a.name+" · "+a.bank;sel.appendChild(o)});
   sel.value=String(x.alias||ALIASES[0].alias);
- }).catch(e=>{
-  console.error("Error de configuración:",e);
  });
 }
 document.getElementById("saveSettings").onclick=async()=>{
@@ -173,9 +152,6 @@ function esc(s){return String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt
 function puntosDe(p,i){return Number((p.points||[])[i]||0)}
 
 async function asegurarParticipante(nombre){
- const buscados=await participants.once("value"),existentes=buscados.val()||{};
- const encontrado=Object.keys(existentes).find(k=>String((existentes[k]||{}).name||"")===String(nombre));
- if(encontrado)return encontrado;
  const key=safeName(nombre);if(!key)return null;
  const snap=await participants.child(key).once("value");
  if(!snap.exists())await participants.child(key).set({name:nombre,totalPoints:0,qualificationOrder:null,tier:null});
@@ -224,96 +200,26 @@ async function ajustar(nombre,cantidad){
  await calificarSiCorresponde(key);
 }
 
-function cargarEstadoJornada(){
- settings.off("value",window.__estadoJornadaListener);
- window.__estadoJornadaListener=snap=>{
-  const x=snap.val()||{};
-  const torneo=Math.min(10,Math.max(1,Number(x.dailyTournament||1)));
-  const estado=x.roundState||"open";
-  document.getElementById("dailyTournament").textContent=torneo+"/10";
-  const labels={open:"PUESTOS ABIERTOS",started:"TORNEO EN CURSO · PUESTOS CERRADOS",reopened:"PUESTOS HABILITADOS · PRIMER ELIMINADO REGISTRADO"};
-  document.getElementById("roundState").textContent=labels[estado]||labels.open;
- };
- settings.on("value",window.__estadoJornadaListener);
-}
-async function iniciarTorneo(){
- const s=await settings.once("value"); const x=s.val()||{}; const estado=x.roundState||"open";
- if(estado==="started"){alert("El torneo ya está en curso.");return}
- if(estado==="reopened"){alert("El primer eliminado ya habilitó los puestos.");return}
- if(!confirm("¿Iniciar este torneo? Los puestos quedarán cerrados hasta que se registre el primer eliminado."))return;
- try{
-  await settings.update({roundState:"started",roundStateUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
-  const ver=await settings.child("roundState").once("value");
-  if(ver.val()!=="started")throw new Error("Firebase no confirmó el cambio de estado.");
- }catch(e){
-  alert("No se pudo guardar el estado del torneo. No se realizó ningún cambio.\n\n"+(e.message||e));
-  console.error(e);
-  return;
- }
- cargarEstadoJornada();
-}
-async function primerEliminadoYHabilitar(){
- const s=await settings.once("value"); const x=s.val()||{};
- if((x.roundState||"open")!=="started"){alert("Primero debes iniciar el torneo.");return}
- if(x.firstEliminated){alert("El primer eliminado ya fue registrado en esta jornada.");return}
- const nombre=document.getElementById("pointName").value.trim();
- if(!nombre){alert("Escribe el nombre del primer eliminado.");return}
- try{
-  const bloqueo=await settings.child("firstEliminated").transaction(v=>v===true?undefined:true);
-  if(!bloqueo.committed){alert("El primer eliminado ya fue registrado en esta jornada.");return}
-  const detalle=await aplicarBonusNombre(nombre,"primer eliminado",2);
-  await settings.update({roundState:"reopened",firstEliminatedName:nombre,firstEliminatedAt:firebase.database.ServerValue.TIMESTAMP});
-  const ver=await settings.child("roundState").once("value");
-  if(ver.val()!=="reopened")throw new Error("Firebase no confirmó la habilitación de puestos.");
-  alert("Primer eliminado registrado: "+detalle+". Los puestos ya están habilitados.");
- }catch(e){
-  alert("No se pudo completar el registro del primer eliminado. Revisa el estado antes de volver a intentarlo.\n\n"+(e.message||e));
-  console.error(e);
-  return;
- }
- cargarEstadoJornada(); cargarRanking();
-}
-
-async function finalizarYLiberar(){
- const s=await settings.once("value"); const x=s.val()||{};
- const torneo=Math.min(10,Math.max(1,Number(x.dailyTournament||1)));
- if(!confirm("¿Finalizar el torneo "+torneo+" y liberar los puestos?\n\nNO se borrarán los puntos acumulados. Se limpiará solamente la ocupación de esta jornada."))return;
- const snap=await players.once("value"); const data=snap.val()||{}; const updates={};
- Object.keys(data).forEach(k=>{updates[k]=null;});
- if(Object.keys(updates).length)await players.update(updates);
- const siguiente=torneo<10?torneo+1:10;
- await settings.update({dailyTournament:siguiente,roundState:"open",firstEliminated:false,firstEliminatedName:null,firstEliminatedAt:null,roundStateUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
- alert(torneo<10?"Torneo finalizado. Los puestos están disponibles para el torneo "+siguiente+"/10. Los puntos acumulados se conservaron.":"Décimo torneo finalizado. Los puestos están disponibles y todos los puntos acumulados se conservaron.");
- cargarDatos(); cargarEstadoJornada();
-}
-
-async function aplicarBonusNombre(nombre,tipo,cantidad=2){
+async function extraPuntos(tipo){
+ const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
  const snap=await players.once("value");
  const data=snap.val()||{};
- let nombres=[];
+ let puesto=null, nombres=[];
  Object.keys(data).some(k=>{
    const ns=(data[k]&&data[k].names)||[];
-   if(ns.includes(nombre)){nombres=ns.filter(Boolean);return true;}
+   if(ns.includes(n)){puesto=k;nombres=ns.filter(Boolean);return true;}
    return false;
  });
  if(nombres.length===2){
-   const mitad=cantidad/2;
-   await sumar(nombres[0],mitad);
-   await sumar(nombres[1],mitad);
-   return "repartidos: +"+mitad+" para "+nombres[0]+" y +"+mitad+" para "+nombres[1];
+   await sumar(nombres[0],1);
+   await sumar(nombres[1],1);
+   alert("+2 puntos por "+tipo+" repartidos: +1 para "+nombres[0]+" y +1 para "+nombres[1]+".");
+ }else{
+   await sumar(n,2);
+   alert("Se agregaron +2 puntos por "+tipo+".");
  }
- await sumar(nombre,cantidad);
- return "+"+cantidad+" para "+nombre;
+ cargarRanking();
 }
-async function extraPuntos(tipo){
- const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
- try{
-  const detalle=await aplicarBonusNombre(n,tipo,2);
-  alert("Puntos por "+tipo+": "+detalle+".");
-  cargarRanking();
- }catch(e){alert("No se pudieron guardar los puntos. Revisa la conexión e inténtalo una vez.");console.error(e)}
-}
-
 async function ajustarManual(){
  const n=document.getElementById("pointName").value.trim(); if(!n){alert("Escribe el nombre.");return}
  const v=prompt("Puntos a sumar o restar. Ejemplo: 2 o -2","2");
@@ -388,16 +294,23 @@ async function liberar(puesto){
 }
 
 async function bonus(nombre,tipo){
- try{
-  const detalle=await aplicarBonusNombre(nombre,tipo,2);
-  alert("Puntos por "+tipo+": "+detalle+".");
-  cargarRanking();
- }catch(e){alert("No se pudieron guardar los puntos. Revisa la conexión e inténtalo una vez.");console.error(e)}
-}
-
-async function primerEliminadoDesdeParticipante(nombre){
- document.getElementById("pointName").value=nombre;
- await primerEliminadoYHabilitar();
+ const snap=await players.once("value");
+ const data=snap.val()||{};
+ let nombres=[];
+ Object.keys(data).some(k=>{
+   const ns=(data[k]&&data[k].names)||[];
+   if(ns.includes(nombre)){nombres=ns.filter(Boolean);return true;}
+   return false;
+ });
+ if(nombres.length===2){
+   await sumar(nombres[0],1);
+   await sumar(nombres[1],1);
+   alert("+2 puntos por "+tipo+" repartidos: +1 para "+nombres[0]+" y +1 para "+nombres[1]+".");
+ }else{
+   await sumar(nombre,2);
+   alert("Se agregaron +2 puntos por "+tipo+".");
+ }
+ cargarRanking();
 }
 async function editarPuntos(nombre){
  const valor=prompt("¿Cuántos puntos quieres sumar o restar?\nEjemplo: 2 o -2","2");
@@ -519,124 +432,15 @@ async function reiniciarTorneo(){
  actualizarEstadoReinicio();
 }
 
-async function editarParticipante(key){
- const snap=await participants.child(key).once("value");
- if(!snap.exists()){alert("El participante ya no existe.");return}
- const p=snap.val()||{},entrada=prompt("Corregir nombre del participante:",String(p.name||""));
- if(entrada===null)return;
- const nuevo=entrada.trim();
- if(!nuevo){alert("El nombre no puede quedar vacío.");return}
- try{
-  // Conservamos la clave de Firebase para mantener el historial y la clasificación.
-  await participants.child(key).update({name:nuevo});
-  const puestos=await players.once("value"),data=puestos.val()||{},updates={};
-  Object.keys(data).forEach(k=>{
-   const pto=data[k]||{},names=Array.isArray(pto.names)?pto.names.slice():[];
-   let changed=false;
-   names.forEach((n,i)=>{if(n===p.name){names[i]=nuevo;changed=true}});
-   if(changed)updates[k+"/names"]=names;
-  });
-  if(Object.keys(updates).length)await players.update(updates);
-  const cfg=await settings.once("value"),cx=cfg.val()||{};
-  if(cx.firstEliminatedName===p.name)await settings.update({firstEliminatedName:nuevo});
-  alert("Nombre actualizado. Los puntos y la clasificación se conservaron.");
-  cargarDatos();cargarRanking();
- }catch(e){alert("No se pudo actualizar el nombre. Revisá la conexión e intentá de nuevo.");console.error(e)}
-}
-
-async function editarPuntosAcumulados(key){
- const snap=await participants.child(key).once("value");
- if(!snap.exists()){alert("El participante ya no existe.");return}
- const p=snap.val()||{},valor=prompt("Nuevo total de puntos acumulados para "+String(p.name||"este participante")+":",String(Number(p.totalPoints||0)));
- if(valor===null)return;
- if(valor.trim()===""||!Number.isFinite(Number(valor))||Number(valor)<0){alert("Ingresá un total válido (0 o más).");return}
- try{
-  await participants.child(key).update({totalPoints:Number(valor)});
-  await calificarSiCorresponde(key);
-  alert("Puntos acumulados actualizados.");cargarRanking();
- }catch(e){alert("No se pudieron actualizar los puntos.");console.error(e)}
-}
-
-async function eliminarParticipante(key){
- const snap=await participants.child(key).once("value");
- if(!snap.exists()){alert("El participante ya no existe.");return}
- const p=snap.val()||{};
- if(p.qualificationOrder||p.tier){alert("Este participante ya está clasificado en "+String(p.tier||"Oro/Plata")+". No se puede eliminar desde aquí porque afectaría la clasificación.");return}
- if(!confirm("¿Eliminar solamente a "+String(p.name||key)+" y sus puntos acumulados? Si comparte un puesto, la otra persona y el puesto se conservarán."))return;
- try{
-  const puestos=await players.once("value"),data=puestos.val()||{},updates={};
-  Object.keys(data).forEach(k=>{
-   const pto=data[k]||{},names=Array.isArray(pto.names)?pto.names:[],idx=names.indexOf(p.name);
-   if(idx!==-1){
-    const nn=names.slice(),pts=Array.isArray(pto.points)?pto.points.slice():[];
-    nn.splice(idx,1);pts.splice(idx,1);
-    updates[k+"/names"]=nn;updates[k+"/points"]=pts;
-    if(nn.length===1)updates[k+"/modalidad"]="solo";
-    if(nn.length===0){updates[k+"/modalidad"]=null;updates[k+"/pointsApplied"]=false;}
-   }
-  });
-  if(Object.keys(updates).length)await players.update(updates);
-  await participants.child(key).remove();
-  const cfg=await settings.once("value"),cx=cfg.val()||{};
-  if(cx.firstEliminatedName===p.name)await settings.update({firstEliminatedName:null,firstEliminated:false});
-  alert("Participante eliminado. Los demás jugadores y puestos se conservaron.");
-  cargarDatos();cargarRanking();
- }catch(e){alert("No se pudo eliminar al participante. Revisá la conexión.");console.error(e)}
-}
-
 function cargarRanking(){
  participants.on("value",snapshot=>{
   const data=snapshot.val()||{};
   const arr=Object.keys(data).map(k=>({key:k,...data[k]}));
   arr.sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name)));
-  document.getElementById("ranking").innerHTML=arr.length?arr.map((p,i)=>"<div class='rank' style='gap:8px;align-items:center;flex-wrap:wrap'><span><b>"+(i+1)+".</b> "+esc(p.name)+" "+(p.tier?"<span class='badge'>"+esc(p.tier)+"</span>":"")+(p.qualificationOrder?" <span class='small'>#"+p.qualificationOrder+"</span>":"")+"</span><span><b>"+Number(p.totalPoints||0)+" pts</b></span><div class='grid' style='width:100%'><button class='secondary' onclick='editarParticipante("+JSON.stringify(p.key)+")'>✏️ EDITAR NOMBRE</button><button class='secondary' onclick='editarPuntosAcumulados("+JSON.stringify(p.key)+")'>🔢 EDITAR PUNTOS</button><button class='danger' onclick='eliminarParticipante("+JSON.stringify(p.key)+")'>🗑️ ELIMINAR JUGADOR</button></div></div>").join(""):"<p>No hay puntos acumulados todavía.</p>";
+  document.getElementById("ranking").innerHTML=arr.length?arr.map((p,i)=>"<div class='rank'><span><b>"+(i+1)+".</b> "+esc(p.name)+" "+(p.tier?"<span class='badge'>"+p.tier+"</span>":"")+(p.qualificationOrder?" <span class='small'>#"+p.qualificationOrder+"</span>":"")+"</span><b>"+Number(p.totalPoints||0)+" pts</b></div>").join(""):"<p>No hay puntos acumulados todavía.</p>";
   qualification.once("value").then(s=>{const q=s.val()||{};document.getElementById("goldCount").textContent=Number(q.goldCount||0);document.getElementById("silverCount").textContent=Number(q.silverCount||0);actualizarEstadoReinicio()});
  });
- }
-async function cargarPuntosOficiales(){
-if(!confirm(“Se reemplazará el ranking actual por los puntos oficiales y se liberarán los puestos. ¿Continuar?”))return;
-const lista=[
-[“BUKELE”,140],[“ROLANDO CARDOZO”,32],[“EL LOKO”,77],[“FABIÁN”,3],
-[“ORIÓN”,57],[“LA MARAVILLA”,129],[“JOSÉ BÁEZ”,85],[“TÍA MIRTHA”,20],
-[“PICOLE”,59],[“TÍA PATTY”,109],[“HOMERO”,136],[“TAKAMOTO”,51],
-[“JOSÉ CABRAL”,57],[“LEO MOLINAS”,39],[“YENNY”,76],[“JOGO”,128],
-[“DR”,23],[“PIKORO”,4],[“FATTY GONZA”,76],[“JHON WICK”,140],
-[“EMANUEL”,140],[“BILLY EL NIÑO”,2],[“RENÉ”,4],[“ARIELITO AMARILLA”,44],
-[“MATHEUS”,6],[“MITA’i MALLORQUÍN”,2],[“SOL DUARTE”,90],[“FORTUNA”,8],
-[“EL ARABE”,15],[“KA’i ARROZ”,2],[“TAPITI”,9],[“CHIKITO”,4],
-[“MARCELO GON”,6],[“DERLIS IRALA”,31],[“MARIO R”,6],[“DANIEL”,18],
-[“MARCOS GONZÁLEZ”,140],[“JAVIER BARRETO”,14],[“SPIDERMAN”,111],
-[“CM”,4],[“ALEXIS MEDINA”,8],[“BELL ORTEGA”,13],[“PABLO BUSTAMANTE”,5],
-[“MOROCHO”,9],[“DIEGO”,2],[“ARTURO KURE CALDO”,35],[“MESSI”,2],
-[“MARCELO IBAÑES”,16],[“MENCHY”,13],[“HULK”,59],[“TORETTO”,16],
-[“KAIO”,106],[“JOSÉ GONZÁLEZ”,2],[“ALBERTO ENCISO”,31],
-[“FERDINAND”,72],[“SOFI SEGOVIA”,17],[“TREINTA Y TRES”,6],
-[“GUZMÁN”,9],[“MILEY”,43],[“GORDITO MENTIROSO”,11],[“YUTY”,6],
-[“PESCADOR”,2],[“BELL”,6],[“DEYFER”,5],[“ELA’i”,2],[“EDINHO”,8],
-[“S.D.S”,8],[“CHUPAMEDIA”,4],[“HEBER CÁCERES”,4],
-[“RICHARD MONGES”,2],[“NELSON RUBIO”,6],[“FABIÁN TIGRE”,4],
-[“EL FARISEO”,2],[“STIFLER”,13],[“HERNÁN”,2],[“CARLOS MÁQUINA”,1],
-[“PEREGILL”,4],[“TORVIC”,2],[“ÁLVARO ZELAYA”,4],[“TÍA ELI”,4],
-[“JULIO MEDINA”,2],[“CURTIDO”,4],[“ROSS ALDERETE”,1],[“JAGUA”,4],
-[“TAJY”,32]
-];
-try{
-const datos={};
-lista.forEach(([name,totalPoints])=>{
-datos[safeName(name)]={name,totalPoints,qualificationOrder:null,tier:null};
-});
-await participants.set(datos);
-await players.remove();
-await qualification.set({goldCount:0,silverCount:0});
-cargarDatos();
-cargarRanking();
-alert(“Ranking oficial cargado y puestos liberados.”);
-}catch(e){alert(“Error al guardar: “+e.message)}
 }
-const botonOficial=document.createElement(“button”);
-botonOficial.textContent=“CARGAR PUNTOS OFICIALES”;
-botonOficial.onclick=cargarPuntosOficiales;
-document.getElementById(“ranking”).before(botonOficial);
 </script>
 </body>
 </html>
