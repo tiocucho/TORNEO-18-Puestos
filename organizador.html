@@ -592,6 +592,51 @@ function cargarRanking(){
   document.getElementById("ranking").innerHTML=arr.length?arr.map((p,i)=>"<div class='rank' style='gap:8px;align-items:center;flex-wrap:wrap'><span><b>"+(i+1)+".</b> "+esc(p.name)+" "+(p.tier?"<span class='badge'>"+esc(p.tier)+"</span>":"")+(p.qualificationOrder?" <span class='small'>#"+p.qualificationOrder+"</span>":"")+"</span><span><b>"+Number(p.totalPoints||0)+" pts</b></span><div class='grid' style='width:100%'><button class='secondary' onclick='editarParticipante("+JSON.stringify(p.key)+")'>✏️ EDITAR NOMBRE</button><button class='secondary' onclick='editarPuntosAcumulados("+JSON.stringify(p.key)+")'>🔢 EDITAR PUNTOS</button><button class='danger' onclick='eliminarParticipante("+JSON.stringify(p.key)+")'>🗑️ ELIMINAR JUGADOR</button></div></div>").join(""):"<p>No hay puntos acumulados todavía.</p>";
   qualification.once("value").then(s=>{const q=s.val()||{};document.getElementById("goldCount").textContent=Number(q.goldCount||0);document.getElementById("silverCount").textContent=Number(q.silverCount||0);actualizarEstadoReinicio()});
  });
+ }
+async function cargarPuntosOficiales(){
+if(!confirm(“Se reemplazará el ranking actual por los puntos oficiales y se liberarán los puestos. ¿Continuar?”))return;
+const lista=[
+[“BUKELE”,140],[“ROLANDO CARDOZO”,32],[“EL LOKO”,77],[“FABIÁN”,3],
+[“ORIÓN”,57],[“LA MARAVILLA”,129],[“JOSÉ BÁEZ”,85],[“TÍA MIRTHA”,20],
+[“PICOLE”,59],[“TÍA PATTY”,109],[“HOMERO”,136],[“TAKAMOTO”,51],
+[“JOSÉ CABRAL”,57],[“LEO MOLINAS”,39],[“YENNY”,76],[“JOGO”,128],
+[“DR”,23],[“PIKORO”,4],[“FATTY GONZA”,76],[“JHON WICK”,140],
+[“EMANUEL”,140],[“BILLY EL NIÑO”,2],[“RENÉ”,4],[“ARIELITO AMARILLA”,44],
+[“MATHEUS”,6],[“MITA’i MALLORQUÍN”,2],[“SOL DUARTE”,90],[“FORTUNA”,8],
+[“EL ARABE”,15],[“KA’i ARROZ”,2],[“TAPITI”,9],[“CHIKITO”,4],
+[“MARCELO GON”,6],[“DERLIS IRALA”,31],[“MARIO R”,6],[“DANIEL”,18],
+[“MARCOS GONZÁLEZ”,140],[“JAVIER BARRETO”,14],[“SPIDERMAN”,111],
+[“CM”,4],[“ALEXIS MEDINA”,8],[“BELL ORTEGA”,13],[“PABLO BUSTAMANTE”,5],
+[“MOROCHO”,9],[“DIEGO”,2],[“ARTURO KURE CALDO”,35],[“MESSI”,2],
+[“MARCELO IBAÑES”,16],[“MENCHY”,13],[“HULK”,59],[“TORETTO”,16],
+[“KAIO”,106],[“JOSÉ GONZÁLEZ”,2],[“ALBERTO ENCISO”,31],
+[“FERDINAND”,72],[“SOFI SEGOVIA”,17],[“TREINTA Y TRES”,6],
+[“GUZMÁN”,9],[“MILEY”,43],[“GORDITO MENTIROSO”,11],[“YUTY”,6],
+[“PESCADOR”,2],[“BELL”,6],[“DEYFER”,5],[“ELA’i”,2],[“EDINHO”,8],
+[“S.D.S”,8],[“CHUPAMEDIA”,4],[“HEBER CÁCERES”,4],
+[“RICHARD MONGES”,2],[“NELSON RUBIO”,6],[“FABIÁN TIGRE”,4],
+[“EL FARISEO”,2],[“STIFLER”,13],[“HERNÁN”,2],[“CARLOS MÁQUINA”,1],
+[“PEREGILL”,4],[“TORVIC”,2],[“ÁLVARO ZELAYA”,4],[“TÍA ELI”,4],
+[“JULIO MEDINA”,2],[“CURTIDO”,4],[“ROSS ALDERETE”,1],[“JAGUA”,4],
+[“TAJY”,32]
+];
+try{
+const datos={};
+lista.forEach(([name,totalPoints])=>{
+datos[safeName(name)]={name,totalPoints,qualificationOrder:null,tier:null};
+});
+await participants.set(datos);
+await players.remove();
+await qualification.set({goldCount:0,silverCount:0});
+cargarDatos();
+cargarRanking();
+alert(“Ranking oficial cargado y puestos liberados.”);
+}catch(e){alert(“Error al guardar: “+e.message)}
+}
+const botonOficial=document.createElement(“button”);
+botonOficial.textContent=“CARGAR PUNTOS OFICIALES”;
+botonOficial.onclick=cargarPuntosOficiales;
+document.getElementById(“ranking”).before(botonOficial);
 }</script>
 </body>
 </html>
