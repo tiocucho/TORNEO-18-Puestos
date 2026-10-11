@@ -46,16 +46,13 @@ async function deletePlayer(key){const s=await participantsRef.child(key).once('
 
 function syncEventPoints(){const type=$('eventType').value;const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};if(type!=='manual')$('eventPoints').value=fixed[type]??2;}
 async function syncQualification(){
- // Guarda la clasificación de forma persistente en participants y usa /qualification para el historial.
- const qSnap=await qualificationRef.once('value');
- const q=qSnap.val()||{};
- const base=q.basePoints||{};
+ // Calcula la clasificación desde participants; no necesita leer /qualification para mostrar los clasificados.
  const snap=await participantsRef.once('value'),data=snap.val()||{};
  const all=Object.keys(data).map(key=>({key,...data[key]}));
  const already=all.filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
  const assigned=new Set(already.map(p=>p.key));
  let next=already.length?Math.max(...already.map(p=>Number(p.qualificationOrder)||0))+1:1;
- const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)-Number(base[p.key]||0)>=140)
+ const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)>=140)
   .sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
  const updates={};
  for(const p of eligible){if(next>30)break;updates['participants/'+p.key+'/qualificationOrder']=next;updates['participants/'+p.key+'/tier']=next<=15?'ORO':'PLATA';next++;}
@@ -69,7 +66,7 @@ async function syncQualification(){
  $('silverList').innerHTML=silver.length?silver.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
  $('qualTotal').textContent='Total clasificados: '+arr.length+'/30';
  $('resetQualification').disabled=!(gold.length===15&&silver.length===15);
- $('qualMsg').textContent='Etapa '+Number(q.cycle||1)+' · clasificación guardada.';
+ $('qualMsg').textContent='Clasificación calculada desde los puntajes. El historial se guarda al cerrar los 30 clasificados.';
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
