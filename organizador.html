@@ -30,5 +30,28 @@ async function assignSpot(i){const old=await playersRef.child(String(i)).once('v
 async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
 async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y extras?'))return;await playersRef.remove();renderSpots()}
 async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=16;while(d[String(n)])n++;await assignSpot(n)}
-async function importFinalList(){if(!confirm('CONFIRMA: reemplazar el ranking por los 86 jugadores y puntajes del Excel, reiniciar la clasificación ORO/PLATA y vaciar los puestos de la jornada. Se conservan monto, alias y acceso.'))return;const out={};for(const p of FINAL_PLAYERS){out[safeName(p.name)]={name:p.name,totalPoints:p.totalPoints,qualificationOrder:null,tier:null}}await participantsRef.set(out);await qualificationRef.set({goldCount:0,silverCount:0});await playersRef.remove();$('importMsg').textContent='Lista del Excel cargada: 86 jugadores. Puestos de jornada vacíos.';await renderRanking();await renderSpots()}
+async function importFinalList(){
+ if(!confirm('CONFIRMA: reemplazar el ranking por los 86 jugadores y puntajes del Excel, reiniciar la clasificación ORO/PLATA y vaciar los puestos de la jornada. Se conservan monto, alias y acceso.'))return;
+ const msg=$('importMsg');msg.textContent='Cargando y verificando los 86 jugadores...';
+ try{
+  if(FINAL_PLAYERS.length!==86)throw new Error('La lista incorporada no contiene exactamente 86 jugadores.');
+  const out={};
+  for(const p of FINAL_PLAYERS){
+   if(!p.name||!Number.isFinite(Number(p.totalPoints)))throw new Error('Hay un nombre o puntaje inválido en la lista.');
+   const key=safeName(p.name);
+   if(out[key])throw new Error('Nombre duplicado en la lista: '+p.name);
+   out[key]={name:p.name,totalPoints:Number(p.totalPoints),qualificationOrder:null,tier:null};
+  }
+  await db.ref().update({participants:out,qualification:{goldCount:0,silverCount:0},players:null});
+  const [rankSnap,spotsSnap]=await Promise.all([participantsRef.once('value'),playersRef.once('value')]);
+  const rank=rankSnap.val()||{},spots=spotsSnap.val()||{};
+  const count=Object.keys(rank).length,occupied=Object.keys(spots).length;
+  if(count!==86||occupied!==0)throw new Error('Verificación incompleta: ranking='+count+', puestos ocupados='+occupied+'. No vuelvas a pulsar; envía esta pantalla.');
+  msg.textContent='Correcto: 86 jugadores cargados con sus puntajes del Excel. Puestos de la jornada vacíos.';
+  await renderRanking();await renderSpots();
+ }catch(e){
+  msg.textContent='NO SE PUDO COMPLETAR: '+(e.message||String(e))+' Revisa conexión/permisos de Firebase y no vuelvas a pulsar varias veces.';
+  console.error('Error al importar lista definitiva:',e);
+ }
+}
 </script></body></html>
