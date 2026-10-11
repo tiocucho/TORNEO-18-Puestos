@@ -46,19 +46,25 @@ async function deletePlayer(key){const s=await participantsRef.child(key).once('
 
 function syncEventPoints(){const type=$('eventType').value;const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};if(type!=='manual')$('eventPoints').value=fixed[type]??2;}
 async function syncQualification(){
- const qs=await qualificationRef.once('value'),q=qs.val()||{},base=q.basePoints||{},cycle=Number(q.cycle||1);
- const snap=await participantsRef.once('value'),data=snap.val()||{},all=Object.keys(data).map(key=>({key,...data[key]}));
- const ordered=all.filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
- const assigned=new Set(ordered.map(p=>p.key));let next=ordered.length?Math.max(...ordered.map(p=>Number(p.qualificationOrder)||0))+1:1;
- const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)-Number(base[p.key]||0)>=140).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const updates={};for(const p of eligible){if(next>30)break;updates['participants/'+p.key+'/qualificationOrder']=next;updates['participants/'+p.key+'/tier']=next<=15?'ORO':'PLATA';next++;}
- if(Object.keys(updates).length)await db.ref().update(updates);
- const fresh=await participantsRef.once('value'),d=fresh.val()||{},arr=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
- const gold=arr.filter(p=>p.tier==='ORO'),silver=arr.filter(p=>p.tier==='PLATA');
+ // La lectura de /qualification está bloqueada por las reglas actuales de Firebase.
+ // Mostrar una clasificación provisional desde los puntajes visibles sin modificar datos.
+ const snap=await participantsRef.once('value'),data=snap.val()||{};
+ const all=Object.keys(data).map(key=>({key,...data[key]}));
+ const already=all.filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
+ const assigned=new Set(already.map(p=>p.key));
+ const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)>=140)
+   .sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ const arr=already.slice();
+ let next=arr.length?Math.max(...arr.map(p=>Number(p.qualificationOrder)||0))+1:1;
+ for(const p of eligible){if(next>30)break;arr.push({...p,qualificationOrder:next,tier:next<=15?'ORO':'PLATA'});next++;}
+ const gold=arr.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)<=15).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder)).slice(0,15);
+ const silver=arr.filter(p=>p.tier==='PLATA'||Number(p.qualificationOrder)>15&&Number(p.qualificationOrder)<=30).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder)).slice(0,15);
  $('goldCount').textContent=gold.length+'/15';$('silverCount').textContent=silver.length+'/15';
- $('goldList').innerHTML=gold.length?gold.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Aún no hay clasificados';
- $('silverList').innerHTML=silver.length?silver.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Aún no hay clasificados';
- $('qualTotal').textContent='Total clasificados: '+arr.length+'/30';$('resetQualification').disabled=!(gold.length===15&&silver.length===15);$('qualMsg').textContent='Etapa '+cycle+' · puntajes acumulados conservados.';
+ $('goldList').innerHTML=gold.length?gold.map((p,i)=>esc((p.qualificationOrder||i+1)+'. '+p.name)).join('<br>'):'Aún no hay clasificados con 140 puntos';
+ $('silverList').innerHTML=silver.length?silver.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
+ $('qualTotal').textContent='Total clasificados: '+(gold.length+silver.length)+'/30';
+ $('resetQualification').disabled=!(gold.length===15&&silver.length===15);
+ $('qualMsg').textContent='Vista calculada desde los puntajes. El guardado del historial requiere habilitar permisos de /qualification en Firebase.';
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
