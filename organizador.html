@@ -46,28 +46,40 @@ async function deletePlayer(key){const s=await participantsRef.child(key).once('
 
 function syncEventPoints(){const type=$('eventType').value;const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};if(type!=='manual')$('eventPoints').value=fixed[type]??2;}
 async function syncQualification(){
- // Vista calculada en memoria desde los puntajes: no escribe campos de clasificación ni necesita /qualification.
+ // Conserva un orden fijo: los seis clasificados iniciales quedan primero; los siguientes se registran al llegar a 140.
+ const initial=['BUKELE','EMANUEL','HOMERO','JHON WICK','MARCOS GONZÁLEZ','SPIDERMAN'];
  const snap=await participantsRef.once('value'),data=snap.val()||{};
- const all=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const eligible=all.filter(p=>Number(p.totalPoints||0)>=140).slice(0,30);
- const gold=eligible.slice(0,15),silver=eligible.slice(15,30);
+ const all=Object.keys(data).map(key=>({key,...data[key]}));
+ const byName=new Map(all.map(p=>[String(p.name||'').trim().toLocaleUpperCase('es'),p]));
+ const updates={};
+ initial.forEach((name,i)=>{const p=byName.get(name);if(p&&!(Number(p.qualificationOrder)>0)){updates['participants/'+p.key+'/qualificationOrder']=i+1;updates['participants/'+p.key+'/tier']='ORO';}});
+ let ordered=all.filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
+ let next=ordered.length?Math.max(...ordered.map(p=>Number(p.qualificationOrder)||0))+1:1;
+ const assigned=new Set(ordered.map(p=>p.key));
+ const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)>=140).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ for(const p of eligible){if(next>30)break;updates['participants/'+p.key+'/qualificationOrder']=next;updates['participants/'+p.key+'/tier']=next<=15?'ORO':'PLATA';next++;}
+ try{if(Object.keys(updates).length)await db.ref().update(updates);}catch(e){$('qualMsg').textContent='No se pudo guardar el orden fijo en Firebase. Revisar permisos de escritura de participants.';}
+ const fresh=await participantsRef.once('value'),d=fresh.val()||{};
+ ordered=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
+ const gold=ordered.filter(p=>Number(p.qualificationOrder)<=15).slice(0,15),silver=ordered.filter(p=>Number(p.qualificationOrder)>15&&Number(p.qualificationOrder)<=30).slice(0,15);
  $('goldCount').textContent=gold.length+'/15';$('silverCount').textContent=silver.length+'/15';
  $('goldList').innerHTML=gold.length?gold.map((p,i)=>esc((i+1)+'. '+p.name)).join('<br>'):'Aún no hay clasificados con 140 puntos';
- $('silverList').innerHTML=silver.length?silver.map((p,i)=>esc((i+16)+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
- $('qualTotal').textContent='Total clasificados: '+eligible.length+'/30';
+ $('silverList').innerHTML=silver.length?silver.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
+ $('qualTotal').textContent='Total clasificados: '+ordered.filter(p=>Number(p.qualificationOrder)<=30).length+'/30';
  $('resetQualification').disabled=!(gold.length===15&&silver.length===15);
- $('qualMsg').textContent='Vista calculada directamente desde los puntajes. El historial se guarda al cerrar los 30 clasificados.';
+ if(!$('qualMsg').textContent.startsWith('No se pudo guardar'))$('qualMsg').textContent='Orden de clasificación guardado: quienes ya clasificaron conservan su lugar.';
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
- const arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const eligible=arr.filter(p=>Number(p.totalPoints||0)>=140).slice(0,30),gold=eligible.slice(0,15),silver=eligible.slice(15,30);
- if(gold.length<15||silver.length<15){alert('Solo se puede cerrar cuando haya 30 jugadores con 140 puntos o más: 15 para Oro y 15 para Plata.');return;}
+ const arr=Object.keys(data).map(key=>({key,...data[key]}));
+ const ordered=arr.filter(p=>Number(p.qualificationOrder)>0&&Number(p.qualificationOrder)<=30).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
+ const gold=ordered.filter(p=>Number(p.qualificationOrder)<=15),silver=ordered.filter(p=>Number(p.qualificationOrder)>15);
+ if(gold.length<15||silver.length<15){alert('Solo se puede cerrar cuando estén guardados los 30 clasificados. No se borró nada.');return;}
  const fmt=list=>list.map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n');
- if(!confirm('¿Guardar la clasificación y reiniciar nombres, puntajes y puestos?\n\nORO\n'+fmt(gold)+'\n\nPLATA\n'+fmt(silver)+'\n\nPrimero se guardará el historial.'))return;
- const archive={createdAt:firebase.database.ServerValue.TIMESTAMP,gold:gold.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'ORO'})),silver:silver.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'PLATA'})),ranking:arr.map(p=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0)}))};
- try{await qualificationRef.child('history').push().set(archive);}catch(e){alert('No se reinició nada porque Firebase rechazó guardar el historial. Deben habilitarse permisos de escritura en /qualification/history.');return;}
- await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false});
+ if(!confirm('¿Guardar esta clasificación fija y reiniciar nombres, puntajes y puestos?\n\nORO\n'+fmt(gold)+'\n\nPLATA\n'+fmt(silver)+'\n\nPrimero se guardará el historial.'))return;
+ const archive={createdAt:firebase.database.ServerValue.TIMESTAMP,gold:gold.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'ORO'})),silver:silver.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'PLATA'})),ranking:arr.map(p=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:p.tier||null,qualificationOrder:p.qualificationOrder||null}))};
+ try{await qualificationRef.child('history').push().set(archive);}catch(e){alert('No se reinició nada porque Firebase rechazó guardar el historial. Revisar permisos de escritura en /qualification/history.');return;}
+ try{await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false});}catch(e){alert('El historial quedó guardado, pero Firebase rechazó la limpieza. No intentes repetir; revisar permisos.');return;}
  alert('Historial guardado. Nombres, puntajes y puestos reiniciados.');await renderRanking();await renderSpots();await syncQualification();
 }
 async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=15;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
