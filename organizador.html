@@ -21,7 +21,22 @@ firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.da
 const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}];
 const $=id=>document.getElementById(id);function safeName(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_').slice(0,80)||'sin_nombre'}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 $('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);$('loginError').textContent=''}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();
-auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;if(user){await loadSettings();await syncQualification();await renderRanking();await renderSpots();}});
+async function ensureRankingExists(){
+  // Recuperación segura: solo restaura la lista final incluida en este archivo
+  // si participants está completamente vacío. Nunca sobrescribe jugadores existentes.
+  const snap=await participantsRef.once('value');
+  const current=snap.val();
+  if(current && Object.keys(current).length){return;}
+  if(!Array.isArray(FINAL_PLAYERS)||!FINAL_PLAYERS.length){throw new Error('No hay lista de recuperación disponible.');}
+  const updates={};
+  for(const p of FINAL_PLAYERS){
+    if(!p || !String(p.name||'').trim() || !Number.isFinite(Number(p.totalPoints))) continue;
+    const key=safeName(p.name);
+    updates['participants/'+key]={name:String(p.name).trim(),totalPoints:Number(p.totalPoints),qualificationOrder:null,tier:null};
+  }
+  if(Object.keys(updates).length) await db.ref().update(updates);
+}
+auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;if(user){try{await ensureRankingExists();await loadSettings();await syncQualification();await renderRanking();await renderSpots();}catch(e){$('ranking').innerHTML='<p class="err">No se pudieron cargar los jugadores: '+esc(e.message||e)+'</p>';}}});
 async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
 $('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
 async function renderRanking(){await syncQualification();const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
