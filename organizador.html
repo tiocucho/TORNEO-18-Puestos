@@ -6,7 +6,7 @@
 <h1>🏆 TORNEO INTER TÍO CUCHO</h1><p>Panel privado del organizador · ranking acumulado · 15 puestos públicos</p>
 <section id="loginBox" class="card"><h2>Acceso del organizador</h2><input id="email" type="email" autocomplete="username" placeholder="Correo electrónico"><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña"><button id="login">INGRESAR</button><p id="loginError" class="err"></p></section>
 <div id="panel" hidden>
-<section class="card"><details id="qualificationDetails"><summary style="color:#e0b85f;font-size:22px;font-weight:bold;cursor:pointer;padding:8px 0">🏅 Clasificación de Oro y Plata · tocar para abrir/cerrar</summary><div style="padding-top:12px"><p class="small">Al completar 15 clasificados a Oro y 15 a Plata, puedes guardar la clasificación en el historial y limpiar nombres, puntajes y puestos para comenzar una nueva etapa.</p><div class="grid"><div class="rank"><b>🥇 Torneo de Oro</b><h2 id="goldCount">0/15</h2><div id="goldList" class="small"></div></div><div class="rank"><b>🥈 Torneo de Plata</b><h2 id="silverCount">0/15</h2><div id="silverList" class="small"></div></div></div><p id="qualTotal" class="ok">Total clasificados: 0/30</p><button id="resetQualification" class="danger" onclick="resetQualification()" disabled>🔄 CERRAR CLASIFICACIÓN Y REINICIAR (30 CLASIFICADOS)</button><p id="qualMsg" class="small"></p></div></details></section>
+<section class="card"><details id="qualificationDetails"><summary style="color:#e0b85f;font-size:22px;font-weight:bold;cursor:pointer;padding:8px 0">🏅 Clasificación de Oro y Plata · tocar para abrir/cerrar</summary><div style="padding-top:12px"><p class="small">Al completar 15 clasificados a Oro y 15 a Plata, puedes guardar la clasificación en el historial y limpiar nombres, puntajes y puestos para comenzar una nueva etapa.</p><div class="grid"><div class="rank"><b>🥇 Torneo de Oro</b><h2 id="goldCount">0/15</h2><div id="goldList" class="small"></div></div><div class="rank"><b>🥈 Torneo de Plata</b><h2 id="silverCount">0/15</h2><div id="silverList" class="small"></div></div></div><p id="qualTotal" class="ok">Total clasificados: 0/30</p><button id="resetQualification" class="danger" onclick="resetQualification()" disabled>🔄 CERRAR CLASIFICACIÓN Y REINICIAR (30 CLASIFICADOS)</button><button id="testHistory" class="secondary" onclick="testHistoryPermission()">🧪 PROBAR GUARDADO SIN BORRAR DATOS</button><p id="qualMsg" class="small"></p></div></details></section>
 
 <section class="card"><h2>⚙️ Configuración</h2><label for="amount">Monto del torneo</label><select id="amount"><option value="100000">100.000 Gs.</option><option value="220000">220.000 Gs.</option><option value="330000">330.000 Gs.</option></select><label for="alias">Alias para transferencia</label><select id="alias"></select><button id="saveSettings">GUARDAR CONFIGURACIÓN</button><p id="settingsMsg" class="ok"></p><p class="small">Monto inicial: 100.000 Gs. Solo el organizador puede cambiarlo.</p></section>
 <section class="card"><details id="rankingDetails"><summary style="color:#e0b85f;font-size:22px;font-weight:bold;cursor:pointer;padding:8px 0">📊 Ranking acumulado · <span id="count">0</span> jugadores · tocar para abrir/cerrar</summary><div style="padding-top:12px"><p class="small">Los puntajes se pueden corregir como valor total exacto. También puedes agregar o eliminar jugadores.</p><input id="newName" placeholder="Nombre de jugador nuevo"><input id="newPoints" type="number" min="0" step="1" placeholder="Puntaje inicial"><button onclick="addPlayer()">➕ AGREGAR JUGADOR</button><div id="ranking">Cargando...</div></div></details></section>
@@ -68,6 +68,21 @@ async function syncQualification(){
  $('qualTotal').textContent='Total clasificados: '+ordered.filter(p=>Number(p.qualificationOrder)<=30).length+'/30';
  $('resetQualification').disabled=!(gold.length===15&&silver.length===15);
  if(!$('qualMsg').textContent.startsWith('No se pudo guardar'))$('qualMsg').textContent='Orden de clasificación guardado: quienes ya clasificaron conservan su lugar.';
+}
+async function testHistoryPermission(){
+ const btn=$('testHistory');btn.disabled=true;
+ const testRef=qualificationRef.child('_permissionTest');
+ try{
+  await testRef.set({test:true,createdAt:firebase.database.ServerValue.TIMESTAMP,message:'Prueba temporal de permisos; no es una clasificación real.'});
+  await testRef.remove();
+  $('qualMsg').textContent='PRUEBA CORRECTA: Firebase permitió guardar y borrar el marcador temporal. No se tocaron jugadores, puntajes ni puestos.';
+  $('qualMsg').className='small ok';
+  alert('Prueba correcta. El marcador temporal se guardó y eliminó. No se borró ningún jugador ni puntaje.');
+ }catch(e){
+  $('qualMsg').textContent='PRUEBA FALLIDA: Firebase rechazó escribir o borrar el marcador temporal. No se tocaron jugadores, puntajes ni puestos. Error: '+(e.message||e);
+  $('qualMsg').className='small err';
+  alert('Firebase rechazó la prueba. No se borró ningún jugador ni puntaje. Revisaremos los permisos.');
+ }finally{btn.disabled=false;}
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
