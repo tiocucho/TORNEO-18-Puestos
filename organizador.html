@@ -128,21 +128,48 @@ async function assignSpot(i){const old=await playersRef.child(String(i)).once('v
 async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
 async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y extras e iniciar una nueva jornada?'))return;await playersRef.remove();await settingsRef.update({firstEliminatedDone:false});renderSpots()}
 async function firstEliminatedAndRelease(){
- const st=await settingsRef.once('value'),settings=st.val()||{};
- if(settings.firstEliminatedDone){alert('El primer eliminado ya fue registrado en esta jornada. Para iniciar otra jornada, usa LIBERAR TODOS LOS PUESTOS.');return}
- const name=prompt('Nombre exacto del primer eliminado:');if(name===null||!name.trim())return;
- const snap=await playersRef.once('value'),spots=snap.val()||{};let matched=null,matchedNames=[];
- for(const [id,spot] of Object.entries(spots)){const names=((spot&&spot.names)||[]).filter(Boolean);if(names.some(n=>String(n).trim().toLowerCase()===name.trim().toLowerCase())){matched=id;matchedNames=names;break}}
- if(!matched){alert('No encontré ese nombre en los puestos ocupados. No se cambió nada.');return}
+ const st=await settingsRef.once('value');
+ const settings=st.val()||{};
+ if(settings.firstEliminatedDone){
+  alert('El primer eliminado ya fue registrado en esta jornada.');return;
+ }
+ const name=prompt('Nombre exacto del primer eliminado:');
+ if(name===null||!name.trim())return;
+ const snap=await playersRef.once('value');
+ const spots=snap.val()||{};
+ let matchedNames=[];
+ for(const spot of Object.values(spots)){
+  const names=((spot&&spot.names)||[]).filter(Boolean);
+  if(names.some(n=>String(n).trim().toLowerCase()===name.trim().toLowerCase())){
+   matchedNames=names;break;
+  }
+ }
+ if(!matchedNames.length){
+  alert('No encontré ese nombre en los puestos ocupados.');return;
+ }
  const recipients=matchedNames.length===2?matchedNames:[name.trim()];
- const msg=matchedNames.length===2?`El puesto es compartido por ${matchedNames.join(' y ')}. Se sumará +1 a cada uno (+2 total), y se liberarán todos los puestos.`:`Se sumarán +2 puntos a ${name.trim()} y se liberarán todos los puestos.`;
- if(!confirm('CONFIRMAR PRIMER ELIMINADO\n\n'+msg+'\n\nEsta acción libera todos los puestos públicos y extras.'))return;
- const partSnap=await participantsRef.once('value'),participants=partSnap.val()||{},updates={};
- for(const n of recipients){const key=safeName(n),existing=participants[key];if(!existing){alert('No encuentro a '+n+' en el ranking acumulado. No se modificó nada. Agrega primero al jugador al ranking.');return}updates['participants/'+key+'/totalPoints']=Number(existing.totalPoints||0)+(matchedNames.length===2?1:2)}
- updates['players']=null;updates['settings/tournament/firstEliminatedDone']=true;
+ const ps=await participantsRef.once('value');
+ const participants=ps.val()||{};
+ const updates={};
+ for(const n of recipients){
+  const key=safeName(n),p=participants[key];
+  if(!p){
+   alert('No encuentro a '+n+' en el ranking. No se modificó nada.');return;
+  }
+  const total=Number(p.totalPoints||0);
+  if(Number(p.qualificationOrder)>0||total>=140){
+   alert(n+' ya clasificó o llegó a 140 puntos. No se modificó nada.');return;
+  }
+  const bonus=recipients.length===2?1:2;
+  updates['participants/'+key+'/totalPoints']=total+Math.min(bonus,140-total);
+ }
+ if(!confirm('Confirmar primer eliminado. Se aplicará la bonificación sin superar 140 puntos y se liberarán todos los puestos.'))return;
+ updates['players']=null;
+ updates['settings/tournament/firstEliminatedDone']=true;
  await db.ref().update(updates);
- alert('Primer eliminado registrado. Bonificación aplicada y todos los puestos liberados.');
- await renderRanking();await renderSpots();
+ alert('Primer eliminado registrado y puestos liberados.');
+ await renderRanking();
+ await renderSpots();
 }
 async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=16;while(d[String(n)])n++;await assignSpot(n)}
 async function addEventPoints(){
