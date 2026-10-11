@@ -146,19 +146,29 @@ async function firstEliminatedAndRelease(){
 }
 async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=16;while(d[String(n)])n++;await assignSpot(n)}
 async function addEventPoints(){
- const key=$('eventPlayer').value,type=$('eventType').value;
+ const key=$('eventPlayer').value;
+ const type=$('eventType').value;
  if(!key){alert('Selecciona un jugador del ranking.');return}
  const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};
  const raw=$('eventPoints').value;
- const points=type==='manual'?Number(raw):fixed[type];
- if(!Number.isFinite(points)||points<0){alert('Introduce un puntaje válido.');return}
- const ref=participantsRef.child(key),snap=await ref.once('value');
- if(!snap.exists()){alert('El jugador ya no aparece en el ranking. Actualiza la página y vuelve a elegirlo.');return}
+ let points=type==='manual'?Number(raw):fixed[type];
+ if(!Number.isFinite(points)||points<=0){alert('Introduce un puntaje válido mayor que cero.');return}
+ const ref=participantsRef.child(key);
+ const snap=await ref.once('value');
+ if(!snap.exists()){alert('El jugador ya no aparece en el ranking.');return}
  const player=snap.val()||{};
- if(!confirm('Sumar '+points+' punto(s) a '+player.name+' por '+({special:'carta especial',specialLoss:'perdió con carta especial (bonificación adicional)',champ3:'campeón con 3 o más jugadores',champ2:'campeón entre 2 jugadores',champSolo:'campeón solo',manual:'ajuste manual'}[type])+ '?'))return;
- await ref.update({totalPoints:Number(player.totalPoints||0)+points});
+ const total=Number(player.totalPoints||0);
+ if(Number(player.qualificationOrder)>0||total>=140){
+  alert('Este jugador ya clasificó o llegó a 140 puntos. No puede sumar más para esta clasificación.');
+  return;
+ }
+ points=Math.min(points,140-total);
+ const motivo={special:'carta especial',specialLoss:'perdió con carta especial (bonificación adicional)',champ3:'campeón con 3 o más jugadores',champ2:'campeón entre 2 jugadores',champSolo:'campeón solo',manual:'ajuste manual'}[type]||'ajuste manual';
+ if(!confirm('Sumar '+points+' punto(s) a '+player.name+' por '+motivo+'?'))return;
+ await ref.update({totalPoints:total+points});
  await syncQualification();
  $('eventMsg').textContent='Se sumaron '+points+' punto(s) a '+player.name+'.';
  await renderRanking();
 }
+ 
 </script></body></html>
