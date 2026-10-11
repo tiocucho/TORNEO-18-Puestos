@@ -1,4 +1,4 @@
-<!doctype html>
+se<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
@@ -81,7 +81,49 @@ async function resetQualification(){
  try{await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false});}catch(e){alert('El historial quedó guardado, pero Firebase rechazó la limpieza. No intentes repetir; revisar permisos.');return;}
  alert('Historial guardado. Nombres, puntajes y puestos reiniciados.');await renderRanking();await renderSpots();await syncQualification();
 }
-async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=15;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
+  async function renderSpots(){
+ const snap=await playersRef.once('value'),data=snap.val()||{};
+ let out='';
+ for(let i=1;i<=15;i++){
+  const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);
+  out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div>`;
+  if(names.length){
+   out+=`<p class="small">Pago: <b class="${p.paid?'ok':'err'}">${p.paid?'PAGADO':'PENDIENTE'}</b> · Estado: <b class="tag">${p.status==='confirmed'?'CONFIRMADO':'APARTADO'}</b></p>`;
+   out+=`<div class="grid"><button class="secondary" onclick="togglePaid(${i})">${p.paid?'💵 MARCAR PENDIENTE':'💵 MARCAR PAGADO'}</button><button class="secondary" onclick="toggleConfirmed(${i})">${p.status==='confirmed'?'↩️ VOLVER A APARTADO':'✅ CONFIRMAR PUESTO'}</button></div>`;
+  }
+  out+=`<div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`;
+ }
+ const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);
+ if(extras.length){
+  out+='<h3>Puestos extra</h3>';
+  for(const i of extras){
+   const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);
+   out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div>`;
+   if(names.length){
+    out+=`<p class="small">Pago: <b class="${p.paid?'ok':'err'}">${p.paid?'PAGADO':'PENDIENTE'}</b> · Estado: <b class="tag">${p.status==='confirmed'?'CONFIRMADO':'APARTADO'}</b></p>`;
+    out+=`<div class="grid"><button class="secondary" onclick="togglePaid(${i})">${p.paid?'💵 MARCAR PENDIENTE':'💵 MARCAR PAGADO'}</button><button class="secondary" onclick="toggleConfirmed(${i})">${p.status==='confirmed'?'↩️ VOLVER A APARTADO':'✅ CONFIRMAR PUESTO'}</button></div>`;
+   }
+   out+=`<button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`;
+  }
+ }
+ $('spots').innerHTML=out;
+}
+async function togglePaid(i){
+ const ref=playersRef.child(String(i)),snap=await ref.once('value');
+ if(!snap.exists())return;
+ const p=snap.val()||{},next=!p.paid;
+ if(!confirm((next?'Marcar PAGADO':'Marcar PENDIENTE')+' el puesto '+i+'?'))return;
+ await ref.update({paid:next,paidUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
+ await renderSpots();
+}
+async function toggleConfirmed(i){
+ const ref=playersRef.child(String(i)),snap=await ref.once('value');
+ if(!snap.exists())return;
+ const p=snap.val()||{},next=p.status!=='confirmed';
+ if(!confirm((next?'CONFIRMAR':'VOLVER A APARTADO')+' el puesto '+i+'?'))return;
+ await ref.update({status:next?'confirmed':'held',confirmedUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
+ await renderSpots();
+}
 async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||100000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
 async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
 async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y extras e iniciar una nueva jornada?'))return;await playersRef.remove();await settingsRef.update({firstEliminatedDone:false});renderSpots()}
