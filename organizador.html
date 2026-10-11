@@ -39,50 +39,37 @@ async function ensureRankingExists(){
 auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;if(user){try{await ensureRankingExists();await loadSettings();await renderRanking();await renderSpots();}catch(e){$('ranking').innerHTML='<p class="err">No se pudieron cargar los jugadores: '+esc(e.message||e)+'</p>';}}});
 async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
 $('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
-async function renderRanking(){try{await syncQualification();}catch(e){$('qualMsg').textContent='Clasificación pendiente: Firebase no permite acceder a /qualification. El ranking se carga igualmente.';}const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
+async function renderRanking(){try{await syncQualification();}catch(e){$('qualMsg').textContent='No se pudo calcular la clasificación desde participants. El ranking se carga igualmente.';}const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
 async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints').value;if(!name||v.trim()===''||!Number.isFinite(Number(v))||Number(v)<0){alert('Escribe nombre y puntaje válido.');return}const key=safeName(name);if((await participantsRef.child(key).once('value')).exists()){alert('Ya existe un jugador con ese nombre.');return}await participantsRef.child(key).set({name,totalPoints:Number(v),qualificationOrder:null,tier:null});$('newName').value='';$('newPoints').value='';await syncQualification();renderRanking()}
 async function editPlayer(key){const snap=await participantsRef.child(key).once('value');if(!snap.exists())return;const p=snap.val()||{},name=prompt('Nombre correcto del jugador:',p.name||'');if(name===null)return;if(!name.trim()){alert('El nombre no puede quedar vacío.');return}const pts=prompt('Puntaje TOTAL exacto:',String(Number(p.totalPoints||0)));if(pts===null)return;if(pts.trim()===''||!Number.isFinite(Number(pts))||Number(pts)<0){alert('Puntaje inválido.');return}const newKey=safeName(name);if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return}await participantsRef.child(newKey).set({...p,name:name.trim(),totalPoints:Number(pts)});if(newKey!==key)await participantsRef.child(key).remove();await syncQualification();renderRanking()}
 async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
 
 function syncEventPoints(){const type=$('eventType').value;const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};if(type!=='manual')$('eventPoints').value=fixed[type]??2;}
 async function syncQualification(){
- // Calcula la clasificación desde participants; no necesita leer /qualification para mostrar los clasificados.
+ // Vista calculada en memoria desde los puntajes: no escribe campos de clasificación ni necesita /qualification.
  const snap=await participantsRef.once('value'),data=snap.val()||{};
- const all=Object.keys(data).map(key=>({key,...data[key]}));
- const already=all.filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
- const assigned=new Set(already.map(p=>p.key));
- let next=already.length?Math.max(...already.map(p=>Number(p.qualificationOrder)||0))+1:1;
- const eligible=all.filter(p=>!assigned.has(p.key)&&Number(p.totalPoints||0)>=140)
-  .sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const updates={};
- for(const p of eligible){if(next>30)break;updates['participants/'+p.key+'/qualificationOrder']=next;updates['participants/'+p.key+'/tier']=next<=15?'ORO':'PLATA';next++;}
- if(Object.keys(updates).length)await db.ref().update(updates);
- const fresh=await participantsRef.once('value'),d=fresh.val()||{};
- const arr=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
- const gold=arr.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)<=15).slice(0,15);
- const silver=arr.filter(p=>p.tier==='PLATA'||Number(p.qualificationOrder)>15).slice(0,15);
+ const all=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ const eligible=all.filter(p=>Number(p.totalPoints||0)>=140).slice(0,30);
+ const gold=eligible.slice(0,15),silver=eligible.slice(15,30);
  $('goldCount').textContent=gold.length+'/15';$('silverCount').textContent=silver.length+'/15';
- $('goldList').innerHTML=gold.length?gold.map((p,i)=>esc((p.qualificationOrder||i+1)+'. '+p.name)).join('<br>'):'Aún no hay clasificados con 140 puntos';
- $('silverList').innerHTML=silver.length?silver.map(p=>esc(p.qualificationOrder+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
- $('qualTotal').textContent='Total clasificados: '+arr.length+'/30';
+ $('goldList').innerHTML=gold.length?gold.map((p,i)=>esc((i+1)+'. '+p.name)).join('<br>'):'Aún no hay clasificados con 140 puntos';
+ $('silverList').innerHTML=silver.length?silver.map((p,i)=>esc((i+16)+'. '+p.name)).join('<br>'):'Se completará con los siguientes 15 jugadores que lleguen a 140 puntos';
+ $('qualTotal').textContent='Total clasificados: '+eligible.length+'/30';
  $('resetQualification').disabled=!(gold.length===15&&silver.length===15);
- $('qualMsg').textContent='Clasificación calculada desde los puntajes. El historial se guarda al cerrar los 30 clasificados.';
+ $('qualMsg').textContent='Vista calculada directamente desde los puntajes. El historial se guarda al cerrar los 30 clasificados.';
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
- const arr=Object.keys(data).map(key=>({key,...data[key]}));
- const gold=arr.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)>0&&Number(p.qualificationOrder)<=15).sort((a,b)=>Number(a.qualificationOrder||999)-Number(b.qualificationOrder||999));
- const silver=arr.filter(p=>p.tier==='PLATA'||Number(p.qualificationOrder)>15&&Number(p.qualificationOrder)<=30).sort((a,b)=>Number(a.qualificationOrder||999)-Number(b.qualificationOrder||999));
- if(gold.length<15||silver.length<15){alert('Solo se puede cerrar cuando estén completos los 15 clasificados a Oro y los 15 a Plata.');return;}
- const fmt=(list)=>list.slice(0,15).map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n');
- if(!confirm('¿Guardar la clasificación y reiniciar nombres, puntajes y puestos?\n\nORO\n'+fmt(gold)+'\n\nPLATA\n'+fmt(silver)+'\n\nSe guardará el historial antes de limpiar los datos actuales.'))return;
- const archive={createdAt:firebase.database.ServerValue.TIMESTAMP,gold:gold.slice(0,15).map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'ORO'})),silver:silver.slice(0,15).map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'PLATA'})),ranking:arr.map(p=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:p.tier||null,qualificationOrder:p.qualificationOrder||null}))};
- await qualificationRef.child('history').push().set(archive);
- await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false,'qualification/cycle':Number((await qualificationRef.once('value')).val()?.cycle||1)+1,'qualification/basePoints':null});
- alert('Clasificación guardada en el historial. Nombres, puntajes y puestos reiniciados.');
- await renderRanking();await renderSpots();await syncQualification();
+ const arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ const eligible=arr.filter(p=>Number(p.totalPoints||0)>=140).slice(0,30),gold=eligible.slice(0,15),silver=eligible.slice(15,30);
+ if(gold.length<15||silver.length<15){alert('Solo se puede cerrar cuando haya 30 jugadores con 140 puntos o más: 15 para Oro y 15 para Plata.');return;}
+ const fmt=list=>list.map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n');
+ if(!confirm('¿Guardar la clasificación y reiniciar nombres, puntajes y puestos?\n\nORO\n'+fmt(gold)+'\n\nPLATA\n'+fmt(silver)+'\n\nPrimero se guardará el historial.'))return;
+ const archive={createdAt:firebase.database.ServerValue.TIMESTAMP,gold:gold.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'ORO'})),silver:silver.map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'PLATA'})),ranking:arr.map(p=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0)}))};
+ try{await qualificationRef.child('history').push().set(archive);}catch(e){alert('No se reinició nada porque Firebase rechazó guardar el historial. Deben habilitarse permisos de escritura en /qualification/history.');return;}
+ await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false});
+ alert('Historial guardado. Nombres, puntajes y puestos reiniciados.');await renderRanking();await renderSpots();await syncQualification();
 }
-
 async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=15;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
 async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||100000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
 async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
