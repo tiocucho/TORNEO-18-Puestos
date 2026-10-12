@@ -20,7 +20,7 @@
 <div class="top"><div class="brand">INTERMEDIO TORNEOS</div></div>
 <section>
 <div class="eyebrow">INSCRIPCIONES ABIERTAS</div>
-<h1>TORNEO INTER TÍO CUCHO<br>15 PUESTOS</h1>
+<h1>TORNEO INTER TÍO CUCHO<br>18 PUESTOS</h1>
 <p class="sub">Elegí tus puestos. Cuando alguien los reserve, todos los teléfonos los verán ocupados en tiempo real.</p>
 </section>
 <div class="price"><small>PRECIO POR PUESTO</small><strong id="publicPrice">100.000 Gs.</strong></div>
@@ -39,7 +39,7 @@
 <section class="card">
 <div class="kicker">ELEGÍ TU LUGAR</div><h2>Puestos del torneo</h2>
 <div class="legend"><span><i class="dot free"></i>Disponible</span><span><i class="dot held"></i>Apartado</span><span><i class="dot confirmed"></i>Confirmado</span></div>
-<div class="counter" id="counter">15 de 15 lugares disponibles</div>
+<div class="counter" id="counter">18 de 18 lugares disponibles</div>
 <div class="seat-help">Elegí uno o más puestos <small>Los números libres se pueden seleccionar. Los ocupados quedan bloqueados.</small></div>
 <div class="grid" id="grid"><button type="button" class="slot" aria-label="Puesto 1"><span class="num">01</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 2"><span class="num">02</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 3"><span class="num">03</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 4"><span class="num">04</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 5"><span class="num">05</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 6"><span class="num">06</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 7"><span class="num">07</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 8"><span class="num">08</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 9"><span class="num">09</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 10"><span class="num">10</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 11"><span class="num">11</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 12"><span class="num">12</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 13"><span class="num">13</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 14"><span class="num">14</span><span class="status">Libre</span></button><button type="button" class="slot" aria-label="Puesto 15"><span class="num">15</span><span class="status">Libre</span></button></div>
 <div class="form">
@@ -63,7 +63,7 @@
 </div>
 
 </section>
-<footer>TORNEO INTER TIO CUCHO · 15 puestos</footer>
+<footer>TORNEO INTER TIO CUCHO · 18 puestos</footer>
 
 <div class="clasificacion" data-version="clasificacion-estatica-2026-10-11-v4">
   <h2>🏆 CLASIFICACIÓN</h2>
@@ -177,7 +177,7 @@ const firebaseConfig={
  measurementId:"G-2TZXHKNG6R"
 };
 
-const TOTAL=15; let PRICE=100000;
+const TOTAL=18; let PRICE=100000;
 let seats={},selected=new Set(),splitMode="one",busy=false;
 let db=null,seatsRef=null,firebaseReady=false,authReady=false;
 
@@ -187,7 +187,7 @@ try{
   seatsRef=db.ref("players");
   firebaseReady=true;
 }catch(e){
-  // Aunque Firebase no cargue, la grilla de 15 puestos debe mostrarse.
+  // Aunque Firebase no cargue, la grilla de 18 puestos debe mostrarse
   firebaseReady=false;
 }
 
