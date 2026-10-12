@@ -8,11 +8,12 @@
 <div id="panel" hidden>
 <section class="card"><details id="qualificationDetails" open><summary style="color:#e0b85f;font-size:22px;font-weight:bold;cursor:pointer;padding:8px 0">🏅 Clasificación de Oro y Plata · tocar para abrir/cerrar</summary><div style="padding-top:12px"><p class="small">Los primeros 15 clasificados integran Oro y los siguientes 15, Plata. Al completar 30, puedes guardar el historial y reiniciar la jornada.</p><div class="grid"><div class="rank"><b>🥇 Torneo de Oro</b><h2 id="goldCount">0/15</h2><div id="goldList" class="small"></div></div><div class="rank"><b>🥈 Torneo de Plata</b><h2 id="silverCount">0/15</h2><div id="silverList" class="small"></div></div></div><p id="qualTotal" class="ok">Total clasificados: 0/30</p><button id="resetQualification" class="danger" onclick="resetQualification()" disabled>🔄 CERRAR CLASIFICACIÓN Y REINICIAR (30 CLASIFICADOS)</button><p id="qualMsg" class="small"></p></div></details></section>
 <section class="card"><h2>⚙️ Configuración</h2><label for="amount">Monto del torneo</label><select id="amount"><option value="100000">100.000 Gs.</option><option value="220000">220.000 Gs.</option><option value="330000">330.000 Gs.</option></select><label for="alias">Alias para transferencia</label><select id="alias"></select><button id="saveSettings">GUARDAR CONFIGURACIÓN</button><p id="settingsMsg" class="ok"></p><p class="small">Monto inicial: 100.000 Gs. Solo el organizador puede cambiarlo.</p></section>
+<section class="card"><h2>📥 Actualizar ranking desde Excel</h2><p class="small">Carga el Excel definitivo con nombre y puntaje total. Actualiza los totales exactos, no suma puntos ni borra jugadores, puestos ni historial. Conserva la clasificación ya asignada.</p><input id="rankingExcel" type="file" accept=".xlsx,.xls"><button onclick="importRankingExcel()">📊 CARGAR PUNTAJES DEFINITIVOS</button><p id="excelMsg" class="small"></p></section>
 <section class="card"><h2>📊 Ranking acumulado · <span id="count">0</span> jugadores</h2><p class="small">Los puntajes se pueden corregir como valor total exacto. También puedes agregar o eliminar jugadores.</p><input id="newName" placeholder="Nombre de jugador nuevo"><input id="newPoints" type="number" min="0" step="1" placeholder="Puntaje inicial"><button onclick="addPlayer()">➕ AGREGAR JUGADOR</button><div id="ranking">Cargando...</div></section>
 <section class="card"><h2>🎯 Puestos de la jornada</h2><p class="small">Los puestos públicos deben quedar vacíos después de la limpieza. Puedes cargar un nombre manualmente aquí cuando comience una jornada.</p><div id="spots">Cargando puestos...</div><button class="secondary" onclick="addExtraSpot()">➕ AGREGAR PUESTO EXTRA</button><button onclick="firstEliminatedAndRelease()">🏁 PRIMER ELIMINADO (+2) Y LIBERAR PUESTOS</button><button class="danger" onclick="clearSpots()">🧹 LIBERAR TODOS LOS PUESTOS</button></section>
 <section class="card"><h2>🃏🏆 Cargar puntos por jugador</h2><p class="small">Esta sección funciona aunque los puestos de la jornada estén vacíos. Busca al jugador por nombre en el ranking acumulado y suma puntos sin depender de una banca ocupada.</p><label for="eventPlayer">Jugador</label><select id="eventPlayer"><option value="">Cargando jugadores...</option></select><label for="eventType">Motivo</label><select id="eventType" onchange="syncEventPoints()"><option value="special">Carta especial (+2)</option><option value="specialLoss">Perdió con carta especial (+2 adicional)</option><option value="champ3">Campeón con 3 o más jugadores (+2)</option><option value="champ2">Campeón entre 2 jugadores (+3)</option><option value="champSolo">Campeón solo (+4)</option><option value="manual">Puntos manuales</option></select><label for="eventPoints">Puntos a sumar (para puntos manuales o ajuste de reparto)</label><input id="eventPoints" type="number" min="0" step="0.5" value="2"><p class="small">Si los puntos de campeón se reparten entre dos personas, selecciona cada jugador y carga su parte correspondiente: 50/50 para campeones de 3 o más; en campeonato de 2 jugadores compartiendo banca, 2 puntos al responsable y 1 al otro.</p><button onclick="addEventPoints()">➕ SUMAR PUNTOS AL JUGADOR</button><p id="eventMsg" class="ok"></p></section>
 <button id="logout" class="secondary">CERRAR SESIÓN</button></div></main>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 const firebaseConfig={apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",authDomain:"torneo-tio-cucho.firebaseapp.com",databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",projectId:"torneo-tio-cucho",storageBucket:"torneo-tio-cucho.firebasestorage.app",messagingSenderId:"468748796216",appId:"1:468748796216:web:2aef532476f612e96801cd"};
 firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database(),playersRef=db.ref('players'),participantsRef=db.ref('participants'),qualificationRef=db.ref('qualification'),settingsRef=db.ref('settings/tournament');
 const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}];
@@ -133,6 +134,41 @@ async function addEventPoints(){
  await syncQualification();
  $('eventMsg').textContent='Se sumaron '+applied+' punto(s) a '+player.name+'.';
  await renderRanking();
+}
+
+
+async function importRankingExcel(){
+ const input=$('rankingExcel'),msg=$('excelMsg');
+ if(!input.files||!input.files[0]){alert('Primero selecciona el Excel definitivo.');return}
+ if(typeof XLSX==='undefined'){alert('No se pudo cargar el lector de Excel. Revisa la conexión y vuelve a abrir el organizador.');return}
+ try{
+  msg.textContent='Leyendo Excel...';
+  const wb=XLSX.read(await input.files[0].arrayBuffer(),{type:'array'});
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  const entries=[],seen=new Set();
+  for(const row of rows){
+   for(const pair of [[0,1],[3,4]]){
+    const name=String(row?.[pair[0]]??'').trim(),raw=row?.[pair[1]];
+    if(!name||raw===''||raw===null||raw===undefined)continue;
+    if(/^(nombre|jugador|participante|total|puntos|puntaje|puntos totales)$/i.test(name))continue;
+    const points=typeof raw==='number'?raw:Number(String(raw).trim().replace(',','.'));
+    if(!Number.isFinite(points)||points<0||!Number.isInteger(points)||points>100000)continue;
+    const key=safeName(name);
+    if(seen.has(key))throw new Error('Nombre repetido o clave duplicada: '+name);
+    seen.add(key);entries.push({key,name,points});
+   }
+  }
+  if(!entries.length)throw new Error('No encontré nombres y puntajes en las columnas A-B o D-E.');
+  if(!confirm('Se encontraron '+entries.length+' jugadores. Se reemplazará cada puntaje por el TOTAL EXACTO del Excel, sin sumar. No se borrarán otros jugadores ni el historial. ¿Continuar?')){msg.textContent='Cancelado; no se cambió nada.';return}
+  const snap=await participantsRef.once('value'),old=snap.val()||{},updates={};
+  for(const p of entries){const previous=old[p.key]||{};updates['participants/'+p.key]={...previous,name:p.name,totalPoints:p.points};}
+  if(!confirm('Última confirmación: actualizar '+entries.length+' jugadores en Firebase. ¿Aplicar ahora?')){msg.textContent='Cancelado; no se cambió nada.';return}
+  await db.ref().update(updates);
+  await syncQualification();
+  await renderRanking();
+  msg.textContent='Listo: '+entries.length+' puntajes totales actualizados. Puestos e historial conservados.';
+  alert('Ranking actualizado: '+entries.length+' puntajes totales exactos. No se borraron puestos ni historial.');
+ }catch(e){console.error(e);msg.textContent='Error: '+(e.message||e);alert('No se actualizó el ranking. '+(e.message||e))}
 }
 
 </script></body></html>
