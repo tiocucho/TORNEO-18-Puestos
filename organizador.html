@@ -33,7 +33,7 @@ async function syncQualification(){
  let goldCount=Math.min(gold.length,15),silverCount=Math.min(silver.length,15);
  const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!p.tier).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
  for(const p of pending){if(goldCount<15){goldCount++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=goldCount;}else if(silverCount<15){silverCount++;updates['participants/'+p.key+'/tier']='PLATA';updates['participants/'+p.key+'/qualificationOrder']=15+silverCount;}}
- if(Object.keys(updates).length)await db.ref().update(updates);
+ for(const [path,value] of Object.entries(updates)) await db.ref(path).set(value);
  const fresh=await participantsRef.once('value'),d=fresh.val()||{};
  const classified=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
  const finalGold=classified.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)<=15).slice(0,15);
