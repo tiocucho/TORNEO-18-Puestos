@@ -44,7 +44,8 @@ async function syncQualification(){
  $('qualTotal').textContent='Total clasificados: '+(finalGold.length+finalSilver.length)+'/30';
  $('resetQualification').disabled=!(finalGold.length===15&&finalSilver.length===15);
  $('qualMsg').textContent='Clasificación guardada. Los puntajes acumulados se conservan.';
- await qualificationRef.update({goldCount:finalGold.length,silverCount:finalSilver.length,totalQualified:finalGold.length+finalSilver.length});
+ try{await qualificationRef.update({goldCount:finalGold.length,silverCount:finalSilver.length,totalQualified:finalGold.length+finalSilver.length});}
+catch(e){console.error(e);$('qualMsg').textContent='No se pudieron guardar los contadores: '+(e.message||e);}
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
