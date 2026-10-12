@@ -24,28 +24,50 @@ auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hid
 async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
 $('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
 async function syncQualification(){
- const snap=await participantsRef.once('value'),data=snap.val()||{};
+ const snap=await participantsRef.once('value');
+ const data=snap.val()||{};
  const entries=Object.keys(data).map(key=>({key,...data[key]}));
- const gold=entries.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort((a,b)=>(Number(a.qualificationOrder)||1e9)-(Number(b.qualificationOrder)||1e9)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const silver=entries.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort((a,b)=>(Number(a.qualificationOrder)||1e9)-(Number(b.qualificationOrder)||1e9)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ const order=(a,b)=>(Number(a.qualificationOrder)||999999)-(Number(b.qualificationOrder)||999999)||String(a.name||'').localeCompare(String(b.name||''),'es');
+ let gold=entries.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort(order).slice(0,15);
+ let silver=entries.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort(order).slice(0,15);
  const updates={};
- gold.forEach((p,i)=>{if(i<15)updates['participants/'+p.key+'/qualificationOrder']=i+1;});
- silver.forEach((p,i)=>{if(i<15)updates['participants/'+p.key+'/qualificationOrder']=16+i;});
- let goldCount=Math.min(gold.length,15),silverCount=Math.min(silver.length,15);
+ gold.forEach((p,i)=>{if(Number(p.qualificationOrder)!==i+1)updates['participants/'+p.key+'/qualificationOrder']=i+1;});
+ silver.forEach((p,i)=>{if(Number(p.qualificationOrder)!==16+i)updates['participants/'+p.key+'/qualificationOrder']=16+i;});
  const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!p.tier).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- for(const p of pending){if(goldCount<15){goldCount++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=goldCount;}else if(silverCount<15){silverCount++;updates['participants/'+p.key+'/tier']='PLATA';updates['participants/'+p.key+'/qualificationOrder']=15+silverCount;}}
- if(Object.keys(updates).length)await db.ref().update(updates);
- const fresh=await participantsRef.once('value'),d=fresh.val()||{};
- const classified=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
- const finalGold=classified.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)<=15).slice(0,15);
- const finalSilver=classified.filter(p=>p.tier==='PLATA'||Number(p.qualificationOrder)>15&&Number(p.qualificationOrder)<=30).slice(0,15);
- $('goldCount').textContent=finalGold.length+'/15';$('silverCount').textContent=finalSilver.length+'/15';
- $('goldList').innerHTML=finalGold.length?finalGold.map((p,i)=>esc((p.qualificationOrder||i+1)+'. '+p.name+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Aún no hay clasificados a Oro';
- $('silverList').innerHTML=finalSilver.length?finalSilver.map((p,i)=>esc((p.qualificationOrder||16+i)+'. '+p.name+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Se completará con los siguientes 15 clasificados';
- $('qualTotal').textContent='Total clasificados: '+(finalGold.length+finalSilver.length)+'/30';
- $('resetQualification').disabled=!(finalGold.length===15&&finalSilver.length===15);
- $('qualMsg').textContent='Clasificación guardada. Los puntajes acumulados se conservan.';
- try{await qualificationRef.update({goldCount:finalGold.length,silverCount:finalSilver.length,totalQualified:finalGold.length+finalSilver.length});}catch(e){console.error(e);$('qualMsg').textContent='No se pudieron guardar los contadores: '+(e.message||e)}
+ let gc=gold.length,sc=silver.length;
+ for(const p of pending){
+  if(gc<15){gc++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=gc;}
+  else if(sc<15){sc++;updates['participants/'+p.key+'/tier']='PLATA';updates['participants/'+p.key+'/qualificationOrder']=15+sc;}
+ }
+ const show=(g,s)=>{
+  $('goldCount').textContent=g.length+'/15';
+  $('silverCount').textContent=s.length+'/15';
+  $('goldList').innerHTML=g.length?g.map((p,i)=>esc((Number(p.qualificationOrder)||i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Aún no hay clasificados a Oro';
+  $('silverList').innerHTML=s.length?s.map((p,i)=>esc((Number(p.qualificationOrder)||16+i)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Se completará con los siguientes 15 clasificados';
+  $('qualTotal').textContent='Total clasificados: '+(g.length+s.length)+'/30';
+  $('resetQualification').disabled=!(g.length===15&&s.length===15);
+ };
+ show(gold,silver);
+ try{
+  if(Object.keys(updates).length)await db.ref().update(updates);
+  const fresh=await participantsRef.once('value');
+  const d=fresh.val()||{};
+  const latest=Object.keys(d).map(key=>({key,...d[key]}));
+  gold=latest.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort(order).slice(0,15);
+  silver=latest.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort(order).slice(0,15);
+  show(gold,silver);
+ }catch(e){
+  console.error(e);
+  $('qualMsg').textContent='Se muestran los datos guardados, pero Firebase rechazó actualizar la clasificación: '+(e.message||e);
+  return;
+ }
+ try{
+  await qualificationRef.update({goldCount:gold.length,silverCount:silver.length,totalQualified:gold.length+silver.length});
+  $('qualMsg').textContent='Clasificación y contadores guardados correctamente.';
+ }catch(e){
+  console.error(e);
+  $('qualMsg').textContent='La clasificación se muestra, pero no se pudieron guardar los contadores: '+(e.message||e);
+ }
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
