@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- ARCHIVO CORREGIDO PARA REEMPLAZAR organizador.html | conservar index.html y Firebase -->
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
@@ -33,7 +34,7 @@ async function syncQualification(){
  let goldCount=Math.min(gold.length,15),silverCount=Math.min(silver.length,15);
  const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!p.tier).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
  for(const p of pending){if(goldCount<15){goldCount++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=goldCount;}else if(silverCount<15){silverCount++;updates['participants/'+p.key+'/tier']='PLATA';updates['participants/'+p.key+'/qualificationOrder']=15+silverCount;}}
- for(const [path,value] of Object.entries(updates)) await db.ref(path).set(value);
+ if(Object.keys(updates).length)await db.ref().update(updates);
  const fresh=await participantsRef.once('value'),d=fresh.val()||{};
  const classified=Object.keys(d).map(key=>({key,...d[key]})).filter(p=>Number(p.qualificationOrder)>0).sort((a,b)=>Number(a.qualificationOrder)-Number(b.qualificationOrder));
  const finalGold=classified.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)<=15).slice(0,15);
@@ -44,8 +45,7 @@ async function syncQualification(){
  $('qualTotal').textContent='Total clasificados: '+(finalGold.length+finalSilver.length)+'/30';
  $('resetQualification').disabled=!(finalGold.length===15&&finalSilver.length===15);
  $('qualMsg').textContent='Clasificación guardada. Los puntajes acumulados se conservan.';
- try{await qualificationRef.update({goldCount:finalGold.length,silverCount:finalSilver.length,totalQualified:finalGold.length+finalSilver.length});}
-catch(e){console.error(e);$('qualMsg').textContent='No se pudieron guardar los contadores: '+(e.message||e);}
+ try{await qualificationRef.update({goldCount:finalGold.length,silverCount:finalSilver.length,totalQualified:finalGold.length+finalSilver.length});}catch(e){console.error(e);$('qualMsg').textContent='No se pudieron guardar los contadores: '+(e.message||e)}
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
@@ -153,13 +153,13 @@ async function importRankingExcel(){
     if(!name||raw===''||raw===null||raw===undefined)continue;
     if(/^(nombre|jugador|participante|total|puntos|puntaje|puntos totales)$/i.test(name))continue;
     const points=typeof raw==='number'?raw:Number(String(raw).trim().replace(',','.'));
-    if(!Number.isFinite(points)||points<0||!Number.isInteger(points)||points>100000)continue;
+    if(!Number.isFinite(points)||points<0||!Number.isInteger(points)||points>140)continue;
     const key=safeName(name);
     if(seen.has(key))throw new Error('Nombre repetido o clave duplicada: '+name);
     seen.add(key);entries.push({key,name,points});
    }
   }
-  if(!entries.length)throw new Error('No encontré nombres y puntajes en las columnas A-B o D-E.');
+  if(!entries.length)throw new Error('No encontré nombres y puntajes enteros entre 0 y 140 en las columnas A-B o D-E.');
   if(!confirm('Se encontraron '+entries.length+' jugadores. Se reemplazará cada puntaje por el TOTAL EXACTO del Excel, sin sumar. No se borrarán otros jugadores ni el historial. ¿Continuar?')){msg.textContent='Cancelado; no se cambió nada.';return}
   const snap=await participantsRef.once('value'),old=snap.val()||{},updates={};
   for(const p of entries){const previous=old[p.key]||{};updates['participants/'+p.key]={...previous,name:p.name,totalPoints:p.points};}
