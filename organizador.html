@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- ARCHIVO CORREGIDO PARA REEMPLAZAR organizador.html | conservar index.html y Firebase -->
+<!-- VERSION FINAL CORREGIDA | mantener index.html y datos Firebase -->
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
@@ -104,7 +104,7 @@ async function firstEliminatedAndRelease(){
  const msg=matchedNames.length===2?`El puesto es compartido por ${matchedNames.join(' y ')}. Se sumará +1 a cada uno (+2 total), y se liberarán todos los puestos.`:`Se sumarán +2 puntos a ${name.trim()} y se liberarán todos los puestos.`;
  if(!confirm('CONFIRMAR PRIMER ELIMINADO\n\n'+msg+'\n\nEsta acción libera todos los puestos públicos y extras.'))return;
  const partSnap=await participantsRef.once('value'),participants=partSnap.val()||{},updates={};
- for(const n of recipients){const key=safeName(n),existing=participants[key];if(!existing){alert('No encuentro a '+n+' en el ranking acumulado. No se modificó nada. Agrega primero al jugador al ranking.');return}updates['participants/'+key+'/totalPoints']=Number(existing.totalPoints||0)+(matchedNames.length===2?1:2)}
+ for(const n of recipients){const key=safeName(n),existing=participants[key];if(!existing){alert('No encuentro a '+n+' en el ranking acumulado. No se modificó nada. Agrega primero al jugador al ranking.');return}const total=Number(existing.totalPoints||0);if(existing.tier||total>=140){alert((existing.name||n)+' ya está clasificado o llegó a 140 puntos; no recibirá puntos adicionales.');continue}const bonus=matchedNames.length===2?1:2;updates['participants/'+key+'/totalPoints']=Math.min(140,total+bonus)}
  updates['players']=null;updates['settings/tournament/firstEliminatedDone']=true;
  await db.ref().update(updates);
  alert('Primer eliminado registrado. Bonificación aplicada y todos los puestos liberados.');
