@@ -46,7 +46,29 @@ async function syncQualification(){
 }
 async function renderRanking(){const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
 async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints').value;const points=Number(v);if(!name||v.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('Escribe el nombre y un puntaje inicial entre 0 y 140.');return}const key=safeName(name);if((await participantsRef.child(key).once('value')).exists()){alert('Ya existe un jugador con ese nombre.');return}await participantsRef.child(key).set({name,totalPoints:points,qualificationOrder:null,tier:null});$('newName').value='';$('newPoints').value='';renderRanking()}
-async function editPlayer(key){const snap=await participantsRef.child(key).once('value');if(!snap.exists())return;const p=snap.val()||{},name=prompt('Nombre correcto del jugador:',p.name||'');if(name===null)return;if(!name.trim()){alert('El nombre no puede quedar vacío.');return}const pts=prompt('Puntaje TOTAL exacto:',String(Number(p.totalPoints||0)));if(pts===null)return;if(pts.trim()===''||!Number.isFinite(Number(pts))||Number(pts)<0){alert('Puntaje inválido.');return}const newKey=safeName(name);if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return}await participantsRef.child(newKey).set({...p,name:name.trim(),totalPoints:Number(pts)});if(newKey!==key)await participantsRef.child(key).remove();renderRanking()}
+async function editPlayer(key){
+ const snap=await participantsRef.child(key).once('value');
+ if(!snap.exists())return;
+ const p=snap.val()||{},current=Number(p.totalPoints||0),qualified=!!p.tier||current>=140;
+ const name=prompt('Nombre correcto del jugador:',p.name||'');
+ if(name===null)return;
+ if(!name.trim()){alert('El nombre no puede quedar vacío.');return}
+ let points=current;
+ if(qualified){
+   alert('Este jugador ya está clasificado o llegó a 140 puntos. Solo puedes corregir su nombre; los puntos quedan bloqueados.');
+ }else{
+   const pts=prompt('Puntaje TOTAL exacto (máximo 140):',String(current));
+   if(pts===null)return;
+   points=Number(pts);
+   if(pts.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('El puntaje total debe estar entre 0 y 140.');return}
+ }
+ const newKey=safeName(name);
+ if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return}
+ await participantsRef.child(newKey).set({...p,name:name.trim(),totalPoints:points});
+ if(newKey!==key)await participantsRef.child(key).remove();
+ await syncQualification();
+ await renderRanking();
+}
 async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
 async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=15;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
 async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||100000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
