@@ -20,8 +20,30 @@ firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.da
 const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}];
 const $=id=>document.getElementById(id);function safeName(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_').slice(0,80)||'sin_nombre'}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 $('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);$('loginError').textContent=''}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();
-auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;if(user){try{await loadSettings()}catch(e){console.error(e);$('settingsMsg').textContent='Error al cargar configuración: '+(e.message||e)}try{await syncQualification()}catch(e){console.error(e);$('qualMsg').textContent='Error de clasificación: '+(e.message||e)}try{await renderRanking()}catch(e){console.error(e);$('ranking').innerHTML='<p>Error al cargar ranking: '+esc(e.message||e)+'</p>'}try{await renderSpots()}catch(e){console.error(e);$('spots').innerHTML='<p>Error al cargar puestos: '+esc(e.message||e)+'</p>'}}});
-async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
+auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;startRealtimeSync(user);if(user){try{await loadSettings()}catch(e){console.error(e);$('settingsMsg').textContent='Error al cargar configuración: '+(e.message||e)}try{await syncQualification()}catch(e){console.error(e);$('qualMsg').textContent='Error de clasificación: '+(e.message||e)}try{await renderRanking()}catch(e){console.error(e);$('ranking').innerHTML='<p>Error al cargar ranking: '+esc(e.message||e)+'</p>'}try{await renderSpots()}catch(e){console.error(e);$('spots').innerHTML='<p>Error al cargar puestos: '+esc(e.message||e)+'</p>'}}});
+// SINCRONIZACIÓN AUTOMÁTICA ENTRE TELÉFONOS
+let realtimeUserUid=null;
+function startRealtimeSync(user){
+  const uid=user&&user.uid;
+  if(realtimeUserUid===uid)return;
+  participantsRef.off('value',onParticipantsRealtime);
+  playersRef.off('value',onPlayersRealtime);
+  realtimeUserUid=uid||null;
+  if(!uid)return;
+  participantsRef.on('value',onParticipantsRealtime);
+  playersRef.on('value',onPlayersRealtime);
+}
+function onParticipantsRealtime(){
+  if(auth.currentUser&&!$('panel').hidden){
+    renderRanking().catch(console.error);
+  }
+}
+function onPlayersRealtime(){
+  if(auth.currentUser&&!$('panel').hidden){
+    renderSpots().catch(console.error);
+  }
+}
+ async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
 $('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
 async function syncQualification(){
  const snap=await participantsRef.once('value');
