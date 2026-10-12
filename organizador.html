@@ -90,22 +90,31 @@ async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints')
 async function editPlayer(key){
  const snap=await participantsRef.child(key).once('value');
  if(!snap.exists())return;
- const p=snap.val()||{},current=Number(p.totalPoints||0),qualified=!!p.tier||current>=140;
+ const p=snap.val()||{};
  const name=prompt('Nombre correcto del jugador:',p.name||'');
  if(name===null)return;
- if(!name.trim()){alert('El nombre no puede quedar vacío.');return}
- let points=current;
- if(qualified){
-   alert('Este jugador ya está clasificado o llegó a 140 puntos. Solo puedes corregir su nombre; los puntos quedan bloqueados.');
- }else{
-   const pts=prompt('Puntaje TOTAL exacto (máximo 140):',String(current));
-   if(pts===null)return;
-   points=Number(pts);
-   if(pts.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('El puntaje total debe estar entre 0 y 140.');return}
+ if(!name.trim()){
+  alert('El nombre no puede quedar vacío.');
+  return;
+ }
+ const pts=prompt('Puntaje TOTAL exacto (0 a 140):',String(Number(p.totalPoints||0)));
+ if(pts===null)return;
+ const points=Number(pts);
+ if(pts.trim()===''||!Number.isFinite(points)||points<0||points>140){
+  alert('El puntaje debe estar entre 0 y 140.');
+  return;
  }
  const newKey=safeName(name);
- if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return}
- await participantsRef.child(newKey).set({...p,name:name.trim(),totalPoints:points});
+ if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){
+  alert('Ya existe otro jugador con ese nombre.');
+  return;
+ }
+ const updated={...p,name:name.trim(),totalPoints:points};
+ if(points<140){
+  updated.tier=null;
+  updated.qualificationOrder=null;
+ }
+ await participantsRef.child(newKey).set(updated);
  if(newKey!==key)await participantsRef.child(key).remove();
  await syncQualification();
  await renderRanking();
