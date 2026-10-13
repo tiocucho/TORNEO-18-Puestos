@@ -2,7 +2,7 @@
 <!-- VERSION FINAL CORREGIDA | mantener index.html y datos Firebase -->
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background-color:#070707;background-image:linear-gradient(rgba(5,5,5,.20),rgba(5,5,5,.30)),url("fondo_torneo_inter_entrega.jpg");background-size:cover;background-position:center top;background-attachment:fixed;background-repeat:no-repeat;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:rgba(18,18,18,.72);border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background-color:#070707;background-image:linear-gradient(rgba(5,5,5,.38),rgba(5,5,5,.52)),url("fondo_torneo_inter_entrega.jpg");background-size:cover;background-position:center top;background-attachment:fixed;background-repeat:no-repeat;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
 </style></head><body><main>
 <h1>🏆 TORNEO INTER TÍO CUCHO</h1><p>Panel privado del organizador · ranking acumulado · 18 puestos públicos</p>
 <section id="loginBox" class="card"><h2>Acceso del organizador</h2><input id="email" type="email" autocomplete="username" placeholder="Correo electrónico"><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña"><button id="login">INGRESAR</button><p id="loginError" class="err"></p></section>
@@ -56,7 +56,7 @@ async function syncQualification(){
  const updates={};
  gold.forEach((p,i)=>{if(Number(p.qualificationOrder)!==i+1)updates['participants/'+p.key+'/qualificationOrder']=i+1;});
  silver.forEach((p,i)=>{if(Number(p.qualificationOrder)!==16+i)updates['participants/'+p.key+'/qualificationOrder']=16+i;});
- const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!p.tier).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!['ORO','PLATA'].includes(String(p.tier||'').trim().toUpperCase())).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
  let gc=gold.length,sc=silver.length;
  for(const p of pending){
   if(gc<15){gc++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=gc;}
@@ -143,29 +143,7 @@ async function editPlayer(key){
  if(newKey!==key)await participantsRef.child(key).remove();
  await syncQualification();await renderRanking();
 }
-async function deletePlayer(key){
-  try {
-    const ref=participantsRef.child(key);
-    const s=await ref.once('value');
-    if(!s.exists()){
-      alert('PRUEBA ya no existe en el ranking.');
-      await renderRanking();
-      return;
-    }
-    const p=s.val()||{};
-    if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;
-    await ref.remove();
-    await renderRanking();
-    const check=await ref.once('value');
-    if(check.exists()){
-      alert('No se eliminó. Firebase conserva el registro.');
-    } else {
-      alert('Jugador eliminado correctamente.');
-    }
-  } catch(e) {
-    alert('Error al eliminar: '+e.message);
-  }
-}
+async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
 async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=18;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>18).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
 async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||100000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
 async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
