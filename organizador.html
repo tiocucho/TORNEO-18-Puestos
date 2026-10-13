@@ -84,13 +84,7 @@ async function syncQualification(){
   $('qualMsg').textContent='Se muestran los datos guardados, pero Firebase rechazó actualizar la clasificación: '+(e.message||e);
   return;
  }
- try{
-  await qualificationRef.update({goldCount:gold.length,silverCount:silver.length,totalQualified:gold.length+silver.length});
-  $('qualMsg').textContent='Clasificación y contadores guardados correctamente.';
- }catch(e){
-  console.error(e);
-  $('qualMsg').textContent='La clasificación se muestra, pero no se pudieron guardar los contadores: '+(e.message||e);
- }
+ $(‘qualMsg’).textContent=‘Clasificación calculada desde los participantes. No se guardan contadores separados.’;
 }
 async function resetQualification(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
