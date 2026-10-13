@@ -1,0 +1,229 @@
+<!doctype html>
+<!-- VERSION FINAL CORREGIDA | mantener index.html y datos Firebase -->
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background-color:#070707;background-image:linear-gradient(rgba(5,5,5,.38),rgba(5,5,5,.52)),url("fondo_torneo_inter_entrega.jpg");background-size:cover;background-position:center top;background-attachment:fixed;background-repeat:no-repeat;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
+</style></head><body><main>
+<h1>🏆 TORNEO INTER TÍO CUCHO</h1><p>Panel privado del organizador · ranking acumulado · 18 puestos públicos</p>
+<section id="loginBox" class="card"><h2>Acceso del organizador</h2><input id="email" type="email" autocomplete="username" placeholder="Correo electrónico"><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña"><button id="login">INGRESAR</button><p id="loginError" class="err"></p></section>
+<div id="panel" hidden>
+<section class="card"><details id="qualificationDetails" open><summary style="color:#e0b85f;font-size:22px;font-weight:bold;cursor:pointer;padding:8px 0">🏅 Clasificación de Oro y Plata · tocar para abrir/cerrar</summary><div style="padding-top:12px"><p class="small">Los primeros 15 clasificados integran Oro y los siguientes 15, Plata. Al completar 30, puedes guardar el historial y reiniciar la jornada.</p><div class="grid"><div class="rank"><b>🥇 Torneo de Oro</b><h2 id="goldCount">0/15</h2><div id="goldList" class="small"></div></div><div class="rank"><b>🥈 Torneo de Plata</b><h2 id="silverCount">0/15</h2><div id="silverList" class="small"></div></div></div><p id="qualTotal" class="ok">Total clasificados: 0/30</p><button id="resetQualification" class="danger" onclick="resetQualification()" disabled>🔄 CERRAR CLASIFICACIÓN Y REINICIAR (30 CLASIFICADOS)</button><p id="testHistoryMsg" class="small"></p><p id="qualMsg" class="small"></p></div></details></section>
+<section class="card"><h2>⚙️ Configuración</h2><label for="amount">Monto del torneo</label><select id="amount"><option value="100000">100.000 Gs.</option><option value="220000">220.000 Gs.</option><option value="330000">330.000 Gs.</option></select><label for="alias">Alias para transferencia</label><select id="alias"></select><button id="saveSettings">GUARDAR CONFIGURACIÓN</button><p id="settingsMsg" class="ok"></p><p class="small">Monto inicial: 100.000 Gs. Solo el organizador puede cambiarlo.</p></section>
+<section class="card"><h2>📥 Actualizar ranking desde Excel</h2><p class="small">Carga el Excel definitivo con nombre y puntaje total. Actualiza los totales exactos, no suma puntos ni borra jugadores, puestos ni historial. Conserva la clasificación ya asignada.</p><input id="rankingExcel" type="file" accept=".xlsx,.xls"><button onclick="importRankingExcel()">📊 CARGAR PUNTAJES DEFINITIVOS</button><p id="excelMsg" class="small"></p></section>
+<section class="card"><h2>📊 Ranking acumulado · <span id="count">0</span> jugadores</h2><button id="toggleRankingBtn" class="secondary" onclick="toggleRanking()">➖ DISMINUIR RANKING</button><div id="rankingContent"><p class="small">Los puntajes se pueden corregir como valor total exacto. También puedes agregar o eliminar jugadores.</p><input id="newName" placeholder="Nombre de jugador nuevo"><input id="newPoints" type="number" min="0" step="1" placeholder="Puntaje inicial"><button onclick="addPlayer()">➕ AGREGAR JUGADOR</button><div id="ranking">Cargando...</div></div></section>
+<section class="card"><h2>🎯 Puestos de la jornada</h2><p class="small">Los puestos públicos deben quedar vacíos después de la limpieza. Puedes cargar un nombre manualmente aquí cuando comience una jornada.</p><button id="toggleSpotsBtn" class="secondary" onclick="toggleSpots()">➖ OCULTAR LOS 18 PUESTOS</button><div id="spotsContent"><div id="spots">Cargando puestos...</div></div><button class="secondary" onclick="addExtraSpot()">➕ AGREGAR PUESTO EXTRA</button><button onclick="firstEliminatedAndRelease()">🏁 PRIMER ELIMINADO (+2) Y LIBERAR PUESTOS</button><button class="danger" onclick="clearSpots()">🧹 LIBERAR TODOS LOS PUESTOS</button></section>
+<section class="card"><h2>🃏🏆 Cargar puntos por jugador</h2><p class="small">Esta sección funciona aunque los puestos de la jornada estén vacíos. Busca al jugador por nombre en el ranking acumulado y suma puntos sin depender de una banca ocupada.</p><label for="eventPlayer">Jugador</label><select id="eventPlayer"><option value="">Cargando jugadores...</option></select><label for="eventType">Motivo</label><select id="eventType" onchange="syncEventPoints()"><option value="special">Carta especial (+2)</option><option value="specialLoss">Perdió con carta especial (+2 adicional)</option><option value="champ3">Campeón con 3 o más jugadores (+2)</option><option value="champ2">Campeón entre 2 jugadores (+3)</option><option value="champSolo">Campeón solo (+4)</option><option value="manual">Puntos manuales</option></select><label for="eventPoints">Puntos a sumar (para puntos manuales o ajuste de reparto)</label><input id="eventPoints" type="number" min="0" step="0.5" value="2"><p class="small">Si los puntos de campeón se reparten entre dos personas, selecciona cada jugador y carga su parte correspondiente: 50/50 para campeones de 3 o más; en campeonato de 2 jugadores compartiendo banca, 2 puntos al responsable y 1 al otro.</p><button onclick="addEventPoints()">➕ SUMAR PUNTOS AL JUGADOR</button><p id="eventMsg" class="ok"></p></section>
+<button id="logout" class="secondary">CERRAR SESIÓN</button></div></main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
+const firebaseConfig={apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",authDomain:"torneo-tio-cucho.firebaseapp.com",databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",projectId:"torneo-tio-cucho",storageBucket:"torneo-tio-cucho.firebasestorage.app",messagingSenderId:"468748796216",appId:"1:468748796216:web:2aef532476f612e96801cd"};
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database(),playersRef=db.ref('players'),participantsRef=db.ref('participants'),qualificationRef=db.ref('qualification'),settingsRef=db.ref('settings/tournament');
+const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}];
+const $=id=>document.getElementById(id);function safeName(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_').slice(0,80)||'sin_nombre'}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+$('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);$('loginError').textContent=''}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();
+auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;startRealtimeSync(user);if(user){try{await loadSettings()}catch(e){console.error(e);$('settingsMsg').textContent='Error al cargar configuración: '+(e.message||e)}try{await syncQualification()}catch(e){console.error(e);$('qualMsg').textContent='Error de clasificación: '+(e.message||e)}try{await renderRanking()}catch(e){console.error(e);$('ranking').innerHTML='<p>Error al cargar ranking: '+esc(e.message||e)+'</p>'}try{await renderSpots()}catch(e){console.error(e);$('spots').innerHTML='<p>Error al cargar puestos: '+esc(e.message||e)+'</p>'}}});
+// SINCRONIZACIÓN AUTOMÁTICA ENTRE TELÉFONOS
+let realtimeUserUid=null;
+function startRealtimeSync(user){
+  const uid=user&&user.uid;
+  if(realtimeUserUid===uid)return;
+  participantsRef.off('value',onParticipantsRealtime);
+  playersRef.off('value',onPlayersRealtime);
+  realtimeUserUid=uid||null;
+  if(!uid)return;
+  participantsRef.on('value',onParticipantsRealtime);
+  playersRef.on('value',onPlayersRealtime);
+}
+function onParticipantsRealtime(){
+  if(auth.currentUser&&!$('panel').hidden){
+    renderRanking().catch(console.error);
+  }
+}
+function onPlayersRealtime(){
+  if(auth.currentUser&&!$('panel').hidden){
+    renderSpots().catch(console.error);
+    renderRanking().catch(console.error);
+  }
+}
+ async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
+$('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
+async function syncQualification(){
+ const snap=await participantsRef.once('value');
+ const data=snap.val()||{};
+ const entries=Object.keys(data).map(key=>({key,...data[key]}));
+ const order=(a,b)=>(Number(a.qualificationOrder)||999999)-(Number(b.qualificationOrder)||999999)||String(a.name||'').localeCompare(String(b.name||''),'es');
+ let gold=entries.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort(order).slice(0,15);
+ let silver=entries.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort(order).slice(0,15);
+ const updates={};
+ gold.forEach((p,i)=>{if(Number(p.qualificationOrder)!==i+1)updates['participants/'+p.key+'/qualificationOrder']=i+1;});
+ silver.forEach((p,i)=>{if(Number(p.qualificationOrder)!==16+i)updates['participants/'+p.key+'/qualificationOrder']=16+i;});
+ const pending=entries.filter(p=>Number(p.totalPoints||0)>=140&&!p.tier).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
+ let gc=gold.length,sc=silver.length;
+ for(const p of pending){
+  if(gc<15){gc++;updates['participants/'+p.key+'/tier']='ORO';updates['participants/'+p.key+'/qualificationOrder']=gc;}
+  else if(sc<15){sc++;updates['participants/'+p.key+'/tier']='PLATA';updates['participants/'+p.key+'/qualificationOrder']=15+sc;}
+ }
+ const show=(g,s)=>{
+  $('goldCount').textContent=g.length+'/15';
+  $('silverCount').textContent=s.length+'/15';
+  $('goldList').innerHTML=g.length?g.map((p,i)=>esc((Number(p.qualificationOrder)||i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Aún no hay clasificados a Oro';
+  $('silverList').innerHTML=s.length?s.map((p,i)=>esc((Number(p.qualificationOrder)||16+i)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>'):'Se completará con los siguientes 15 clasificados';
+  $('qualTotal').textContent='Total clasificados: '+(g.length+s.length)+'/30';
+  $('resetQualification').disabled=!(g.length===15&&s.length===15);
+ };
+ show(gold,silver);
+ try{
+  if(Object.keys(updates).length)await db.ref().update(updates);
+  const fresh=await participantsRef.once('value');
+  const d=fresh.val()||{};
+  const latest=Object.keys(d).map(key=>({key,...d[key]}));
+  gold=latest.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort(order).slice(0,15);
+  silver=latest.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort(order).slice(0,15);
+  show(gold,silver);
+ }catch(e){
+  console.error(e);
+  $('qualMsg').textContent='Se muestran los datos guardados, pero Firebase rechazó actualizar la clasificación: '+(e.message||e);
+  return;
+ }
+ try{
+  await qualificationRef.update({goldCount:gold.length,silverCount:silver.length,totalQualified:gold.length+silver.length});
+  $('qualMsg').textContent='Clasificación y contadores guardados correctamente.';
+ }catch(e){
+  console.error(e);
+  $('qualMsg').textContent='La clasificación se muestra, pero no se pudieron guardar los contadores: '+(e.message||e);
+ }
+}
+async function resetQualification(){
+ const snap=await participantsRef.once('value'),data=snap.val()||{};
+ const arr=Object.keys(data).map(key=>({key,...data[key]}));
+ const gold=arr.filter(p=>p.tier==='ORO'||Number(p.qualificationOrder)>0&&Number(p.qualificationOrder)<=15).sort((a,b)=>Number(a.qualificationOrder||999)-Number(b.qualificationOrder||999));
+ const silver=arr.filter(p=>p.tier==='PLATA'||Number(p.qualificationOrder)>15&&Number(p.qualificationOrder)<=30).sort((a,b)=>Number(a.qualificationOrder||999)-Number(b.qualificationOrder||999));
+ if(gold.length<15||silver.length<15){alert('Solo se puede cerrar cuando estén completos los 15 clasificados a Oro y los 15 a Plata.');return;}
+ const fmt=list=>list.slice(0,15).map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n');
+ if(!confirm('¿Guardar la clasificación y reiniciar nombres, puntajes y puestos?\n\nORO\n'+fmt(gold)+'\n\nPLATA\n'+fmt(silver)+'\n\nSe guardará el historial antes de limpiar los datos actuales.'))return;
+ const archive={createdAt:firebase.database.ServerValue.TIMESTAMP,gold:gold.slice(0,15).map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'ORO'})),silver:silver.slice(0,15).map((p,i)=>({rank:i+1,key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:'PLATA'})),ranking:arr.map(p=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),tier:p.tier||null,qualificationOrder:p.qualificationOrder||null}))};
+ await qualificationRef.child('history').push().set(archive);
+ const q=await qualificationRef.once('value');
+ await db.ref().update({'participants':null,'players':null,'settings/tournament/firstEliminatedDone':false,'qualification/cycle':Number((q.val()||{}).cycle||1)+1,'qualification/goldCount':0,'qualification/silverCount':0,'qualification/totalQualified':0});
+ alert('Clasificación guardada en el historial. Nombres, puntajes y puestos reiniciados.');
+ await renderRanking();await renderSpots();await syncQualification();
+}
+
+function toggleRanking(){const content=$('rankingContent'),btn=$('toggleRankingBtn');const willHide=!content.hidden;content.hidden=willHide;btn.textContent=willHide?'➕ AMPLIAR RANKING':'➖ DISMINUIR RANKING'}
+function toggleSpots(){const content=$('spotsContent'),btn=$('toggleSpotsBtn');const willHide=!content.hidden;content.hidden=willHide;btn.textContent=willHide?'➕ MOSTRAR LOS 18 PUESTOS':'➖ OCULTAR LOS 18 PUESTOS'}
+async function testHistoryPermission(){
+ const btn=$('testHistory');const msg=$('testHistoryMsg');
+ btn.disabled=true;msg.className='small';msg.textContent='Probando permiso de guardado…';
+ const testRef=qualificationRef.child('_permissionTest');
+ try{
+  await testRef.set({testedAt:firebase.database.ServerValue.TIMESTAMP,uid:auth.currentUser?auth.currentUser.uid:null});
+  await testRef.remove();
+  msg.className='small ok';msg.textContent='✅ Firebase permitió guardar y borrar el dato temporal de prueba. No se tocaron nombres, puntajes, puestos ni historial.';
+ }catch(e){
+  msg.className='small err';msg.textContent='❌ Falló la prueba de permisos: '+(e.message||e)+'. No se modificaron nombres, puntajes ni puestos.';
+ }finally{btn.disabled=false;}
+}
+async function renderRanking(){const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
+async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints').value;const points=Number(v);if(!name||v.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('Escribe el nombre y un puntaje inicial entre 0 y 140.');return}const key=safeName(name);if((await participantsRef.child(key).once('value')).exists()){alert('Ya existe un jugador con ese nombre.');return}await participantsRef.child(key).set({name,totalPoints:points,qualificationOrder:null,tier:null});$('newName').value='';$('newPoints').value='';await syncQualification();await renderRanking()}
+async function editPlayer(key){
+ const snap=await participantsRef.child(key).once('value');
+ if(!snap.exists())return;
+ const p=snap.val()||{};
+ const name=prompt('Nombre correcto del jugador:',p.name||'');
+ if(name===null)return;
+ if(!name.trim()){alert('El nombre no puede quedar vacío.');return;}
+ const pts=prompt('Puntaje TOTAL exacto (0 a 140):',String(Number(p.totalPoints||0)));
+ if(pts===null)return;
+ const points=Number(pts);
+ if(pts.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('El puntaje debe estar entre 0 y 140.');return;}
+ const newKey=safeName(name);
+ if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return;}
+ const updated={...p,name:name.trim(),totalPoints:points};
+ if(points<140){updated.tier=null;updated.qualificationOrder=null;}
+ await participantsRef.child(newKey).set(updated);
+ if(newKey!==key)await participantsRef.child(key).remove();
+ await syncQualification();await renderRanking();
+}
+async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
+async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=18;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>18).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
+async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||100000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
+async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
+async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y extras e iniciar una nueva jornada?'))return;await playersRef.remove();await settingsRef.update({firstEliminatedDone:false});renderSpots()}
+async function firstEliminatedAndRelease(){
+ const st=await settingsRef.once('value'),settings=st.val()||{};
+ if(settings.firstEliminatedDone){alert('El primer eliminado ya fue registrado en esta jornada. Para iniciar otra jornada, usa LIBERAR TODOS LOS PUESTOS.');return}
+ const name=prompt('Nombre exacto del primer eliminado:');if(name===null||!name.trim())return;
+ const snap=await playersRef.once('value'),spots=snap.val()||{};let matched=null,matchedNames=[];
+ for(const [id,spot] of Object.entries(spots)){const names=((spot&&spot.names)||[]).filter(Boolean);if(names.some(n=>String(n).trim().toLowerCase()===name.trim().toLowerCase())){matched=id;matchedNames=names;break}}
+ if(!matched){alert('No encontré ese nombre en los puestos ocupados. No se cambió nada.');return}
+ const recipients=matchedNames.length===2?matchedNames:[name.trim()];
+ const msg=matchedNames.length===2?`El puesto es compartido por ${matchedNames.join(' y ')}. Se sumará +1 a cada uno (+2 total), y se liberarán todos los puestos.`:`Se sumarán +2 puntos a ${name.trim()} y se liberarán todos los puestos.`;
+ if(!confirm('CONFIRMAR PRIMER ELIMINADO\n\n'+msg+'\n\nEsta acción libera todos los puestos públicos y extras.'))return;
+ const partSnap=await participantsRef.once('value'),participants=partSnap.val()||{},updates={};
+ for(const n of recipients){const key=safeName(n),existing=participants[key];if(!existing){alert('No encuentro a '+n+' en el ranking acumulado. No se modificó nada. Agrega primero al jugador al ranking.');return}const total=Number(existing.totalPoints||0);if(existing.tier||total>=140){alert((existing.name||n)+' ya está clasificado o llegó a 140 puntos; no recibirá puntos adicionales.');continue}const bonus=matchedNames.length===2?1:2;updates['participants/'+key+'/totalPoints']=Math.min(140,total+bonus)}
+ updates['players']=null;updates['settings/tournament/firstEliminatedDone']=true;
+ await db.ref().update(updates);
+ alert('Primer eliminado registrado. Bonificación aplicada y todos los puestos liberados.');
+ await renderRanking();await renderSpots();
+}
+async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=19;while(d[String(n)])n++;await assignSpot(n)}
+function syncEventPoints(){
+ const type=$('eventType').value;
+ const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};
+ if(type!=='manual') $('eventPoints').value=fixed[type]??2;
+}
+async function addEventPoints(){
+ const key=$('eventPlayer').value,type=$('eventType').value;
+ if(!key){alert('Selecciona un jugador del ranking.');return}
+ const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};
+ const raw=$('eventPoints').value;
+ const requested=type==='manual'?Number(raw):fixed[type];
+ if(!Number.isFinite(requested)||requested<=0){alert('Introduce un puntaje válido mayor que cero.');return}
+ const ref=participantsRef.child(key),snap=await ref.once('value');
+ if(!snap.exists()){alert('El jugador ya no aparece en el ranking. Actualiza la página y vuelve a elegirlo.');return}
+ const player=snap.val()||{},total=Number(player.totalPoints||0);
+ if(player.tier||total>=140){alert((player.name||'Este jugador')+' ya está clasificado o llegó a 140 puntos. No puede sumar más.');return}
+ const applied=Math.min(requested,140-total);
+ if(applied<=0){alert('El jugador ya llegó al máximo de 140 puntos.');return}
+ const reason={special:'carta especial',specialLoss:'perdió con carta especial (bonificación adicional)',champ3:'campeón con 3 o más jugadores',champ2:'campeón entre 2 jugadores',champSolo:'campeón solo',manual:'ajuste manual'}[type];
+ if(!confirm('Sumar '+applied+' punto(s) a '+player.name+' por '+reason+'?'+(applied<requested?' Se limitará a 140 puntos como máximo.':'')))return;
+ await ref.update({totalPoints:total+applied});
+ await syncQualification();
+ $('eventMsg').textContent='Se sumaron '+applied+' punto(s) a '+player.name+'.';
+ await renderRanking();
+}
+
+async function importRankingExcel(){
+ const input=$('rankingExcel'),msg=$('excelMsg');
+ if(!input.files||!input.files[0]){alert('Primero selecciona el Excel definitivo.');return}
+ if(typeof XLSX==='undefined'){alert('No se pudo cargar el lector de Excel. Revisa la conexión y vuelve a abrir el organizador.');return}
+ try{
+  msg.textContent='Leyendo Excel...';
+  const wb=XLSX.read(await input.files[0].arrayBuffer(),{type:'array'});
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  const entries=[],seen=new Set();
+  for(const row of rows){
+   for(const pair of [[0,1],[3,4]]){
+    const name=String(row?.[pair[0]]??'').trim(),raw=row?.[pair[1]];
+    if(!name||raw===''||raw===null||raw===undefined)continue;
+    if(/^(nombre|jugador|participante|total|puntos|puntaje|puntos totales)$/i.test(name))continue;
+    const points=typeof raw==='number'?raw:Number(String(raw).trim().replace(',','.'));
+    if(!Number.isFinite(points)||points<0||!Number.isInteger(points)||points>140)continue;
+    const key=safeName(name);
+    if(seen.has(key))throw new Error('Nombre repetido o clave duplicada: '+name);
+    seen.add(key);entries.push({key,name,points});
+   }
+  }
+  if(!entries.length)throw new Error('No encontré nombres y puntajes enteros entre 0 y 140 en las columnas A-B o D-E.');
+  if(!confirm('Se encontraron '+entries.length+' jugadores. Se reemplazará cada puntaje por el TOTAL EXACTO del Excel, sin sumar. No se borrarán otros jugadores ni el historial. ¿Continuar?')){msg.textContent='Cancelado; no se cambió nada.';return}
+  const snap=await participantsRef.once('value'),old=snap.val()||{},updates={};
+  for(const p of entries){const previous=old[p.key]||{};updates['participants/'+p.key]={...previous,name:p.name,totalPoints:p.points};}
+  if(!confirm('Última confirmación: actualizar '+entries.length+' jugadores en Firebase. ¿Aplicar ahora?')){msg.textContent='Cancelado; no se cambió nada.';return}
+  await db.ref().update(updates);
+  await syncQualification();
+  await renderRanking();
+  msg.textContent='Listo: '+entries.length+' puntajes totales actualizados. Puestos e historial conservados.';
+  alert('Ranking actualizado: '+entries.length+' puntajes totales exactos. No se borraron puestos ni historial.');
+ }catch(e){console.error(e);msg.textContent='Error: '+(e.message||e);alert('No se actualizó el ranking. '+(e.message||e))}
+}
+
+</script></body></html>
