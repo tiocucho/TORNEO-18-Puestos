@@ -123,7 +123,28 @@ async function testHistoryPermission(){
  }finally{btn.disabled=false;}
 }
 async function renderRanking(){const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
-async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints').value;const points=Number(v);if(!name||v.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('Escribe el nombre y un puntaje inicial entre 0 y 140.');return}const key=safeName(name);if((await participantsRef.child(key).once('value')).exists()){alert('Ya existe un jugador con ese nombre.');return}await participantsRef.child(key).set({name,totalPoints:points,qualificationOrder:null,tier:null});$('newName').value='';$('newPoints').value='';await syncQualification();await renderRanking()}
+async function addPlayer(){
+ const name=$('newName').value.trim(),v=$('newPoints').value;
+ const points=Number(v);
+ if(!name||v.trim()===''||!Number.isFinite(points)||points<0||points>140){alert('Escribe el nombre y un puntaje inicial entre 0 y 140.');return}
+ const key=safeName(name),btn=document.querySelector('button[onclick="addPlayer()"]');
+ try{
+  if(btn){btn.disabled=true;btn.textContent='GUARDANDO...'}
+  $('qualMsg').textContent='Guardando jugador en Firebase...';
+  if((await participantsRef.child(key).once('value')).exists())throw new Error('Ya existe un jugador con ese nombre.');
+  await participantsRef.child(key).set({name,totalPoints:points,qualificationOrder:null,tier:null});
+  const check=await participantsRef.child(key).once('value');
+  if(!check.exists())throw new Error('Firebase no confirmó el guardado.');
+  $('newName').value='';$('newPoints').value='';
+  await syncQualification();await renderRanking();
+  $('qualMsg').textContent='Jugador guardado correctamente: '+name;
+  alert('✅ Jugador guardado correctamente: '+name+'.');
+ }catch(e){
+  console.error(e);
+  $('qualMsg').textContent='No se pudo guardar el jugador: '+(e.message||e);
+  alert('❌ NO SE GUARDÓ EL JUGADOR. '+(e.message||e));
+ }finally{if(btn){btn.disabled=false;btn.textContent='➕ AGREGAR JUGADOR'}}
+}
 async function editPlayer(key){
  const snap=await participantsRef.child(key).once('value');
  if(!snap.exists())return;
