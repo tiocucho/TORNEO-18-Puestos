@@ -58,7 +58,7 @@
 </div>
 <div class="summary"><span>Puestos: <b id="selectedCount">0</b></span><span>Puntos: <b id="points">0</b></span><span class="total">Total: <strong id="total">0 Gs.</strong></span></div>
 <button class="primary" id="reserve" disabled>APARTAR PUESTOS</button>
-<p class="note">Cada puesto cuesta 100.000 Gs. y suma 2 puntos. Si lo comparten dos personas, cada una suma 1 punto.</p>
+<p class="note" id="pointsNote">Cada puesto cuesta 100.000 Gs. y suma 2 puntos. Si lo comparten dos personas, cada una suma 1 punto.</p>
 <div id="error" class="error"></div>
 </div>
 
@@ -292,7 +292,7 @@ function update(){
     "1 PERSONA<br><b>"+individualPoints+" puntos</b>";
   document.querySelector("#twoPeople").innerHTML=
     "2 PERSONAS<br><b>"+sharedPoints+" puntos c/u</b>";
-  document.querySelector(".note").textContent=
+  document.querySelector("#pointsNote").textContent=
     "Cada puesto cuesta "+PRICE.toLocaleString("es-PY")+
     " Gs. y suma "+individualPoints+
     " puntos. Si lo comparten dos personas, cada una suma "+
