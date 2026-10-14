@@ -33,19 +33,9 @@ function startRealtimeSync(user){
   participantsRef.on('value',onParticipantsRealtime);
   playersRef.on('value',onPlayersRealtime);
 }
-let qualificationSyncTimer=null;
 function onParticipantsRealtime(){
   if(auth.currentUser&&!$('panel').hidden){
     renderRanking().catch(console.error);
-    if(qualificationSyncTimer) clearTimeout(qualificationSyncTimer);
-    qualificationSyncTimer=setTimeout(()=>{
-      if(auth.currentUser&&!$('panel').hidden){
-        syncQualification().catch(e=>{
-          console.error(e);
-          $('qualMsg').textContent='No se pudo sincronizar la clasificación automáticamente: '+(e.message||e);
-        });
-      }
-    },350);
   }
 }
 function onPlayersRealtime(){
@@ -153,7 +143,22 @@ async function editPlayer(key){
  if(newKey!==key)await participantsRef.child(key).remove();
  await syncQualification();await renderRanking();
 }
-async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
+async function deletePlayer(key){
+ const ref=participantsRef.child(key);
+ try{
+  const s=await ref.once('value');
+  if(!s.exists()){alert('Ese jugador ya no existe en el ranking.');await renderRanking();await syncQualification();return;}
+  const p=s.val()||{};
+  if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'? Esta acción solo elimina este jugador ficticio y no toca a los demás.'))return;
+  await ref.remove();
+  await renderRanking();
+  await syncQualification();
+  alert('Jugador eliminado. Ranking y contadores de clasificación actualizados.');
+ }catch(e){
+  console.error('Error al eliminar jugador:',e);
+  alert('Firebase no permitió eliminar a '+key+'. Error: '+(e.code||'')+' '+(e.message||e)+' . No se ha eliminado ningún otro jugador. Hay que corregir los permisos de Firebase antes de continuar.');
+ }
+}
 async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=18;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean),paid=!!p.paid,confirmed=String(p.status||'').toLowerCase()==='confirmed';out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div>${names.length?`<p class="small">Pago: <b>${paid?'PAGADO':'PENDIENTE'}</b> · Estado: <b>${confirmed?'CONFIRMADO':'SIN CONFIRMAR'}</b></p><div class="grid"><button class="secondary" onclick="togglePaid(${i},${!paid})">${paid?'↩️ DESMARCAR PAGADO':'💰 MARCAR PAGADO'}</button><button onclick="confirmSpot(${i})" ${confirmed?'disabled':''}>${confirmed?'✅ CONFIRMADO':'✅ CONFIRMAR PUESTO'}</button></div>`:''}<div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>18).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean),paid=!!p.paid,confirmed=String(p.status||'').toLowerCase()==='confirmed';out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div>${names.length?`<p class="small">Pago: <b>${paid?'PAGADO':'PENDIENTE'}</b> · Estado: <b>${confirmed?'CONFIRMADO':'SIN CONFIRMAR'}</b></p><div class="grid"><button class="secondary" onclick="togglePaid(${i},${!paid})">${paid?'↩️ DESMARCAR PAGADO':'💰 MARCAR PAGADO'}</button><button onclick="confirmSpot(${i})" ${confirmed?'disabled':''}>${confirmed?'✅ CONFIRMADO':'✅ CONFIRMAR PUESTO'}</button></div>`:''}<button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
 async function togglePaid(i,paid){try{const ref=playersRef.child(String(i)),snap=await ref.once('value');if(!snap.exists()||!((snap.val()||{}).names||[]).filter(Boolean).length){alert('Primero carga un participante en el puesto.');return}await ref.update({paid:!!paid,paidAt:paid?firebase.database.ServerValue.TIMESTAMP:null});await renderSpots()}catch(e){alert('No se pudo actualizar el pago: '+(e.message||e))}}
 async function confirmSpot(i){try{const ref=playersRef.child(String(i)),snap=await ref.once('value'),p=snap.val()||{};if(!snap.exists()||!((p.names||[]).filter(Boolean).length)){alert('Primero carga un participante en el puesto.');return}if(!p.paid){if(!confirm('Este puesto todavía figura como PENDIENTE de pago. ¿Confirmar el puesto igualmente?'))return}await ref.update({status:'confirmed',confirmedAt:firebase.database.ServerValue.TIMESTAMP});await renderSpots()}catch(e){alert('No se pudo confirmar el puesto: '+(e.message||e))}}
