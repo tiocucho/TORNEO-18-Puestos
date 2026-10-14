@@ -282,13 +282,29 @@ function render(){
 }
 
 function update(){
- const n=selected.size;
- document.querySelector("#selectedCount").textContent=n;
- document.querySelector("#points").textContent=n*2;
- document.querySelector("#total").textContent=(n*PRICE).toLocaleString("es-PY")+" Gs.";
- const name=document.querySelector("#name").value.trim();
- const name2=document.querySelector("#name2").value.trim();
- document.querySelector("#reserve").disabled=!n||!name||(splitMode==="two"&&!name2)||busy;
+  const n=selected.size;
+  const individualPoints=PRICE===330000?4:2;
+  const sharedPoints=PRICE===330000?2:1;
+
+  document.querySelector("#selectedCount").textContent=n;
+  document.querySelector("#points").textContent=n*individualPoints;
+  document.querySelector("#onePerson").innerHTML=
+    "1 PERSONA<br><b>"+individualPoints+" puntos</b>";
+  document.querySelector("#twoPeople").innerHTML=
+    "2 PERSONAS<br><b>"+sharedPoints+" puntos c/u</b>";
+  document.querySelector(".note").textContent=
+    "Cada puesto cuesta "+PRICE.toLocaleString("es-PY")+
+    " Gs. y suma "+individualPoints+
+    " puntos. Si lo comparten dos personas, cada una suma "+
+    sharedPoints+" punto(s).";
+
+  document.querySelector("#total").textContent=
+    (n*PRICE).toLocaleString("es-PY")+" Gs.";
+
+  const name=document.querySelector("#name").value.trim();
+  const name2=document.querySelector("#name2").value.trim();
+  document.querySelector("#reserve").disabled=
+    !n||!name||(splitMode==="two"&&!name2)||busy;
 }
 
 cargarConfiguracionPublica();
@@ -329,7 +345,7 @@ document.querySelector("#reserve").onclick=async()=>{
          status:"held",
          names:splitMode==="two"?[name,name2]:[name],
          mode:splitMode,
-         points:splitMode==="two"?[1,1]:[2],
+         points:splitMode==="two"?(PRICE===330000?[2,2]:[1,1]):[PRICE===330000?4:2],
          paid:false,
          createdBy: firebase.auth().currentUser ? firebase.auth().currentUser.uid : "",
          createdAt:firebase.database.ServerValue.TIMESTAMP
