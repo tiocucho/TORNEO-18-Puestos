@@ -42,7 +42,7 @@ async function syncQualification(){
  const fresh=(await participantsRef.once('value')).val()||{},latest=Object.keys(fresh).map(key=>({key,...fresh[key]}));
  gold=latest.filter(p=>String(p.tier||'').toUpperCase()==='ORO').sort(order).slice(0,15);silver=latest.filter(p=>String(p.tier||'').toUpperCase()==='PLATA').sort(order).slice(0,15);
  $('goldCount').textContent=gold.length+'/15';$('silverCount').textContent=silver.length+'/15';$('goldList').innerHTML=gold.map((p,i)=>esc((p.qualificationOrder||i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>')||'Aún no hay clasificados a Oro';$('silverList').innerHTML=silver.map((p,i)=>esc((p.qualificationOrder||16+i)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts')).join('<br>')||'Se completará con los siguientes 15 clasificados';$('qualTotal').textContent='Total clasificados: '+(gold.length+silver.length)+'/30';$('resetQualification').disabled=!(gold.length===15&&silver.length===15);
- await qualificationRef.update({goldCount:gold.length,silverCount:silver.length,totalQualified:gold.length+silver.length});$('qualMsg').textContent='Clasificación y contadores guardados correctamente.'
+ $('qualMsg').textContent='Clasificación actualizada correctamente.'
 }
 let editingPlayerKey=null;
 // Delegación de eventos compatible con Safari/iPhone: los botones siguen funcionando aunque el ranking se vuelva a dibujar.
