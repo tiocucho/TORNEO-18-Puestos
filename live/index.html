@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TÍO CUCHO LIVE</title>
+<style>
+body{margin:0;background:#090909;color:white;font-family:Arial,sans-serif;padding:16px}
+header{color:#f5d575;font-size:23px;font-weight:bold;margin-bottom:22px}
+.card{background:#191919;border:1px solid #665329;border-radius:16px;padding:18px;margin-bottom:15px}
+h1{font-size:30px}.gold{color:#f5d575}
+button{background:#292316;color:#ffe49b;border:1px solid #80672f;border-radius:10px;padding:12px;margin:4px;font-weight:bold}
+.primary{background:#f5d575;color:#111;border:0}
+input{background:#080808;color:white;border:1px solid #665329;padding:12px;border-radius:8px;width:90%;margin:8px 0}
+.hidden{display:none}
+.stage{background:#030303;border:1px solid #80672f;border-radius:15px;padding:35px 10px;text-align:center;margin:12px 0}
+.avatar{background:#f5d575;color:#111;border-radius:50%;padding:25px;display:inline-block;font-size:24px;font-weight:bold}
+.tiles{display:flex;gap:7px}.tile{background:#292316;border-radius:9px;padding:12px 5px;text-align:center;flex:1;font-size:12px}
+#comments{height:150px;overflow:auto;background:#080808;padding:10px;border-radius:8px}
+video{width:100%;border-radius:12px}
+</style>
+</head>
+<body>
+<header>👑 TÍO CUCHO LIVE</header>
+<section id="home" class="card">
+<p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p>
+<h1>Conectá a tu gente.</h1>
+<p>Una sala para compartir, conversar y subir invitados al escenario.</p>
+<button class="primary" onclick="createRoom()">＋ Crear sala de prueba</button>
+<button onclick="document.getElementById('join').classList.toggle('hidden')">Entrar con código</button>
+<div id="join" class="hidden">
+<input id="code" placeholder="Código de sala">
+<button onclick="enterRoom()">Entrar</button>
+</div>
+</section>
+<section id="room" class="hidden">
+<div class="card">
+<button onclick="leaveRoom()">← Salir</button>
+<button onclick="shareRoom()">Compartir enlace</button>
+<button onclick="whatsapp()">WhatsApp</button>
+<h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
+<div class="stage">
+<div id="host"><div class="avatar">TC</div><h3 id="hostName">Tío Cucho · Anfitrión</h3></div>
+<video id="video" autoplay playsinline muted class="hidden"></video>
+<p id="status">Sala de demostración</p>
+</div>
+<div class="tiles" id="tiles">
+<div class="tile">PÚBLICO<br>Comentarios</div>
+<div class="tile">INVITADOS<br>Ventanas</div>
+<div class="tile">ESCENARIO<br>En vivo</div>
+</div>
+<button onclick="camera()">📷 Probar cámara</button>
+<button onclick="microphone()">🎙️ Probar micrófono</button>
+<button onclick="requestStage()">🙋 Pedir escenario</button>
+</div>
+<div class="card">
+<h3>💬 Comentarios</h3>
+<div id="comments">Bienvenido a TÍO CUCHO LIVE.</div>
+<input id="message" placeholder="Escribí un comentario">
+<button class="primary" onclick="sendComment()">Enviar</button>
+</div>
+<div class="card">
+<h3>👑 Panel del anfitrión</h3>
+<input id="guest" placeholder="Nombre del invitado">
+<button onclick="promote()">Subir a escenario</button>
+<button onclick="mute()">Silenciar (demo)</button>
+<p id="adminStatus">Controles de demostración.</p>
+</div>
+</section>
+<p style="color:#aaa;font-size:12px">Prototipo inicial. Para conectar otros teléfonos necesitamos un servidor de videollamadas.</p>
+<script>
+let roomCode='',stream=null,silenced=false;
+function createRoom(){roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();openRoom()}
+function enterRoom(){roomCode=document.getElementById('code').value.trim();if(roomCode)openRoom()}
+function openRoom(){document.getElementById('home').classList.add('hidden');document.getElementById('room').classList.remove('hidden');document.getElementById('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode))}
+function leaveRoom(){stopCamera();document.getElementById('room').classList.add('hidden');document.getElementById('home').classList.remove('hidden');history.replaceState({},' ',location.pathname)}
+function shareRoom(){let url=location.href; if(navigator.share){navigator.share({title:'TÍO CUCHO LIVE',url:url})}else{prompt('Copiá este enlace',url)}}
+function whatsapp(){location.href='https://wa.me/?text='+encodeURIComponent('Entrá a mi sala TÍO CUCHO LIVE: '+location.href)}
+function sendComment(){let i=document.getElementById('message'),t=i.value.trim();if(!t)return;let p=document.createElement('p');p.textContent='Vos: '+t;document.getElementById('comments').appendChild(p);i.value=''}
+async function camera(){try{stopCamera();stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});document.getElementById('video').srcObject=stream;document.getElementById('video').classList.remove('hidden');document.getElementById('host').classList.add('hidden');document.getElementById('status').textContent='Vista previa local: no se transmite a otros teléfonos.'}catch(e){alert('No se pudo abrir la cámara. Abrí la página publicada en HTTPS y permití el acceso. '+e.message)}}
+async function microphone(){try{let s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());alert('Micrófono autorizado en este dispositivo. Aún no se transmite a la sala.')}catch(e){alert('Permití el acceso al micrófono desde el navegador. '+e.message)}}
+function stopCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;document.getElementById('video').srcObject=null;document.getElementById('video').classList.add('hidden');document.getElementById('host').classList.remove('hidden')}
+function requestStage(){alert('Solicitud de ejemplo. El anfitrión podrá recibirla cuando conectemos el servidor.')}
+function promote(){let n=document.getElementById('guest').value.trim()||'Invitado';document.getElementById('hostName').textContent=n+' · Anfitrión';document.getElementById('adminStatus').textContent=n+' pasó al escenario en esta demostración.'}
+function mute(){silenced=!silenced;document.getElementById('adminStatus').textContent=silenced?'Silencio de demostración activado.':'Silencio de demostración desactivado.'}
+let existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing;openRoom()}
+</script>
+</body>
+</html>
