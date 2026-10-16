@@ -1,89 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TÍO CUCHO LIVE</title>
 <style>
-body{margin:0;background:#090909;color:white;font-family:Arial,sans-serif;padding:16px}
-header{color:#f5d575;font-size:23px;font-weight:bold;margin-bottom:22px}
-.card{background:#191919;border:1px solid #665329;border-radius:16px;padding:18px;margin-bottom:15px}
-h1{font-size:30px}.gold{color:#f5d575}
-button{background:#292316;color:#ffe49b;border:1px solid #80672f;border-radius:10px;padding:12px;margin:4px;font-weight:bold}
-.primary{background:#f5d575;color:#111;border:0}
-input{background:#080808;color:white;border:1px solid #665329;padding:12px;border-radius:8px;width:90%;margin:8px 0}
-.hidden{display:none}
-.stage{background:#030303;border:1px solid #80672f;border-radius:15px;padding:35px 10px;text-align:center;margin:12px 0}
-.avatar{background:#f5d575;color:#111;border-radius:50%;padding:25px;display:inline-block;font-size:24px;font-weight:bold}
-.tiles{display:flex;gap:7px}.tile{background:#292316;border-radius:9px;padding:12px 5px;text-align:center;flex:1;font-size:12px}
-#comments{height:150px;overflow:auto;background:#080808;padding:10px;border-radius:8px}
-video{width:100%;border-radius:12px}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:14px;background:#090909;color:#fff;font-family:Arial,sans-serif}header{color:#f5d575;font-size:23px;font-weight:bold;margin:8px 0 18px}.card{background:#191919;border:1px solid #665329;border-radius:16px;padding:15px;margin-bottom:14px}h1{font-size:28px}.gold{color:#f5d575}button{background:#292316;color:#ffe49b;border:1px solid #80672f;border-radius:10px;padding:12px;margin:4px;font-weight:bold;font-size:14px}.primary{background:#f5d575;color:#111;border:0}input{background:#080808;color:white;border:1px solid #665329;padding:12px;border-radius:8px;width:100%;margin:8px 0;font-size:16px}.hidden{display:none!important}.status{font-size:13px;color:#ddd;overflow-wrap:anywhere}.videos{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px}.person{background:#030303;border:1px solid #80672f;border-radius:12px;padding:6px;min-width:0}.person video{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#111}.person .name{font-size:12px;padding:5px;overflow-wrap:anywhere}#comments{height:150px;overflow:auto;background:#080808;padding:10px;border-radius:8px;font-size:14px}#comments p{margin:5px 0;padding:5px;border-bottom:1px solid #292316}.note{font-size:12px;color:#bbb;line-height:1.45}
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
-<section id="home" class="card">
-<p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p>
-<h1>Conectá a tu gente.</h1>
-<p>Una sala para compartir, conversar y subir invitados al escenario.</p>
-<button class="primary" onclick="createRoom()">＋ Crear sala de prueba</button>
-<button onclick="document.getElementById('join').classList.toggle('hidden')">Entrar con código</button>
-<div id="join" class="hidden">
-<input id="code" placeholder="Código de sala">
-<button onclick="enterRoom()">Entrar</button>
-</div>
-</section>
-<section id="room" class="hidden">
-<div class="card">
-<button onclick="leaveRoom()">← Salir</button>
-<button onclick="shareRoom()">Compartir enlace</button>
-<button onclick="whatsapp()">WhatsApp</button>
-<h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
-<div class="stage">
-<div id="host"><div class="avatar">TC</div><h3 id="hostName">Tío Cucho · Anfitrión</h3></div>
-<video id="video" autoplay playsinline muted class="hidden"></video>
-<p id="status">Sala de demostración</p>
-</div>
-<div class="tiles" id="tiles">
-<div class="tile">PÚBLICO<br>Comentarios</div>
-<div class="tile">INVITADOS<br>Ventanas</div>
-<div class="tile">ESCENARIO<br>En vivo</div>
-</div>
-<button onclick="camera()">📷 Probar cámara</button>
-<button onclick="microphone()">🎙️ Probar micrófono</button>
-<button onclick="requestStage()">🙋 Pedir escenario</button>
-</div>
-<div class="card">
-<h3>💬 Comentarios</h3>
-<div id="comments">Bienvenido a TÍO CUCHO LIVE.</div>
-<input id="message" placeholder="Escribí un comentario">
-<button class="primary" onclick="sendComment()">Enviar</button>
-</div>
-<div class="card">
-<h3>👑 Panel del anfitrión</h3>
-<input id="guest" placeholder="Nombre del invitado">
-<button onclick="promote()">Subir a escenario</button>
-<button onclick="mute()">Silenciar (demo)</button>
-<p id="adminStatus">Controles de demostración.</p>
-</div>
-</section>
-<p style="color:#aaa;font-size:12px">Prototipo inicial. Para conectar otros teléfonos necesitamos un servidor de videollamadas.</p>
-<script>
-let roomCode='',stream=null,silenced=false;
-function createRoom(){roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();openRoom()}
-function enterRoom(){roomCode=document.getElementById('code').value.trim();if(roomCode)openRoom()}
-function openRoom(){document.getElementById('home').classList.add('hidden');document.getElementById('room').classList.remove('hidden');document.getElementById('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode))}
-function leaveRoom(){stopCamera();document.getElementById('room').classList.add('hidden');document.getElementById('home').classList.remove('hidden');history.replaceState({},' ',location.pathname)}
-function shareRoom(){let url=location.href; if(navigator.share){navigator.share({title:'TÍO CUCHO LIVE',url:url})}else{prompt('Copiá este enlace',url)}}
-function whatsapp(){location.href='https://wa.me/?text='+encodeURIComponent('Entrá a mi sala TÍO CUCHO LIVE: '+location.href)}
-function sendComment(){let i=document.getElementById('message'),t=i.value.trim();if(!t)return;let p=document.createElement('p');p.textContent='Vos: '+t;document.getElementById('comments').appendChild(p);i.value=''}
-async function camera(){try{stopCamera();stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});document.getElementById('video').srcObject=stream;document.getElementById('video').classList.remove('hidden');document.getElementById('host').classList.add('hidden');document.getElementById('status').textContent='Vista previa local: no se transmite a otros teléfonos.'}catch(e){alert('No se pudo abrir la cámara. Abrí la página publicada en HTTPS y permití el acceso. '+e.message)}}
-async function microphone(){try{let s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());alert('Micrófono autorizado en este dispositivo. Aún no se transmite a la sala.')}catch(e){alert('Permití el acceso al micrófono desde el navegador. '+e.message)}}
-function stopCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;document.getElementById('video').srcObject=null;document.getElementById('video').classList.add('hidden');document.getElementById('host').classList.remove('hidden')}
-function requestStage(){alert('Solicitud de ejemplo. El anfitrión podrá recibirla cuando conectemos el servidor.')}
-function promote(){let n=document.getElementById('guest').value.trim()||'Invitado';document.getElementById('hostName').textContent=n+' · Anfitrión';document.getElementById('adminStatus').textContent=n+' pasó al escenario en esta demostración.'}
-function mute(){silenced=!silenced;document.getElementById('adminStatus').textContent=silenced?'Silencio de demostración activado.':'Silencio de demostración desactivado.'}
-let existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing;openRoom()}
+<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button class="primary" onclick="createRoom()">＋ Crear sala</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
+<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><p id="status" class="status">Preparando conexión…</p><div id="videos" class="videos"></div><div><button class="primary" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button class="primary" id="micBtn" onclick="toggleMic()">🎙️ Activar micrófono</button></div></div>
+<div class="card"><h3>💬 Comentarios de la sala</h3><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></section>
+<p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
+<script type="module">
+import {Room, RoomEvent, Track, TokenSource} from 'https://esm.sh/livekit-client@2.22.4';
+const TOKEN_SERVER_ID='tiocucholive-1x4ggu';
+let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado';
+const $=id=>document.getElementById(id);
+function setStatus(s){$('status').textContent=s}
+function safeName(s){return (s||'Invitado').trim().slice(0,40)||'Invitado'}
+function addPerson(participant,track=null){let id='p-'+participant.identity;let card=document.getElementById(id);if(!card){card=document.createElement('div');card.className='person';card.id=id;let video=document.createElement('video');video.autoplay=true;video.playsInline=true;video.controls=false;let name=document.createElement('div');name.className='name';name.textContent=participant.name||participant.identity;card.append(video,name);$('videos').append(card)}if(track&&track.kind==='video'){let v=card.querySelector('video');track.attach(v)}return card}
+function removePerson(participant){let el=document.getElementById('p-'+participant.identity);if(el)el.remove()}
+function addLocalCard(){const lp=room.localParticipant;const card=addPerson({identity:lp.identity,name:myName});card.querySelector('.name').textContent=myName+' (vos)'}
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>{let c=addPerson(participant);track.attach(c.querySelector('video'))});room.on(RoomEvent.TrackUnsubscribed,(track)=>track.detach());room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);setStatus(p.name||p.identity+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat')appendComment(data.name,data.text)}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:'u-'+Math.random().toString(36).slice(2,10)});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)pub.track.attach(document.querySelector('#p-'+p.identity+' video'))}}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
+window.createRoom=async()=>{roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
+window.enterRoom=async()=>{roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
+window.toggleCamera=async()=>{if(!room?.localParticipant)return;try{cameraOn=!cameraOn;await room.localParticipant.setCameraEnabled(cameraOn);$('camBtn').textContent=cameraOn?'📷 Apagar cámara':'📷 Activar cámara';if(cameraOn){let pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);if(pub?.track)pub.track.attach($('p-'+room.localParticipant.identity).querySelector('video'))}}catch(e){cameraOn=false;alert('No se pudo activar la cámara. Permití el acceso en el navegador. '+e.message)}};
+window.toggleMic=async()=>{if(!room?.localParticipant)return;try{micOn=!micOn;await room.localParticipant.setMicrophoneEnabled(micOn);$('micBtn').textContent=micOn?'🎙️ Apagar micrófono':'🎙️ Activar micrófono'}catch(e){micOn=false;alert('No se pudo activar el micrófono. Permití el acceso en el navegador. '+e.message)}};
+function appendComment(name,text){let p=document.createElement('p');p.textContent=name+': '+text;$('comments').append(p);$('comments').scrollTop=$('comments').scrollHeight}
+window.sendComment=async()=>{const i=$('message'),text=i.value.trim();if(!text)return;if(!room?.localParticipant){appendComment(myName,text+' (solo en este dispositivo: sala desconectada)');i.value='';return}try{const payload=new TextEncoder().encode(JSON.stringify({type:'chat',name:myName,text}));await room.localParticipant.publishData(payload,{reliable:true});appendComment('Vos',text);i.value=''}catch(e){alert('No se pudo enviar el comentario. '+e.message)}};
+window.shareRoom=async()=>{let url=location.origin+location.pathname+'?sala='+encodeURIComponent(roomCode);try{if(navigator.share)await navigator.share({title:'TÍO CUCHO LIVE',text:'Entrá a mi sala '+roomCode,url});else await navigator.clipboard.writeText(url)}catch(e){prompt('Copiá este enlace',url)}};
+window.whatsapp=()=>{let url=location.origin+location.pathname+'?sala='+encodeURIComponent(roomCode);location.href='https://wa.me/?text='+encodeURIComponent('Entrá a mi sala TÍO CUCHO LIVE ('+roomCode+'): '+url)};
+window.leaveRoom=async()=>{if(room){try{await room.disconnect()}catch(e){}room=null}cameraOn=false;micOn=false;$('videos').replaceChildren();$('room').classList.add('hidden');$('home').classList.remove('hidden');history.replaceState({},'',location.pathname)};
+$('message').addEventListener('keydown',e=>{if(e.key==='Enter')window.sendComment()});
+const existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing.toUpperCase();$('code').value=roomCode;}
 </script>
-</body>
-</html>
+</body></html>
