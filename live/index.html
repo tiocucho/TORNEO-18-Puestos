@@ -49,6 +49,6 @@ window.whatsapp=()=>{const url=location.origin+location.pathname+'?sala='+encode
 window.leaveRoom=async()=>{if(room){try{await room.disconnect()}catch(e){}room=null}cameraOn=false;micOn=false;isHost=false;hostIdentity='host';spotlightIdentity='host';facingMode='user';$('flipBtn').textContent='🔄 Girar cámara';$('videos').replaceChildren();$('hostViewBtn').classList.add('hidden');$('room').classList.add('hidden');$('home').classList.remove('hidden');history.replaceState({},'',location.pathname)};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&room){if(room.state==='connected'){setStatus('De vuelta en TÍO CUCHO LIVE. Conexión activa.')}else setStatus('Volviste a la sala; esperando recuperar la conexión…')}});
 $('message').addEventListener('keydown',e=>{if(e.key==='Enter')window.sendComment()});
-const existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing.toUpperCase();$('code').value=roomCode;}
+const params=new URLSearchParams(location.search);const existing=params.get('sala');if(params.get('anfitrion')==='1')$('createRoomBtn').classList.remove('hidden');if(existing){roomCode=existing.toUpperCase();$('code').value=roomCode;$('joinBox').classList.remove('hidden');}
 </script>
 </body></html>
