@@ -19,7 +19,7 @@
 <div class="card"><h3>💬 Comentarios de la sala</h3><div id="commentsAnchor"></div><div id="comments" aria-live="polite"></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></section>
 <p class="note">Calidad de video adaptable según cámara, conexión y dispositivo. Para uso público se necesita un servidor seguro de permisos.</p>
 <script type="module">
-import {Room, RoomEvent, Track, TokenSource} from 'https://esm.sh/livekit-client@2.22.4';
+import {Room, RoomEvent, Track, TokenSource, VideoPresets} from 'https://esm.sh/livekit-client@2.22.4';
 const TOKEN_SERVER_ID='tiocucholive-1x4ggu';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHost=false, hostIdentity='host', spotlightIdentity='host', facingMode='user', reconnecting=false;
 const $=id=>document.getElementById(id);
