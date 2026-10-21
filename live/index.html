@@ -54,6 +54,7 @@ window.shareRoom=async()=>{let url=location.origin+location.pathname+'?sala='+en
 window.whatsapp=()=>{let url=location.origin+location.pathname+'?sala='+encodeURIComponent(roomCode);location.href='https://wa.me/?text='+encodeURIComponent('Entrá a mi sala TÍO CUCHO LIVE ('+roomCode+'): '+url)};
 window.leaveRoom=async()=>{if(room){try{await room.disconnect()}catch(e){}room=null}cameraOn=false;micOn=false;$('videos').replaceChildren();$('stage').replaceChildren();$('room').classList.add('hidden');$('home').classList.remove('hidden');history.replaceState({},'',location.pathname)};
 $('message').addEventListener('keydown',e=>{if(e.key==='Enter')window.sendComment()});
+ const params=new URLSearchParams(location.search);if(params.get('anfitrion')==='1')$('createRoomBtn').classList.remove('hidden');
 const existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing.toUpperCase();$('code').value=roomCode;}
 </script>
 </body></html>
