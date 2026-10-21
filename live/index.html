@@ -93,6 +93,7 @@ if(e.key==='Enter')window.sendComment();
 const params=new URLSearchParams(location.search);
 if(params.get('anfitrion')==='1'){
 $('createRoomBtn').classList.remove('hidden');
+$('endLiveBtn').classList.remove('hidden');
 }
 
 const existing=new URLSearchParams(location.search).get('sala');
