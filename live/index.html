@@ -69,7 +69,7 @@ $('home').classList.remove('hidden');
 history.replaceState({},'',location.pathname);
 };if(room){try{await room.disconnect()}catch(e){}room=null}cameraOn=false;micOn=false;$('videos').replaceChildren();$('stage').replaceChildren();$('room').classList.add('hidden');$('home').classList.remove('hidden');history.replaceState({},'',location.pathname)};
 $('message').addEventListener('keydown',e=>{if(e.key==='Enter')window.sendComment()});
-const params=new URLSearchParams(location.search);if(params.get('anfitrion')==='1'){$('createRoomBtn').classList.remove('hidden');$('endLiveBtn').classList.remove('hidden');}
+if(params.get('anfitrion')==='1'){$('createRoomBtn').classList.remove('hidden');$('endLiveBtn').classList.remove('hidden');}
 const existing=new URLSearchParams(location.search).get('sala');if(existing){roomCode=existing.toUpperCase();$('code').value=roomCode;}
 </script>
 </body></html>
