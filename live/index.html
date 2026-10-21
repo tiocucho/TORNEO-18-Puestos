@@ -33,7 +33,7 @@ function addPerson(participant,track=null){
  }
  const stage=$('stage');
  if(isHostParticipant(participant)){
-  if(card.parentElement!==stage)stage.replaceChildren(card);
+  if(card.parentElement!==stage)stage.replaceChildren(card,$('chatBubbles'));
  }else if(card.parentElement!==stage && card.parentElement!==$('videos')){
   $('videos').append(card);
  }
