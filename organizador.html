@@ -13,7 +13,32 @@
 <script>
 const firebaseConfig={apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",authDomain:"torneo-tio-cucho.firebaseapp.com",databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",projectId:"torneo-tio-cucho",storageBucket:"torneo-tio-cucho.firebasestorage.app",messagingSenderId:"468748796216",appId:"1:468748796216:web:2aef532476f612e96801cd"};firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database(),playersRef=db.ref('players'),participantsRef=db.ref('participants'),settingsRef=db.ref('settings/tournament');const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}],$=id=>document.getElementById(id);
 function keyName(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_').slice(0,80)||'sin_nombre'}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function err(prefix,e){alert(prefix+(e.message||e))}
-$('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value)}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();auth.onAuthStateChanged(async u=>{$('loginBox').hidden=!!u;$('panel').hidden=!u;if(u){try{await loadSettings();await renderAll()}catch(e){err('Error al cargar: ',e)}}});
+$('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value)}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();const ADMIN_EMAIL = 'joalalir@gmail.com';
+
+auth.onAuthStateChanged(async u => {
+  $('loginBox').hidden = !(!u);
+  $('panel').hidden = true;
+
+  if (!u) return;
+
+  if (u.email !== ADMIN_EMAIL) {
+    await auth.signOut();
+    $('loginBox').hidden = false;
+    $('loginError').textContent =
+      'Ingresá con ' + ADMIN_EMAIL;
+    return;
+  }
+
+  $('loginBox').hidden = true;
+  $('panel').hidden = false;
+
+  try {
+    await loadSettings();
+    await renderAll();
+  } catch (e) {
+    err('Error al cargar: ', e);
+  }
+});$('loginBox').hidden=!!u;$('panel').hidden=!u;if(u){try{await loadSettings();await renderAll()}catch(e){err('Error al cargar: ',e)}}});
 async function loadSettings(){let s=(await settingsRef.once('value')).val()||{};$('amount').value=String(s.amount||100000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${a.alias}">${a.alias} · ${a.name} · ${a.bank}</option>`).join('');$('alias').value=s.alias||ALIASES[0].alias}$('saveSettings').onclick=async()=>{try{let a=ALIASES.find(a=>a.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank});$('settingsMsg').textContent='Configuración guardada.'}catch(e){err('No se pudo guardar: ',e)}};
 async function renderAll(){await renderRanking();await renderQualifiers();await renderSpots()}async function renderQualifiers(){let d=(await participantsRef.once('value')).val()||{},a=Object.keys(d).map(k=>({key:k,...d[k]})).sort((x,y)=>Number(y.totalPoints||0)-Number(x.totalPoints||0)||String(x.name||'').localeCompare(String(y.name||''),'es')).slice(0,25);$('qualifiedCount').textContent=a.length+'/25';$('qualifiedList').innerHTML=a.map((p,i)=>`${i+1}. ${esc(p.name||p.key)} — ${Number(p.totalPoints||0)} pts`).join('<br>');$('qualMsg').textContent='Ranking actualizado. Puntajes sin límite.'}
 async function renderRanking(){let d=(await participantsRef.once('value')).val()||{},a=Object.keys(d).map(k=>({key:k,...d[k]})).sort((x,y)=>Number(y.totalPoints||0)-Number(x.totalPoints||0)||String(x.name||'').localeCompare(String(y.name||''),'es'));$('count').textContent=a.length;$('eventPlayer').innerHTML='<option value="">Seleccionar jugador...</option>'+a.map(p=>`<option value="${esc(p.key)}">${esc(p.name||p.key)} · ${Number(p.totalPoints||0)} pts</option>`).join('');$('ranking').innerHTML=a.map((p,i)=>`<div class="rank"><div class="row"><b>${i+1}. ${esc(p.name||p.key)}</b><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" data-edit="${esc(p.key)}">EDITAR</button><button class="danger" data-del="${esc(p.key)}">ELIMINAR</button></div></div>`).join('')||'No hay jugadores.'}
