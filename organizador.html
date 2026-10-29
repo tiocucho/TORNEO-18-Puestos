@@ -56,6 +56,23 @@ async function renderQualifiers(){let d=(await participantsRef.once('value')).va
 async function renderRanking(){let d=(await participantsRef.once('value')).val()||{},a=Object.keys(d).map(k=>({key:k,...d[k]})).sort((x,y)=>Number(y.totalPoints||0)-Number(x.totalPoints||0)||String(x.name||'').localeCompare(String(y.name||''),'es'));$('count').textContent=a.length;$('eventPlayer').innerHTML='<option value="">Seleccionar jugador...</option>'+a.map(p=>`<option value="${esc(p.key)}">${esc(p.name||p.key)} · ${Number(p.totalPoints||0)} pts</option>`).join('');$('ranking').innerHTML=a.map((p,i)=>`<div class="rank"><div class="row"><b>${i+1}. ${esc(p.name||p.key)}</b><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" data-edit="${esc(p.key)}">EDITAR</button><button class="danger" data-del="${esc(p.key)}">ELIMINAR</button></div></div>`).join('')||'No hay jugadores.'}
 $('ranking').onclick=async ev=>{let e=ev.target.closest('[data-edit]'),d=ev.target.closest('[data-del]');try{if(e){let k=e.dataset.edit,p=(await participantsRef.child(k).once('value')).val()||{},n=prompt('Nombre:',p.name||k);if(n===null||!n.trim())return;let v=prompt('Puntaje acumulado:',String(p.totalPoints||0));if(v===null)return;let pts=Number(v),nk=keyName(n);if(!Number.isFinite(pts)||pts<0)return alert('Puntaje inválido.');if(nk!==k&&(await participantsRef.child(nk).once('value')).exists())return alert('Ya existe ese nombre.');let obj={...p,name:n.trim(),totalPoints:pts,tier:null,qualificationOrder:null};if(nk!==k){await participantsRef.child(nk).set(obj);await participantsRef.child(k).remove()}else await participantsRef.child(k).update(obj)}else if(d){let k=d.dataset.del,p=(await participantsRef.child(k).once('value')).val()||{};if(!confirm('¿Eliminar a '+(p.name||k)+' del ranking?'))return;await participantsRef.child(k).remove()}await renderAll()}catch(e){err('Error en ranking: ',e)}};
 $('toggleRanking').onclick=()=>{$('rankingWrap').hidden=!$('rankingWrap').hidden;$('toggleRanking').textContent=$('rankingWrap').hidden?'📋 MOSTRAR RANKING':'📋 OCULTAR RANKING'};
+$('addPlayer').onclick=async()=>{
+  let n=prompt('Nombre completo del nuevo jugador:');
+  if(n===null||!n.trim())return;
+  let k=keyName(n);
+  try{
+    let r=participantsRef.child(k);
+    if((await r.once('value')).exists()){
+      alert('Ese jugador ya existe en el ranking.');
+      return;
+    }
+    await r.set({name:n.trim(),totalPoints:0});
+    await renderAll();
+    alert('Jugador agregado correctamente.');
+  }catch(e){
+    err('No se pudo agregar el jugador: ',e);
+  }
+};
 $('toggleSpots').onclick=()=>{$('spotsWrap').hidden=!$('spotsWrap').hidden;$('toggleSpots').textContent=$('spotsWrap').hidden?'🎯 MOSTRAR PUESTOS':'🎯 OCULTAR PUESTOS'};
 function spotBase(amount,n){return Number(amount)===330000?(n===2?1:2):(n===2?.5:1)}
 async function renderSpots(){let d=(await playersRef.once('value')).val()||{},ids=[...Array(18)].map((_,i)=>i+1).concat(Object.keys(d).map(Number).filter(n=>n>18).sort((a,b)=>a-b));$('spots').innerHTML=ids.map(i=>{let p=d[String(i)]||{},ns=(p.names||[]).filter(Boolean);return `<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}${i>18?' · EXTRA':''}</b><p>${ns.length?esc(ns.join(' + ')):'Vacío'}</p>${ns.length?`<p class="small">${p.pointsApplied?'PAGO CONFIRMADO · PUNTOS APLICADOS':'PAGO PENDIENTE DE CONFIRMACIÓN'}</p><div class="grid">${p.pointsApplied?'<button class="secondary" disabled>CONFIRMADO · PUNTOS APLICADOS</button>':`<button data-confirm="${i}">CONFIRMAR Y SUMAR PUNTOS</button>`}</div>`:''}<div class="grid"><button class="secondary" data-assign="${i}">CARGAR/EDITAR</button><button class="danger" data-clear="${i}">LIBERAR</button></div></div>`}).join('')}
