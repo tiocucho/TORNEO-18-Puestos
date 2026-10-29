@@ -78,7 +78,72 @@ function spotBase(amount,n){return Number(amount)===330000?(n===2?1:2):(n===2?.5
 async function renderSpots(){let d=(await playersRef.once('value')).val()||{},ids=[...Array(18)].map((_,i)=>i+1).concat(Object.keys(d).map(Number).filter(n=>n>18).sort((a,b)=>a-b));$('spots').innerHTML=ids.map(i=>{let p=d[String(i)]||{},ns=(p.names||[]).filter(Boolean);return `<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}${i>18?' · EXTRA':''}</b><p>${ns.length?esc(ns.join(' + ')):'Vacío'}</p>${ns.length?`<p class="small">${p.pointsApplied?'PAGO CONFIRMADO · PUNTOS APLICADOS':'PAGO PENDIENTE DE CONFIRMACIÓN'}</p><div class="grid">${p.pointsApplied?'<button class="secondary" disabled>CONFIRMADO · PUNTOS APLICADOS</button>':`<button data-confirm="${i}">CONFIRMAR Y SUMAR PUNTOS</button>`}</div>`:''}<div class="grid"><button class="secondary" data-assign="${i}">CARGAR/EDITAR</button><button class="danger" data-clear="${i}">LIBERAR</button></div></div>`}).join('')}
 $('spots').onclick=async ev=>{let b=ev.target.closest('button');if(!b)return;try{let i=b.dataset.assign||b.dataset.clear||b.dataset.confirm;if(b.dataset.assign!==undefined){let p=(await playersRef.child(i).once('value')).val()||{},old=p.names||[],n=prompt('Nombre del primer jugador:',old[0]||'');if(n===null||!n.trim())return;let n2=prompt('Segundo jugador opcional (vacío = individual):',old[1]||''),ns=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()],s=(await settingsRef.once('value')).val()||{},base=spotBase(s.amount||100000,ns.length);if(p.pointsApplied)return alert('Este puesto ya aplicó puntos. No lo edites para evitar duplicar el puntaje.');await playersRef.child(i).set({names:ns,points:ns.map(()=>base),paid:false,status:'held',pointsApplied:false});return renderSpots()}if(b.dataset.clear!==undefined){let current=(await playersRef.child(i).once('value')).val()||{};if(current.pointsApplied)return alert('Este puesto ya sumó puntos. No se puede liberar individualmente.');if(!confirm('¿Liberar puesto '+i+' sin cambiar el ranking?'))return;await playersRef.child(i).remove();return renderSpots()}if(b.dataset.confirm!==undefined){let r=playersRef.child(i),p=(await r.once('value')).val()||{};if(!p.names?.length)return alert('Primero cargá jugadores.');if(p.pointsApplied){alert('Este puesto ya fue confirmado y sus puntos ya se aplicaron.');return}if(!confirm('¿Confirmar el pago y sumar los puntos de este puesto una sola vez?'))return;await applySpot(i,p);await r.update({paid:true,status:'confirmed'});await renderAll()}}catch(e){err('Error en puesto: ',e)}};
 async function applySpot(i,p){if(p.pointsApplied)return;let s=(await settingsRef.once('value')).val()||{},award=spotBase(s.amount||100000,p.names.length),old=(await participantsRef.once('value')).val()||{},u={};p.names.forEach(n=>{let k=keyName(n),person=old[k]||{};u[k+'/name']=person.name||n;u[k+'/totalPoints']=Number(person.totalPoints||0)+award});await participantsRef.update(u);await playersRef.child(String(i)).update({pointsApplied:true,pointsAppliedAt:firebase.database.ServerValue.TIMESTAMP})}
-$('addExtra').onclick=async()=>{let d=(await playersRef.once('value')).val()||{},i=19;while(d[String(i)])i++;let n=prompt('Nombre del primer jugador del puesto extra '+i+':');if(n===null||!n.trim())return;let n2=prompt('Segundo jugador opcional (vacío = individual):'),ns=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()],s=(await settingsRef.once('value')).val()||{},base=spotBase(s.amount||100000,ns.length);try{await playersRef.child(String(i)).set({names:ns,points:ns.map(()=>base),paid:false,status:'held',pointsApplied:false});await renderSpots()}catch(e){err('No se pudo agregar: ',e)}};
+$('addExtra').onclick=async()=>{
+  try{
+    let d=(await playersRef.once('value')).val()||{};
+    let i=19;
+    while(d[String(i)])i++;
+
+    async function elegirJugador(numero){
+      let data=(await participantsRef.once('value')).val()||{};
+      let lista=Object.keys(data).map(k=>({key:k,...data[k]}));
+      lista.sort((a,b)=>String(a.name||a.key).localeCompare(String(b.name||b.key),'es'));
+
+      let opciones=lista.map((p,j)=>(j+1)+'. '+(p.name||p.key)).join('\n');
+      let eleccion=prompt(
+        'PUESTO EXTRA '+i+' · JUGADOR '+numero+
+        '\n\nElegí un número del ranking o escribí 0 para un jugador nuevo:\n\n'+opciones,
+        ''
+      );
+      if(eleccion===null)return null;
+
+      let num=Number(eleccion);
+      if(eleccion.trim()!==''&&Number.isInteger(num)&&num===0){
+        let nuevo=prompt('Nombre completo del jugador nuevo:');
+        return nuevo===null||!nuevo.trim()?null:nuevo.trim();
+      }
+      if(eleccion.trim()!==''&&Number.isInteger(num)&&num>=1&&num<=lista.length){
+        return lista[num-1].name||lista[num-1].key;
+      }
+      alert('Elegí un número válido de la lista.');
+      return null;
+    }
+
+    let n=await elegirJugador(1);
+    if(!n)return;
+
+    let respuesta=confirm(
+      '¿Este puesto será compartido por dos personas?\n\nAceptar = dos personas\nCancelar = individual'
+    );
+    let ns=[n];
+
+    if(respuesta){
+      let n2=await elegirJugador(2);
+      if(!n2)return;
+      if(keyName(n2)===keyName(n)){
+        alert('Elegí dos jugadores diferentes.');
+        return;
+      }
+      ns.push(n2);
+    }
+
+    let s=(await settingsRef.once('value')).val()||{};
+    let base=spotBase(s.amount||100000,ns.length);
+
+    await playersRef.child(String(i)).set({
+      names:ns,
+      points:ns.map(()=>base),
+      paid:false,
+      status:'held',
+      pointsApplied:false
+    });
+
+    await renderSpots();
+    alert('Puesto extra '+i+' creado. Confirmá el pago para sumar los puntos.');
+  }catch(e){
+    err('No se pudo agregar el puesto extra: ',e);
+  }
+};
 $('startTournament').onclick=async()=>{let d=(await playersRef.once('value')).val()||{},n=Object.values(d).filter(p=>p&&p.paid&&p.names&&p.names.length).length;if(!n)return alert('No hay puestos con pago marcado.');if(!confirm('¿Iniciar con '+n+' puestos pagados?'))return;try{await settingsRef.update({status:'in_progress',startedAt:firebase.database.ServerValue.TIMESTAMP});alert('Torneo iniciado.')}catch(e){err('No se pudo iniciar: ',e)}};
 $('finishTournament').onclick=async()=>{if(!confirm('¿Finalizar y liberar todos los puestos? Se conservará el ranking acumulado.'))return;try{await playersRef.remove();await settingsRef.update({status:'open',finishedAt:firebase.database.ServerValue.TIMESTAMP});await renderSpots();alert('Puestos liberados. Ranking conservado.')}catch(e){err('No se pudo finalizar: ',e)}};
 $('addEvent').onclick=async()=>{let k=$('eventPlayer').value,t=$('eventType').value,p=t==='manual'?Number($('eventPoints').value):({special:1,champ2:1,champSolo:2}[t]);if(!k)return alert('Seleccioná un jugador.');if(!Number.isFinite(p)||p<=0)return alert('Puntos inválidos.');try{let r=participantsRef.child(k),s=(await r.once('value')).val();if(!s)return alert('Jugador inexistente.');if(!confirm('¿Sumar '+p+' puntos a '+s.name+'?'))return;await r.update({totalPoints:Number(s.totalPoints||0)+p});$('eventMsg').textContent='Puntos sumados.';await renderAll()}catch(e){err('No se pudieron sumar puntos: ',e)}};
