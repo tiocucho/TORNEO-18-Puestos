@@ -162,7 +162,7 @@ function cargarDatos(){
    const data=snapshot.val()||{},puestos=Object.keys(data).sort((a,b)=>Number(a)-Number(b));
    document.getElementById("ocupados").textContent=puestos.length;
    document.getElementById("disponibles").textContent=Math.max(0,18-puestos.length);
-   document.getElementById("recaudacion").textContent=(puestos.length*100000).toLocaleString("es-PY")+" Gs.";
+   document.getElementById("recaudacion").textContent=(puestos.length*110000).toLocaleString("es-PY")+" Gs.";
    renderRanking(data);
 
    const lista=document.getElementById("lista");
@@ -206,6 +206,9 @@ function cargarDatos(){
        document.getElementById(prefix+puesto).addEventListener("input",()=>actualizarPreview(puesto));
      });
    });
+ },error=>{
+   console.error("Error leyendo Firebase /players:",error);
+   mostrarMensaje("❌ Firebase no permitió leer los puestos: "+(error.message||error),false);
  });
 }
 function actualizarPreview(puesto){
