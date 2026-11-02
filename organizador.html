@@ -206,9 +206,6 @@ function cargarDatos(){
        document.getElementById(prefix+puesto).addEventListener("input",()=>actualizarPreview(puesto));
      });
    });
- },error=>{
-   console.error("Error leyendo Firebase /players:",error);
-   mostrarMensaje("❌ Firebase no permitió leer los puestos: "+(error.message||error),false);
  });
 }
 function actualizarPreview(puesto){
