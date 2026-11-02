@@ -35,16 +35,23 @@ async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y
 async function finishAndRestartTournament(){
  const snap=await participantsRef.once('value'),data=snap.val()||{};
  const ranking=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name||'').localeCompare(String(b.name||''),'es'));
- const top=ranking.slice(0,25);
- if(!top.length){alert('Todavía no hay jugadores en el ranking.');return}
- const summary=top.map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n');
- if(!confirm('Se cerrará este torneo, se guardarán los 25 primeros como clasificados y se liberarán todos los puestos. El ranking y sus puntos acumulados NO se borrarán.\n\n'+summary+'\n\n¿Finalizar y preparar el siguiente torneo?'))return;
- const record={closedAt:firebase.database.ServerValue.TIMESTAMP,qualified:top.map((p,i)=>({key:p.key,name:p.name||p.key,totalPoints:Number(p.totalPoints||0),position:i+1})),qualifiedCount:top.length};
- await qualificationRef.push(record);
- await playersRef.remove();
- await settingsRef.update({status:'open',lastTournamentFinishedAt:firebase.database.ServerValue.TIMESTAMP});
- $('finishMsg').textContent='Torneo finalizado. Clasificación guardada y puestos liberados. El ranking acumulado se conservó.';
- await renderRanking();await renderSpots();
+ const summary=ranking.length?ranking.slice(0,10).map((p,i)=>(i+1)+'. '+(p.name||p.key)+' — '+Number(p.totalPoints||0)+' pts').join('\n'):'No hay jugadores cargados.';
+ const message='ATENCIÓN: esta acción BORRARÁ TODO el torneo actual: nombres, jugadores, puntos, ranking acumulado, clasificación anterior, puestos ocupados y pozo acumulado. Todo quedará en CERO para comenzar un torneo nuevo. Esta acción no se puede deshacer.\n\n'+summary+'\n\n¿Confirmás BORRAR TODO y reiniciar?';
+ if(!confirm(message))return;
+ try{
+  const updates={};
+  updates['players']=null;
+  updates['participants']=null;
+  updates['qualification']=null;
+  updates['settings/tournament/accumulatedPot']=0;
+  updates['settings/tournament/status']='open';
+  updates['settings/tournament/lastTournamentFinishedAt']=firebase.database.ServerValue.TIMESTAMP;
+  await db.ref().update(updates);
+  $('poolAmount').value='0';$('poolDisplay').textContent='0 Gs.';$('poolMsg').textContent='Pozo acumulado reiniciado en 0.';
+  $('finishMsg').textContent='Torneo finalizado. Todo quedó en cero: nombres, puntos, ranking, clasificación, puestos y pozo.';
+  await loadSettings();await renderRanking();await renderSpots();
+  alert('Listo. Todo quedó en cero para comenzar el nuevo torneo.');
+ }catch(e){$('finishMsg').textContent='No se pudo reiniciar todo: '+(e.message||e);alert('Error al borrar los datos: '+(e.message||e));}
 }
 async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=19;while(d[String(n)])n++;await assignSpot(n)}
 function syncEventPoints(){
