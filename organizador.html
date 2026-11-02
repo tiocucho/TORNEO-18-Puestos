@@ -1,263 +1,72 @@
 <!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Organizador - Torneo Inter Tio Cucho</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizador · Torneo Inter Tío Cucho</title>
 <style>
-body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}
-main{max-width:820px;margin:auto;padding:18px}
-.card{background:#121212;border:1px solid #4d4028;border-radius:18px;padding:18px;margin:15px 0}
-h1,h2,h3{color:#e0b85f}
-input,select,button{width:100%;box-sizing:border-box;padding:13px;margin:6px 0;border-radius:10px;font-size:16px}
-input,select{background:#080808;color:white;border:1px solid #55472c}
-button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}
-button.secondary{background:#29251d;color:#f7f3ea;border:1px solid #55472c}
-button.danger{background:#8f2f2f;color:white}
-button:disabled{opacity:.55}
-.item{border-top:1px solid #403520;padding:18px 0}
-.info{color:#bbb;line-height:1.7}
-.error{color:#ff9f9f}.ok{color:#9cc9a6}
-.edit{display:none;margin-top:14px;padding-top:14px;border-top:1px solid #403520}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media(max-width:520px){.grid{grid-template-columns:1fr}}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#29251d;color:#e0b85f;font-size:13px}
-.small{font-size:13px;color:#999}
-.rank{display:grid;grid-template-columns:48px 1fr 80px 90px;gap:8px;align-items:center;border-top:1px solid #403520;padding:12px 0}
-.rank:first-child{border-top:0}
-.rankpos{color:#e0b85f;font-size:20px;font-weight:900;text-align:center}
-.rankname{font-weight:800}
-.rankdetail{font-size:12px;color:#999}
-.rankpoints{text-align:right;color:#f1cd7a;font-size:20px;font-weight:900}
-@media(max-width:520px){.rank{grid-template-columns:40px 1fr 70px}.rankdetail{grid-column:2/3}.rankpoints{grid-column:3;grid-row:1/3}}
-.bonusbox{background:#0b0b0b;border:1px solid #3f3421;border-radius:14px;padding:14px;margin-top:12px}
-.bonusline{display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;margin:6px 0;color:#bbb}
-.bonusline input{text-align:center}
-.totalbox{margin-top:12px;padding:13px;border-radius:12px;background:#29251d;color:#f1cd7a;font-weight:900;text-align:center}
-</style>
-</head>
-<body>
-<main>
-<h1>🏆 Panel del Organizador</h1>
-<p>TORNEO INTER TIO CUCHO · 18 PUESTOS</p>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070707;color:#f7f3ea;font-family:Arial,sans-serif}main{max-width:850px;margin:auto;padding:14px}h1,h2,h3{color:#e0b85f}h1{font-size:25px}.card{background:#121212;border:1px solid #4d4028;border-radius:16px;padding:16px;margin:13px 0}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:9px;font-size:15px}input,select{background:#080808;color:#fff;border:1px solid #55472c}button{background:#e0b85f;color:#100d06;border:0;font-weight:bold}button.secondary{background:#2a2418;color:#f7f3ea}button.danger{background:#702222;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:13px;color:#aaa;line-height:1.5}.ok{color:#9cc9a6}.err{color:#ff9999}.rank,.spot{border-top:1px solid #403520;padding:12px 0}.rankhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{color:#e0b85f;font-size:12px}@media(max-width:520px){main{padding:9px}.grid{grid-template-columns:1fr}.card{padding:12px}}
+</style></head><body><main>
+<h1>🏆 TORNEO INTER TÍO CUCHO</h1><p>Panel privado del organizador · ranking acumulado · 15 puestos públicos</p>
+<section id="loginBox" class="card"><h2>Acceso del organizador</h2><input id="email" type="email" autocomplete="username" placeholder="Correo electrónico"><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña"><button id="login">INGRESAR</button><p id="loginError" class="err"></p></section>
+<div id="panel" hidden>
+<section class="card"><h2>⚙️ Configuración</h2><label for="amount">Monto del torneo</label><select id="amount"><option value="110000">110.000 Gs.</option><option value="220000">220.000 Gs.</option><option value="330000">330.000 Gs.</option></select><label for="alias">Alias para transferencia</label><select id="alias"></select><button id="saveSettings">GUARDAR CONFIGURACIÓN</button><p id="settingsMsg" class="ok"></p><p class="small">Monto inicial: 110.000 Gs. Solo el organizador puede cambiarlo.</p></section>
+<section class="card"><h2>📊 Ranking acumulado · <span id="count">0</span> jugadores</h2><p class="small">Los puntajes se pueden corregir como valor total exacto. También puedes agregar o eliminar jugadores.</p><input id="newName" placeholder="Nombre de jugador nuevo"><input id="newPoints" type="number" min="0" step="1" placeholder="Puntaje inicial"><button onclick="addPlayer()">➕ AGREGAR JUGADOR</button><div id="ranking">Cargando...</div></section>
+<section class="card"><h2>🎯 Puestos de la jornada</h2><p class="small">Los puestos públicos deben quedar vacíos después de la limpieza. Puedes cargar un nombre manualmente aquí cuando comience una jornada.</p><div id="spots">Cargando puestos...</div><button class="secondary" onclick="addExtraSpot()">➕ AGREGAR PUESTO EXTRA</button><button onclick="firstEliminatedAndRelease()">🏁 PRIMER ELIMINADO (+2) Y LIBERAR PUESTOS</button><button class="danger" onclick="clearSpots()">🧹 LIBERAR TODOS LOS PUESTOS</button></section>
+<section class="card"><h2>🃏🏆 Cargar puntos por jugador</h2><p class="small">Esta sección funciona aunque los puestos de la jornada estén vacíos. Busca al jugador por nombre en el ranking acumulado y suma puntos sin depender de una banca ocupada.</p><label for="eventPlayer">Jugador</label><select id="eventPlayer"><option value="">Cargando jugadores...</option></select><label for="eventType">Motivo</label><select id="eventType" onchange="syncEventPoints()"><option value="special">Carta especial (+2)</option><option value="specialLoss">Perdió con carta especial (+2 adicional)</option><option value="champ3">Campeón con 3 o más jugadores (+2)</option><option value="champ2">Campeón entre 2 jugadores (+3)</option><option value="champSolo">Campeón solo (+4)</option><option value="manual">Puntos manuales</option></select><label for="eventPoints">Puntos a sumar (para puntos manuales o ajuste de reparto)</label><input id="eventPoints" type="number" min="0" step="0.5" value="2"><p class="small">Si los puntos de campeón se reparten entre dos personas, selecciona cada jugador y carga su parte correspondiente: 50/50 para campeones de 3 o más; en campeonato de 2 jugadores compartiendo banca, 2 puntos al responsable y 1 al otro.</p><button onclick="addEventPoints()">➕ SUMAR PUNTOS AL JUGADOR</button><p id="eventMsg" class="ok"></p></section>
 
-<div id="loginBox" class="card">
-<h2>Acceso del organizador</h2>
-<input id="email" type="email" placeholder="Correo electrónico">
-<input id="password" type="password" placeholder="Contraseña">
-<button id="login">INGRESAR</button>
-<p id="loginError" class="error"></p>
-</div>
-
-<div id="panel" style="display:none">
-<div class="card">
-<h2>Resumen</h2>
-<p>Puestos ocupados: <b id="ocupados">0</b></p>
-<p>Puestos disponibles: <b id="disponibles">18</b></p>
-<p>Recaudación: <b id="recaudacion">0 Gs.</b></p>
-<button id="salir">CERRAR SESIÓN</button>
-</div>
-
-<div class="card">
-<h2>🏆 Tabla de puntos</h2>
-<p class="small">El ranking suma los puntos base y reparte todos los puntos extras 50/50 cuando un puesto tiene 2 personas.</p>
-<div id="ranking">Cargando...</div>
-</div>
-
-<div class="card">
-<h2>Participantes</h2>
-<p class="small">Puedes editar nombres, puntos base, estado, pago y puntos extras. Los cambios se guardan directamente en Firebase.</p>
-<div id="mensaje"></div>
-<div id="lista">Cargando...</div>
-</div>
-</div>
-</main>
-
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig={
-apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",
-authDomain:"torneo-tio-cucho.firebaseapp.com",
-databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",
-projectId:"torneo-tio-cucho",
-storageBucket:"torneo-tio-cucho.firebasestorage.app",
-messagingSenderId:"468748796216",
-appId:"1:468748796216:web:2aef532476f612e96801cd"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.database(),players=db.ref("players");
-const loginBox=document.getElementById("loginBox"),panel=document.getElementById("panel");
-
-document.getElementById("login").onclick=async()=>{
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- try{await auth.signInWithEmailAndPassword(email,password);document.getElementById("loginError").textContent="";}
- catch(e){document.getElementById("loginError").textContent="No se pudo ingresar: "+e.message;}
-};
-document.getElementById("salir").onclick=()=>auth.signOut();
-
-auth.onAuthStateChanged(user=>{
- if(user){loginBox.style.display="none";panel.style.display="block";cargarDatos();}
- else{loginBox.style.display="block";panel.style.display="none";}
-});
-
-function esc(v){
- return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+<button id="logout" class="secondary">CERRAR SESIÓN</button></div></main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script>
+const FINAL_PLAYERS=[{"name":"BUKELE","totalPoints":140},{"name":"JHON WICK","totalPoints":140},{"name":"EMANUEL","totalPoints":140},{"name":"MARCOS GONZÁLEZ","totalPoints":140},{"name":"HOMERO","totalPoints":140},{"name":"SPIDERMAN","totalPoints":140},{"name":"JOGO","totalPoints":138},{"name":"LA MARAVILLA","totalPoints":129},{"name":"TÍA PATTY","totalPoints":113},{"name":"SOL DUARTE","totalPoints":99},{"name":"JOSÉ BÁEZ","totalPoints":95},{"name":"YENNY","totalPoints":79},{"name":"EL LOKO","totalPoints":77},{"name":"FATTY GONZA","totalPoints":76},{"name":"PICOLE","totalPoints":76},{"name":"ORIÓN","totalPoints":60},{"name":"JOSÉ CABRAL","totalPoints":57},{"name":"TAKAMOTO","totalPoints":51},{"name":"ROLANDO CARDOZO","totalPoints":46},{"name":"ARIELITO AMARILLA","totalPoints":44},{"name":"LEO MOLINAS","totalPoints":40},{"name":"TAJY","totalPoints":32},{"name":"DERLIS IRALA","totalPoints":31},{"name":"DR","totalPoints":23},{"name":"TÍA MIRTHA","totalPoints":20},{"name":"DANIEL","totalPoints":18},{"name":"JAVIER BARRETO","totalPoints":16},{"name":"EL ARABE","totalPoints":15},{"name":"BELL ORTEGA","totalPoints":13},{"name":"TAPITI","totalPoints":9},{"name":"FORTUNA","totalPoints":8},{"name":"ALEXIS MEDINA","totalPoints":8},{"name":"MATHEUS","totalPoints":6},{"name":"MARCELO GON","totalPoints":6},{"name":"MARIO R","totalPoints":6},{"name":"PABLO BUSTAMANTE","totalPoints":5},{"name":"PIKORO","totalPoints":4},{"name":"RENÉ","totalPoints":4},{"name":"CHIKITO","totalPoints":4},{"name":"CM","totalPoints":4},{"name":"JAGUA","totalPoints":4},{"name":"FABIÁN","totalPoints":3},{"name":"BILLY EL NIÑO","totalPoints":2},{"name":"MITA'i MALLORQUÍN","totalPoints":2},{"name":"KA'i ARROZ","totalPoints":2},{"name":"KAIO","totalPoints":120},{"name":"FERDINAND","totalPoints":82},{"name":"HULK","totalPoints":59},{"name":"MILEY","totalPoints":43},{"name":"ARTURO KURE CALDO","totalPoints":35},{"name":"ALBERTO ENCISO","totalPoints":31},{"name":"SOFI SEGOVIA","totalPoints":17},{"name":"MARCELO IBAÑES","totalPoints":16},{"name":"TORETTO","totalPoints":16},{"name":"MENCHY","totalPoints":13},{"name":"STIFLER","totalPoints":13},{"name":"GORDITO MENTIROSO","totalPoints":11},{"name":"MOROCHO","totalPoints":9},{"name":"GUZMÁN","totalPoints":9},{"name":"EDINHO","totalPoints":8},{"name":"S.D.S","totalPoints":8},{"name":"TREINTA Y TRES","totalPoints":6},{"name":"YUTY","totalPoints":6},{"name":"BELL","totalPoints":6},{"name":"NELSON RUBIO","totalPoints":6},{"name":"FABIÁN TIGRE","totalPoints":6},{"name":"PANAMBI","totalPoints":6},{"name":"DEYFER","totalPoints":5},{"name":"CHUPAMEDIA","totalPoints":4},{"name":"HEBER CÁCERES","totalPoints":4},{"name":"PEREGILL","totalPoints":4},{"name":"ÁLVARO ZELAYA","totalPoints":4},{"name":"TÍA ELI","totalPoints":4},{"name":"CURTIDO","totalPoints":4},{"name":"CARLOS MÁQUINA","totalPoints":3},{"name":"DIEGO","totalPoints":2},{"name":"MESSI","totalPoints":2},{"name":"JOSÉ GONZÁLEZ","totalPoints":2},{"name":"PESCADOR","totalPoints":2},{"name":"ELA'i","totalPoints":2},{"name":"RICHARD MONGES","totalPoints":2},{"name":"EL FARISEO","totalPoints":2},{"name":"HERNÁN","totalPoints":2},{"name":"TORVIC","totalPoints":2},{"name":"JULIO MEDINA","totalPoints":2},{"name":"ROSS ALDERETE","totalPoints":1}];
+const firebaseConfig={apiKey:"AIzaSyBDaj8e38W8AOyR6yfNQ7AQoW5bf5i2J9Q",authDomain:"torneo-tio-cucho.firebaseapp.com",databaseURL:"https://torneo-tio-cucho-default-rtdb.firebaseio.com",projectId:"torneo-tio-cucho",storageBucket:"torneo-tio-cucho.firebasestorage.app",messagingSenderId:"468748796216",appId:"1:468748796216:web:2aef532476f612e96801cd"};
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database(),playersRef=db.ref('players'),participantsRef=db.ref('participants'),qualificationRef=db.ref('qualification'),settingsRef=db.ref('settings/tournament');
+const ALIASES=[{alias:'0971367727',name:'José Alfredo Alfonso',bank:'Familiar'},{alias:'4029694',name:'Patricia Benítez',bank:'Familiar'},{alias:'0992879107',name:'Rodolfo Richard Oliveira',bank:'Familiar'}];
+const $=id=>document.getElementById(id);function safeName(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_').slice(0,80)||'sin_nombre'}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+$('login').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);$('loginError').textContent=''}catch(e){$('loginError').textContent='No se pudo ingresar: '+e.message}};$('logout').onclick=()=>auth.signOut();
+auth.onAuthStateChanged(async user=>{ $('loginBox').hidden=!!user;$('panel').hidden=!user;if(user){await loadSettings();renderRanking();renderSpots();}});
+async function loadSettings(){const snap=await settingsRef.once('value'),x=snap.val()||{};$('amount').value=String(x.amount||110000);$('alias').innerHTML=ALIASES.map(a=>`<option value="${esc(a.alias)}">${esc(a.alias+' · '+a.name+' · '+a.bank)}</option>`).join('');$('alias').value=String(x.alias||ALIASES[0].alias)}
+$('saveSettings').onclick=async()=>{const a=ALIASES.find(x=>x.alias===$('alias').value)||ALIASES[0];await settingsRef.update({amount:Number($('amount').value),alias:a.alias,aliasName:a.name,bank:a.bank,updatedAt:firebase.database.ServerValue.TIMESTAMP});$('settingsMsg').textContent='Configuración guardada.'};
+async function renderRanking(){const snap=await participantsRef.once('value'),data=snap.val()||{},arr=Object.keys(data).map(key=>({key,...data[key]})).sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0)||String(a.name).localeCompare(String(b.name),'es'));$('count').textContent=arr.length;const ep=$('eventPlayer'),previous=ep.value;ep.innerHTML='<option value="">Seleccionar jugador...</option>'+arr.map(p=>`<option value="${esc(p.key)}">${esc(p.name)} · ${Number(p.totalPoints||0)} pts</option>`).join('');if(arr.some(p=>p.key===previous))ep.value=previous;$('ranking').innerHTML=arr.length?arr.map((p,i)=>`<div class="rank"><div class="rankhead"><span><b>${i+1}. ${esc(p.name)}</b><br><span class="tag">${esc(p.tier||'')}</span></span><b>${Number(p.totalPoints||0)} pts</b></div><div class="grid"><button class="secondary" onclick="editPlayer('${esc(p.key)}')">✏️ EDITAR NOMBRE/PUNTOS</button><button class="danger" onclick="deletePlayer('${esc(p.key)}')">🗑️ ELIMINAR</button></div></div>`).join(''):'<p>No hay jugadores cargados.</p>'}
+async function addPlayer(){const name=$('newName').value.trim(),v=$('newPoints').value;if(!name||v.trim()===''||!Number.isFinite(Number(v))||Number(v)<0){alert('Escribe nombre y puntaje válido.');return}const key=safeName(name);if((await participantsRef.child(key).once('value')).exists()){alert('Ya existe un jugador con ese nombre.');return}await participantsRef.child(key).set({name,totalPoints:Number(v),qualificationOrder:null,tier:null});$('newName').value='';$('newPoints').value='';renderRanking()}
+async function editPlayer(key){const snap=await participantsRef.child(key).once('value');if(!snap.exists())return;const p=snap.val()||{},name=prompt('Nombre correcto del jugador:',p.name||'');if(name===null)return;if(!name.trim()){alert('El nombre no puede quedar vacío.');return}const pts=prompt('Puntaje TOTAL exacto:',String(Number(p.totalPoints||0)));if(pts===null)return;if(pts.trim()===''||!Number.isFinite(Number(pts))||Number(pts)<0){alert('Puntaje inválido.');return}const newKey=safeName(name);if(newKey!==key&&(await participantsRef.child(newKey).once('value')).exists()){alert('Ya existe otro jugador con ese nombre.');return}await participantsRef.child(newKey).set({...p,name:name.trim(),totalPoints:Number(pts)});if(newKey!==key)await participantsRef.child(key).remove();renderRanking()}
+async function deletePlayer(key){const s=await participantsRef.child(key).once('value');if(!s.exists())return;const p=s.val()||{};if(!confirm('¿Eliminar del ranking a '+(p.name||key)+'?'))return;await participantsRef.child(key).remove();renderRanking()}
+async function renderSpots(){const snap=await playersRef.once('value'),data=snap.val()||{};let out='';for(let i=1;i<=15;i++){const p=data[String(i)]||{},names=(p.names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${String(i).padStart(2,'0')}</b><div>${names.length?esc(names.join(' + ')):'<span class="small">Vacío</span>'}</div><div class="grid"><button class="secondary" onclick="assignSpot(${i})">✏️ CARGAR/EDITAR</button><button class="danger" onclick="clearSpot(${i})">LIBERAR</button></div></div>`}const extras=Object.keys(data).map(Number).filter(n=>n>15).sort((a,b)=>a-b);if(extras.length){out+='<h3>Puestos extra</h3>';for(const i of extras){const names=(data[String(i)].names||[]).filter(Boolean);out+=`<div class="spot"><b>Puesto ${i} · EXTRA</b><div>${esc(names.join(' + ')||'Vacío')}</div><button class="danger" onclick="clearSpot(${i})">ELIMINAR PUESTO</button></div>`}}$('spots').innerHTML=out}
+async function assignSpot(i){const old=await playersRef.child(String(i)).once('value'),p=old.val()||{},oldNames=(p.names||[]);const n=prompt('Nombre del primer jugador (deja vacío para cancelar):',oldNames[0]||'');if(n===null||!n.trim())return;const n2=prompt('Segundo jugador opcional (Cancelar o vacío = solo):',oldNames[1]||'');const names=n2&&n2.trim()?[n.trim(),n2.trim()]:[n.trim()];const a=await settingsRef.once('value'),amount=Number((a.val()||{}).amount||110000),base=amount===330000?(names.length===2?2:4):(names.length===2?1:2);await playersRef.child(String(i)).set({names,points:names.map(()=>base),status:'held',paid:false,pointsApplied:false,modalidad:names.length===2?'familia':'solo'});renderSpots()}
+async function clearSpot(i){if(!confirm('¿Liberar el puesto '+i+'?'))return;await playersRef.child(String(i)).remove();renderSpots()}
+async function clearSpots(){if(!confirm('¿Liberar todos los puestos públicos y extras e iniciar una nueva jornada?'))return;await playersRef.remove();await settingsRef.update({firstEliminatedDone:false});renderSpots()}
+async function firstEliminatedAndRelease(){
+ const st=await settingsRef.once('value'),settings=st.val()||{};
+ if(settings.firstEliminatedDone){alert('El primer eliminado ya fue registrado en esta jornada. Para iniciar otra jornada, usa LIBERAR TODOS LOS PUESTOS.');return}
+ const name=prompt('Nombre exacto del primer eliminado:');if(name===null||!name.trim())return;
+ const snap=await playersRef.once('value'),spots=snap.val()||{};let matched=null,matchedNames=[];
+ for(const [id,spot] of Object.entries(spots)){const names=((spot&&spot.names)||[]).filter(Boolean);if(names.some(n=>String(n).trim().toLowerCase()===name.trim().toLowerCase())){matched=id;matchedNames=names;break}}
+ if(!matched){alert('No encontré ese nombre en los puestos ocupados. No se cambió nada.');return}
+ const recipients=matchedNames.length===2?matchedNames:[name.trim()];
+ const msg=matchedNames.length===2?`El puesto es compartido por ${matchedNames.join(' y ')}. Se sumará +1 a cada uno (+2 total), y se liberarán todos los puestos.`:`Se sumarán +2 puntos a ${name.trim()} y se liberarán todos los puestos.`;
+ if(!confirm('CONFIRMAR PRIMER ELIMINADO\n\n'+msg+'\n\nEsta acción libera todos los puestos públicos y extras.'))return;
+ const partSnap=await participantsRef.once('value'),participants=partSnap.val()||{},updates={};
+ for(const n of recipients){const key=safeName(n),existing=participants[key];if(!existing){alert('No encuentro a '+n+' en el ranking acumulado. No se modificó nada. Agrega primero al jugador al ranking.');return}updates['participants/'+key+'/totalPoints']=Number(existing.totalPoints||0)+(matchedNames.length===2?1:2)}
+ updates['players']=null;updates['settings/tournament/firstEliminatedDone']=true;
+ await db.ref().update(updates);
+ alert('Primer eliminado registrado. Bonificación aplicada y todos los puestos liberados.');
+ await renderRanking();await renderSpots();
 }
-function num(v){const n=Number(v);return Number.isFinite(n)?n:0;}
-function mostrarMensaje(texto,ok=true){
- const m=document.getElementById("mensaje");m.className=ok?"ok":"error";m.textContent=texto;
+async function addExtraSpot(){const snap=await playersRef.once('value'),d=snap.val()||{};let n=16;while(d[String(n)])n++;await assignSpot(n)}
+function syncEventPoints(){
+ const type=$('eventType').value;
+ const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};
+ if(type!=='manual') $('eventPoints').value=fixed[type]??2;
 }
-function extraTotal(p){
- return num(p.bonusSpecial)+num(p.bonusLossSpecial)+num(p.bonusFirstEliminated)+num(p.bonusChampion);
-}
-function baseTotal(p){
- return Array.isArray(p.points)?p.points.reduce((a,b)=>a+num(b),0):0;
-}
-function personaRows(data){
- const rows=[];
- Object.keys(data).forEach(puesto=>{
-   const p=data[puesto]||{},
-         names=Array.isArray(p.names)?p.names:[],
-         base=Array.isArray(p.points)?p.points:[],
-         extra=extraTotal(p);
-
-   // Regla: todo lo generado por un puesto se reparte 50/50
-   // cuando hay dos personas. Un puesto individual recibe el 100%.
-   const twoPeople=names.filter(Boolean).length===2;
-   const extraPerPerson=twoPeople ? extra/2 : extra;
-
-   names.forEach((name,i)=>{
-     if(!name)return;
-     rows.push({
-       name,
-       puesto,
-       base:num(base[i]??0),
-       extra:extraPerPerson
-     });
-   });
- });
- return rows;
-}
-function renderRanking(data){
- const rows=personaRows(data).map(r=>({...r,total:r.base+r.extra}));
- rows.sort((a,b)=>b.total-a.total || a.name.localeCompare(b.name));
- const box=document.getElementById("ranking");
- if(!rows.length){box.innerHTML="<p>No hay participantes todavía.</p>";return;}
- box.innerHTML=rows.map((r,i)=>
-   "<div class='rank'>"+
-   "<div class='rankpos'>"+(i+1)+"</div>"+
-   "<div><div class='rankname'>"+esc(r.name)+"</div><div class='rankdetail'>Puesto "+String(r.puesto).padStart(2,"0")+" · Base "+r.base+" · Extras "+r.extra+"</div></div>"+
-   "<div class='rankpoints'>"+r.total+" pts</div>"+
-   "</div>"
- ).join("");
+async function addEventPoints(){
+ const key=$('eventPlayer').value,type=$('eventType').value;
+ if(!key){alert('Selecciona un jugador del ranking.');return}
+ const fixed={special:2,specialLoss:2,champ3:2,champ2:3,champSolo:4};
+ const raw=$('eventPoints').value;
+ const points=type==='manual'?Number(raw):fixed[type];
+ if(!Number.isFinite(points)||points<0){alert('Introduce un puntaje válido.');return}
+ const ref=participantsRef.child(key),snap=await ref.once('value');
+ if(!snap.exists()){alert('El jugador ya no aparece en el ranking. Actualiza la página y vuelve a elegirlo.');return}
+ const player=snap.val()||{};
+ if(!confirm('Sumar '+points+' punto(s) a '+player.name+' por '+({special:'carta especial',specialLoss:'perdió con carta especial (bonificación adicional)',champ3:'campeón con 3 o más jugadores',champ2:'campeón entre 2 jugadores',champSolo:'campeón solo',manual:'ajuste manual'}[type])+ '?'))return;
+ await ref.update({totalPoints:Number(player.totalPoints||0)+points});
+ $('eventMsg').textContent='Se sumaron '+points+' punto(s) a '+player.name+'.';
+ await renderRanking();
 }
 
-function cargarDatos(){
- players.off("value");
- players.on("value",snapshot=>{
-   const data=snapshot.val()||{},puestos=Object.keys(data).sort((a,b)=>Number(a)-Number(b));
-   document.getElementById("ocupados").textContent=puestos.length;
-   document.getElementById("disponibles").textContent=Math.max(0,18-puestos.length);
-   document.getElementById("recaudacion").textContent=(puestos.length*110000).toLocaleString("es-PY")+" Gs.";
-   renderRanking(data);
-
-   const lista=document.getElementById("lista");
-   if(!puestos.length){lista.innerHTML="<p>No hay puestos apartados.</p>";return;}
-   lista.innerHTML="";
-
-   puestos.forEach(puesto=>{
-     const p=data[puesto]||{},names=Array.isArray(p.names)?p.names:[],points=Array.isArray(p.points)?p.points:[];
-     const div=document.createElement("div");div.className="item";
-     div.innerHTML=
-       "<h3>Puesto "+String(puesto).padStart(2,"0")+" <span class='badge'>"+esc(p.status||"apartado")+"</span></h3>"+
-       "<div class='info'><b>Participante:</b> "+esc(names.join(" + ")||"Sin nombre")+"<br>"+
-       "<b>Puntos base:</b> "+esc(points.join(" + ")||"0")+"<br>"+
-       "<b>Puntos extras:</b> "+extraTotal(p)+"<br>"+
-       "<b>Puntos totales:</b> "+(baseTotal(p)+extraTotal(p))+"<br>"+
-       "<b>Pago:</b> "+(p.paid===true?"PAGADO":"PENDIENTE")+"</div>"+
-       "<button class='secondary' onclick='toggleEdit("+JSON.stringify(puesto)+")'>✏️ EDITAR</button>"+
-       "<div class='edit' id='edit-"+esc(puesto)+"'>"+
-       "<div class='grid'><div><label>Nombre 1</label><input id='n1-"+esc(puesto)+"' value='"+esc(names[0]||"")+"'></div>"+
-       "<div><label>Nombre 2 (opcional)</label><input id='n2-"+esc(puesto)+"' value='"+esc(names[1]||"")+"'></div></div>"+
-       "<div class='grid'><div><label>Puntos base 1</label><input id='p1-"+esc(puesto)+"' type='number' min='0' value='"+esc(points[0]??2)+"'></div>"+
-       "<div><label>Puntos base 2</label><input id='p2-"+esc(puesto)+"' type='number' min='0' value='"+esc(points[1]??1)+"'></div></div>"+
-       "<div class='bonusbox'><b style='color:#e0b85f'>⭐ PUNTOS EXTRAS</b>"+
-       "<div class='small' style='margin:5px 0 10px'>Se suman automáticamente al ranking.</div>"+
-       "<div class='bonusline'><span>🃏 Carta especial (+2)</span><input id='bs-"+esc(puesto)+"' type='number' min='0' step='2' value='"+esc(p.bonusSpecial??0)+"'></div>"+
-       "<div class='bonusline'><span>💥 Perdió con especial (+2)</span><input id='bl-"+esc(puesto)+"' type='number' min='0' step='2' value='"+esc(p.bonusLossSpecial??0)+"'></div>"+
-       "<div class='bonusline'><span>❌ Primer eliminado (+2)</span><input id='be-"+esc(puesto)+"' type='number' min='0' step='2' value='"+esc(p.bonusFirstEliminated??0)+"'></div>"+
-       "<div class='bonusline'><span>🏆 Campeón / extra</span><input id='bc-"+esc(puesto)+"' type='number' min='0' value='"+esc(p.bonusChampion??0)+"'></div>"+
-       "<div class='totalbox'>Total del puesto: <span id='preview-"+esc(puesto)+"'>0</span> puntos</div>"+
-       "</div>"+
-       "<label>Estado</label><select id='s-"+esc(puesto)+"'><option value='held'>held</option><option value='apartado'>apartado</option><option value='confirmado'>confirmado</option><option value='finalizado'>finalizado</option></select>"+
-       "<label>Pago</label><select id='paid-"+esc(puesto)+"'><option value='false'>PENDIENTE</option><option value='true'>PAGADO</option></select>"+
-       "<button id='save-"+esc(puesto)+"' onclick='guardar("+JSON.stringify(puesto)+")'>💾 GUARDAR CAMBIOS</button>"+
-       "<button class='danger' onclick='eliminar("+JSON.stringify(puesto)+")'>🗑️ ELIMINAR PUESTO</button>"+
-       "</div>";
-     lista.appendChild(div);
-     document.getElementById("s-"+puesto).value=p.status||"apartado";
-     document.getElementById("paid-"+puesto).value=p.paid===true?"true":"false";
-     actualizarPreview(puesto);
-     ["p1-","p2-","bs-","bl-","be-","bc-"].forEach(prefix=>{
-       document.getElementById(prefix+puesto).addEventListener("input",()=>actualizarPreview(puesto));
-     });
-   });
- });
-}
-function actualizarPreview(puesto){
- const total=num(document.getElementById("p1-"+puesto)?.value)+num(document.getElementById("p2-"+puesto)?.value)+num(document.getElementById("bs-"+puesto)?.value)+num(document.getElementById("bl-"+puesto)?.value)+num(document.getElementById("be-"+puesto)?.value)+num(document.getElementById("bc-"+puesto)?.value);
- const el=document.getElementById("preview-"+puesto);if(el)el.textContent=total;
-}
-function toggleEdit(puesto){
- const e=document.getElementById("edit-"+puesto);
- e.style.display=e.style.display==="block"?"none":"block";
-}
-async function guardar(puesto){
- const save=document.getElementById("save-"+puesto);
- try{
-   save.disabled=true;save.textContent="⏳ GUARDANDO...";
-   mostrarMensaje("Guardando cambios del puesto "+puesto+"...");
-   const n1=document.getElementById("n1-"+puesto).value.trim(),n2=document.getElementById("n2-"+puesto).value.trim();
-   if(!n1)throw new Error("El nombre de la primera persona no puede quedar vacío.");
-   const names=[n1,n2].filter(Boolean);
-   const p1=num(document.getElementById("p1-"+puesto).value),p2=num(document.getElementById("p2-"+puesto).value);
-   const points=n2?[p1,p2]:[p1];
-   const status=document.getElementById("s-"+puesto).value;
-   const paid=document.getElementById("paid-"+puesto).value==="true";
-   const cambios={
-     names,points,status,paid,
-     bonusSpecial:num(document.getElementById("bs-"+puesto).value),
-     bonusLossSpecial:num(document.getElementById("bl-"+puesto).value),
-     bonusFirstEliminated:num(document.getElementById("be-"+puesto).value),
-     bonusChampion:num(document.getElementById("bc-"+puesto).value)
-   };
-   await players.child(String(puesto)).update(cambios);
-   const comprobacion=await players.child(String(puesto)).once("value");
-   const guardado=comprobacion.val()||{};
-   if(guardado.paid!==paid)throw new Error("Firebase no confirmó el cambio de pago.");
-   if(baseTotal(guardado)+extraTotal(guardado)!==(p1+(n2?p2:0)+cambios.bonusSpecial+cambios.bonusLossSpecial+cambios.bonusFirstEliminated+cambios.bonusChampion))
-     throw new Error("Firebase no confirmó los puntos correctamente.");
-   mostrarMensaje("✅ Puesto "+puesto+" guardado. Ranking actualizado.",true);
- }catch(e){
-   console.error(e);mostrarMensaje("❌ No se pudo guardar: "+(e.message||e),false);
- }finally{
-   save.disabled=false;save.textContent="💾 GUARDAR CAMBIOS";
- }
-}
-async function eliminar(puesto){
- if(!confirm("¿Seguro que quieres eliminar el puesto "+puesto+"?"))return;
- try{
-   mostrarMensaje("Eliminando puesto "+puesto+"...");
-   await players.child(String(puesto)).remove();
-   const comprobacion=await players.child(String(puesto)).once("value");
-   if(comprobacion.exists())throw new Error("Firebase no confirmó la eliminación.");
-   mostrarMensaje("✅ Puesto "+puesto+" eliminado.",true);
- }catch(e){mostrarMensaje("❌ No se pudo eliminar: "+(e.message||e),false);}
-}
-</script>
-</body>
-</html>
+</script></body></html>
