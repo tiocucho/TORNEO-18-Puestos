@@ -140,7 +140,50 @@ window.createRoom=async()=>{isHostSession=true;roomCode='TC'+Math.random().toStr
 window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
 window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
 window.toggleCamera=async()=>{if(!room?.localParticipant)return;if(!isHostSession&&!cameraOn&&!cameraApproved){try{const payload=new TextEncoder().encode(JSON.stringify({type:'camera-request',name:myName}));await room.localParticipant.publishData(payload,{reliable:true});setStatus('Solicitud enviada al anfitrión. Esperá su aprobación.')}catch(e){setStatus('No se pudo solicitar permiso: '+e.message)}return}try{cameraOn=!cameraOn;await room.localParticipant.setCameraEnabled(cameraOn);if(!cameraOn)cameraApproved=false;$('camBtn').textContent=cameraOn?'📷 Apagar cámara':'📷 Activar cámara';if(cameraOn){let pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);if(pub?.track){const v=$('p-'+room.localParticipant.identity)?.querySelector('video');if(v){pub.track.attach(v);v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{});}}}}catch(e){cameraOn=false;alert('No se pudo activar la cámara. Permití el acceso en el navegador. '+e.message)}};
-window.flipCamera=async()=>{if(!room?.localParticipant){alert('Primero ingresá a una sala.');return}try{if(!cameraOn){cameraOn=true;await room.localParticipant.setCameraEnabled(true);$('camBtn').textContent='📷 Apagar cámara'}const devices=await navigator.mediaDevices.enumerateDevices();const cams=devices.filter(d=>d.kind==='videoinput');if(cams.length<2){alert('No se detectó otra cámara. Activá la cámara y permití el acceso en Safari; luego probá de nuevo.');return}const current=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera)?.track?.mediaStreamTrack?.getSettings?.().deviceId;let index=cams.findIndex(d=>d.deviceId===current);let next=cams[(index+1+cams.length)%cams.length];await room.switchActiveDevice('videoinput',next.deviceId);setStatus('Cámara cambiada.')}catch(e){alert('No se pudo girar la cámara: '+e.message)}};
+let cameraSwitching=false;
+window.flipCamera=async()=>{
+ if(!room?.localParticipant){alert('Primero ingresá a una sala.');return}
+ if(cameraSwitching)return;
+ cameraSwitching=true;
+ try{
+  const pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);
+  if(!cameraOn || !pub?.track){
+   setStatus('Primero activá la cámara y esperá a que aparezca tu imagen.');
+   return;
+  }
+  const currentTrack=pub.track.mediaStreamTrack;
+  const settings=currentTrack?.getSettings?.()||{};
+  const devices=await navigator.mediaDevices.enumerateDevices();
+  const cams=devices.filter(d=>d.kind==='videoinput');
+  if(cams.length<2){
+   setStatus('Safari no está mostrando las dos cámaras. Revisá el permiso de cámara y volvé a intentar.');
+   return;
+  }
+  let currentIndex=cams.findIndex(d=>d.deviceId && d.deviceId===settings.deviceId);
+  if(currentIndex<0){
+   const facing=(settings.facingMode||'').toLowerCase();
+   if(facing==='user') currentIndex=cams.findIndex(d=>/back|rear|trasera|environment/i.test(d.label));
+   else if(facing==='environment') currentIndex=cams.findIndex(d=>/front|user|frontal|delantera/i.test(d.label));
+  }
+  if(currentIndex<0){
+   const labels=cams.map(d=>d.label||'');
+   const front=labels.findIndex(s=>/front|user|frontal|delantera/i.test(s));
+   const back=labels.findIndex(s=>/back|rear|trasera|environment/i.test(s));
+   if(front>=0 && back>=0) currentIndex=(settings.facingMode||'').toLowerCase()==='environment'?back:front;
+  }
+  if(currentIndex<0){
+   setStatus('No pude identificar qué cámara está activa. No cambié la cámara para evitar que se apague.');
+   return;
+  }
+  const next=cams[(currentIndex+1)%cams.length];
+  await room.switchActiveDevice('videoinput',next.deviceId);
+  setStatus('Cámara cambiada.');
+ }catch(e){
+  setStatus('No se pudo cambiar la cámara: '+e.message);
+ }finally{
+  cameraSwitching=false;
+ }
+};
 function renderCameraRequests(){const box=$('cameraRequests');if(!box)return;box.replaceChildren();if(!isHostSession||pendingCameraRequests.size===0){box.classList.add('hidden');return}box.classList.remove('hidden');const title=document.createElement('strong');title.textContent='📷 Solicitudes de cámara';box.append(title);for(const req of pendingCameraRequests.values()){const row=document.createElement('div');row.className='camera-request';const label=document.createElement('span');label.textContent=req.name+' quiere activar su cámara';const actions=document.createElement('span');const yes=document.createElement('button');yes.className='primary';yes.textContent='Aprobar';yes.onclick=()=>decideCamera(req.identity,true);const no=document.createElement('button');no.textContent='Rechazar';no.onclick=()=>decideCamera(req.identity,false);actions.append(yes,no);row.append(label,actions);box.append(row)}}
 async function decideCamera(identity,approved){pendingCameraRequests.delete(identity);renderCameraRequests();try{const payload=new TextEncoder().encode(JSON.stringify({type:'camera-decision',target:identity,approved}));await room.localParticipant.publishData(payload,{reliable:true,destinationIdentities:[identity]});setStatus(approved?'Solicitud de cámara aprobada.':'Solicitud de cámara rechazada.')}catch(e){setStatus('No se pudo enviar la decisión: '+e.message)}}
 window.toggleMic=async()=>{if(!room?.localParticipant)return;try{micOn=!micOn;await room.localParticipant.setMicrophoneEnabled(micOn);$('micBtn').textContent=micOn?'🎙️ Apagar micrófono':'🎙️ Activar micrófono'}catch(e){micOn=false;alert('No se pudo activar el micrófono. Permití el acceso en el navegador. '+e.message)}};
