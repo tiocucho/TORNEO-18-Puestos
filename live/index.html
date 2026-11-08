@@ -74,11 +74,11 @@ function addPerson(participant,track=null){
   name.textContent=participant.name||identity;
   card.append(video,name);
 
-  // Solo el anfitrión puede ampliar a los invitados.
-  if(isHostSession && !isHostParticipant(participant)){
+// El anfitrión puede volver a su pantalla o ampliar invitados.
+  if(isHostSession){
    const btn=document.createElement('button');
    btn.type='button';
-   btn.textContent='⛶ AMPLIAR';
+   btn.textContent=isHostParticipant(participant)?'👑 VOLVER A MI PANTALLA':'⛶ AMPLIAR';
    btn.style.cssText='display:block;width:100%;padding:12px;margin-top:5px;background:#f5d575;color:#111;font-weight:bold;border-radius:8px;touch-action:manipulation';
    btn.addEventListener('click',function(ev){
     ev.preventDefault();
