@@ -139,7 +139,57 @@ function showRoom(){ $('home').classList.add('hidden');$('room').classList.remov
 window.createRoom=async()=>{isHostSession=true;roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
 window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
 window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
-window.toggleCamera=async()=>{if(!room?.localParticipant)return;if(!isHostSession&&!cameraOn&&!cameraApproved){try{const payload=new TextEncoder().encode(JSON.stringify({type:'camera-request',name:myName}));await room.localParticipant.publishData(payload,{reliable:true});setStatus('Solicitud enviada al anfitrión. Esperá su aprobación.')}catch(e){setStatus('No se pudo solicitar permiso: '+e.message)}return}try{cameraOn=!cameraOn;await room.localParticipant.setCameraEnabled(cameraOn);if(!cameraOn)cameraApproved=false;$('camBtn').textContent=cameraOn?'📷 Apagar cámara':'📷 Activar cámara';if(cameraOn){let pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);if(pub?.track){const v=$('p-'+room.localParticipant.identity)?.querySelector('video');if(v){pub.track.attach(v);v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{});}}}}catch(e){cameraOn=false;alert('No se pudo activar la cámara. Permití el acceso en el navegador. '+e.message)}};
+let cameraStarting=false;
+window.toggleCamera=async()=>{
+ if(!room?.localParticipant)return;
+ if(cameraStarting)return;
+ if(!isHostSession&&!cameraOn&&!cameraApproved){
+  try{
+   const payload=new TextEncoder().encode(JSON.stringify({type:'camera-request',name:myName}));
+   await room.localParticipant.publishData(payload,{reliable:true});
+   setStatus('Solicitud enviada al anfitrión. Esperá su aprobación.');
+  }catch(e){setStatus('No se pudo solicitar permiso: '+e.message)}
+  return;
+ }
+ cameraStarting=true;
+ $('camBtn').disabled=true;
+ if(cameraOn){
+  $('camBtn').textContent='⏳ Apagando cámara…';
+  try{
+   await room.localParticipant.setCameraEnabled(false);
+   cameraOn=false;
+   cameraApproved=false;
+   $('camBtn').textContent='📷 Activar cámara';
+   setStatus('Cámara apagada.');
+  }catch(e){$('camBtn').textContent='📷 Apagar cámara';setStatus('No se pudo apagar la cámara: '+e.message)}
+  finally{cameraStarting=false;$('camBtn').disabled=false}
+  return;
+ }
+ $('camBtn').textContent='⏳ Iniciando cámara…';
+ setStatus('Iniciando cámara frontal… Permití el acceso si Safari lo solicita.');
+ try{
+  // Solicitar frontal al iniciar, evitando que el usuario tenga que girar varias veces.
+  await room.localParticipant.setCameraEnabled(true,{facingMode:'user'});
+  const pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);
+  if(!pub?.track)throw new Error('La cámara se activó pero no se encontró la pista de video publicada.');
+  const video=$('p-'+room.localParticipant.identity)?.querySelector('video');
+  if(video){
+   video.muted=true;video.autoplay=true;video.playsInline=true;
+   pub.track.attach(video);
+   try{await video.play()}catch(e){}
+  }
+  cameraOn=true;
+  $('camBtn').textContent='📷 Apagar cámara';
+  setStatus('Cámara encendida.');
+ }catch(e){
+  cameraOn=false;
+  try{await room.localParticipant.setCameraEnabled(false)}catch(_){}
+  $('camBtn').textContent='📷 Activar cámara';
+  setStatus('No se pudo iniciar la cámara: '+e.message+'. Revisá el permiso de cámara de Safari.');
+ }finally{
+  cameraStarting=false;$('camBtn').disabled=false;
+ }
+};
 let cameraSwitching=false;
 window.flipCamera=async()=>{
  if(!room?.localParticipant){alert('Primero ingresá a una sala.');return}
