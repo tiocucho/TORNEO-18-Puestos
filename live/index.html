@@ -11,7 +11,7 @@
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
-<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><p id="status" class="status">Preparando conexión…</p><div id="cameraRequests" class="camera-requests hidden"></div><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div><button class="primary" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button id="flipBtn" onclick="flipCamera()">🔄 Girar cámara</button><button class="primary" id="micBtn" onclick="toggleMic()">🎙️ Activar micrófono</button></div></div>
+<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><p id="status" class="status">Preparando conexión…</p><div id="cameraRequests" class="camera-requests hidden"></div><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div><button class="primary" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button id="flipBtn" onclick="flipCamera()">🔄 Girar cámara</button><button class="primary" id="micBtn" onclick="toggleMic()">🎙️ Activar micrófono</button><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div></div>
 <div class="card"><h3>💬 Comentarios de la sala</h3><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script type="module">
@@ -74,11 +74,11 @@ function addPerson(participant,track=null){
   name.textContent=participant.name||identity;
   card.append(video,name);
 
-// El anfitrión puede volver a su pantalla o ampliar invitados.
-  if(isHostSession){
+  // Solo el anfitrión puede ampliar a los invitados.
+  if(isHostSession && !isHostParticipant(participant)){
    const btn=document.createElement('button');
    btn.type='button';
-   btn.textContent=isHostParticipant(participant)?'👑 VOLVER A MI PANTALLA':'⛶ AMPLIAR';
+   btn.textContent='⛶ AMPLIAR';
    btn.style.cssText='display:block;width:100%;padding:12px;margin-top:5px;background:#f5d575;color:#111;font-weight:bold;border-radius:8px;touch-action:manipulation';
    btn.addEventListener('click',function(ev){
     ev.preventDefault();
@@ -114,6 +114,7 @@ function addPerson(participant,track=null){
 
 function removePerson(participant){
  const id=participant.identity;
+  for(const audio of document.querySelectorAll('audio[data-remote-participant]')){if(audio.dataset.remoteParticipant===id)audio.remove();}
  const el=document.getElementById('p-'+id);
  if(el)el.remove();
 
@@ -134,7 +135,38 @@ function addLocalCard(){
  isHostSession?'👑 '+myName+' (ANFITRIÓN)':myName;
  if(isHostSession)showFeatured(lp.identity);
 }
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>{let c=addPerson(participant);if(track.kind==='video'){const v=c.querySelector('video');track.attach(v);v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{});}});room.on(RoomEvent.TrackUnsubscribed,(track)=>track.detach());room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);setStatus(p.name||p.identity+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}else if(data.type==='camera-request'&&isHostSession){pendingCameraRequests.set(participant.identity,{identity:participant.identity,name:data.name||participant.name||participant.identity});renderCameraRequests()}else if(data.type==='camera-decision'&&data.target===room.localParticipant.identity){if(data.approved){cameraApproved=true;try{await room.localParticipant.setCameraEnabled(true);cameraOn=true;$('camBtn').textContent='📷 Apagar cámara';const pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);const v=$('p-'+room.localParticipant.identity)?.querySelector('video');if(pub?.track&&v){pub.track.attach(v);v.autoplay=true;v.playsInline=true;await v.play().catch(()=>{});}setStatus('Cámara aprobada y activada.')}catch(camErr){cameraOn=false;setStatus('Permiso aceptado, pero no se pudo iniciar la cámara: '+camErr.message)}}else{cameraApproved=false;setStatus('El anfitrión rechazó la solicitud de cámara.')}}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)pub.track.attach(document.querySelector('#p-'+p.identity+' video'))}}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+// Reproducir audio remoto en un elemento separado del video (Safari/iPhone).
+function attachRemoteMedia(track,participant){
+ const card=addPerson(participant);
+ if(track.kind==='video'){
+  const video=card.querySelector('video');
+  track.attach(video);
+  video.autoplay=true;video.playsInline=true;
+  video.play?.().catch(()=>{});
+ }else if(track.kind==='audio'){
+  const audio=track.attach();
+  audio.autoplay=true;
+  audio.playsInline=true;
+  audio.muted=false;
+  audio.volume=1;
+  audio.dataset.remoteParticipant=participant.identity;
+  document.body.appendChild(audio);
+  audio.play?.().catch(()=>{const b=$('soundBtn');if(b)b.textContent='🔊 Tocar para escuchar';});
+ }
+}
+window.activateSound=async()=>{
+ if(!room){setStatus('Primero conectate a una sala.');return;}
+ try{
+  await room.startAudio();
+  for(const audio of document.querySelectorAll('audio[data-remote-participant]')){
+   audio.muted=false;
+   await audio.play().catch(()=>{});
+  }
+  $('soundBtn').textContent='🔊 Sonido activado';
+  setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
+ }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
+};
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);setStatus(p.name||p.identity+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}else if(data.type==='camera-request'&&isHostSession){pendingCameraRequests.set(participant.identity,{identity:participant.identity,name:data.name||participant.name||participant.identity});renderCameraRequests()}else if(data.type==='camera-decision'&&data.target===room.localParticipant.identity){if(data.approved){cameraApproved=true;try{await room.localParticipant.setCameraEnabled(true);cameraOn=true;$('camBtn').textContent='📷 Apagar cámara';const pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);const v=$('p-'+room.localParticipant.identity)?.querySelector('video');if(pub?.track&&v){pub.track.attach(v);v.autoplay=true;v.playsInline=true;await v.play().catch(()=>{});}setStatus('Cámara aprobada y activada.')}catch(camErr){cameraOn=false;setStatus('Permiso aceptado, pero no se pudo iniciar la cámara: '+camErr.message)}}else{cameraApproved=false;setStatus('El anfitrión rechazó la solicitud de cámara.')}}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
 window.createRoom=async()=>{isHostSession=true;roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
 window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
