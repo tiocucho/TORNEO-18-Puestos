@@ -133,12 +133,15 @@
 <button type="button" onclick="sendReaction('🐎 Aviador tembo')"><span class="sticker-face">🐎</span><span class="sticker-caption">Aviador tembo</span></button>
 <button type="button" onclick="sendReaction('🤪 Aviador plaga')"><span class="sticker-face">🤪</span><span class="sticker-caption">Aviador plaga</span></button>
 <button type="button" onclick="sendReaction('🐎 Aviador solo hohoho')"><span class="sticker-face">🐎</span><span class="sticker-caption">Aviador solo hohoho</span></button>
-<button type="button" onclick="sendReaction('🤣 Ñde rete vai che socio')"><span class="sticker-face">🤣</span><span class="sticker-caption">Ñde rete vai che socio</span></button>
+<button type="button" onclick="sendReaction('🤣 NDE RETE VAI CHE SOCIO')"><span class="sticker-face">🤣</span><span class="sticker-caption">NDE RETE VAI CHE SOCIO</span></button>
 <button type="button" onclick="sendReaction('🍷 Vino mamá')"><span class="sticker-face">🍷</span><span class="sticker-caption">Vino mamá</span></button>
 <button type="button" onclick="sendReaction('😂 Eladio Maidana')"><span class="sticker-face">😂</span><span class="sticker-caption">Eladio Maidana</span></button>
 <button type="button" onclick="sendReaction('😎 Sotelo')"><span class="sticker-face">😎</span><span class="sticker-caption">Sotelo</span></button>
 <button type="button" onclick="sendReaction('🍀 El trébol llama al trébol')"><span class="sticker-face">🍀</span><span class="sticker-caption">El trébol llama al trébol</span></button>
-<button type="button" onclick="sendReaction('🤣 Tereho ejapiro nde plaga')"><span class="sticker-face">🤣</span><span class="sticker-caption">Tereho ejapiro nde plaga</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></div></section>
+<button type="button" onclick="sendReaction('🤣 Tereho ejapiro nde plaga')"><span class="sticker-face">🤣</span><span class="sticker-caption">Tereho ejapiro nde plaga</span></button>
+<button type="button" onclick="sendReaction('🟢 PUESTOS DISPONIBLES')"><span class="sticker-face">🟢</span><span class="sticker-caption">PUESTOS DISPONIBLES</span></button>
+<button type="button" onclick="sendReaction('👉 ELIJAN PUESTOS')"><span class="sticker-face">👉</span><span class="sticker-caption">ELIJAN PUESTOS</span></button>
+<button type="button" onclick="sendReaction('🔓 PUESTOS LIBERADOS')"><span class="sticker-face">🔓</span><span class="sticker-caption">PUESTOS LIBERADOS</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -511,12 +514,15 @@ const stickerCatalog=[
  {label:'🐎 Aviador tembo',emoji:'🐎',caption:'Aviador tembo'},
  {label:'🤪 Aviador plaga',emoji:'🤪',caption:'Aviador plaga'},
  {label:'🐎 Aviador solo hohoho',emoji:'🐎',caption:'Aviador solo hohoho'},
- {label:'🤣 Ñde rete vai che socio',emoji:'🤣',caption:'Ñde rete vai che socio'},
+ {label:'🤣 NDE RETE VAI CHE SOCIO',emoji:'🤣',caption:'NDE RETE VAI CHE SOCIO'},
  {label:'🍷 Vino mamá',emoji:'🍷',caption:'Vino mamá'},
  {label:'😂 Eladio Maidana',emoji:'😂',caption:'Eladio Maidana'},
  {label:'😎 Sotelo',emoji:'😎',caption:'Sotelo'},
  {label:'🍀 El trébol llama al trébol',emoji:'🍀',caption:'El trébol llama al trébol'},
- {label:'🤣 Tereho ejapiro nde plaga',emoji:'🤣',caption:'Tereho ejapiro nde plaga'}
+ {label:'🤣 Tereho ejapiro nde plaga',emoji:'🤣',caption:'Tereho ejapiro nde plaga'},
+ {label:'🟢 PUESTOS DISPONIBLES',emoji:'🟢',caption:'PUESTOS DISPONIBLES'},
+ {label:'👉 ELIJAN PUESTOS',emoji:'👉',caption:'ELIJAN PUESTOS'},
+ {label:'🔓 PUESTOS LIBERADOS',emoji:'🔓',caption:'PUESTOS LIBERADOS'}
 ];
 function appendSticker(name,sticker){
  const comments=$('comments');if(!comments)return;
