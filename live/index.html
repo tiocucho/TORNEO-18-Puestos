@@ -23,31 +23,131 @@
 #reactionBar{display:flex;gap:6px;overflow-x:auto;padding:8px 2px;white-space:nowrap}
 #reactionBar button{flex:0 0 auto;border:1px solid #9d7b2b;background:#17120a;color:#fff;border-radius:18px;padding:7px 10px;font-size:12px}
 
+
+/* FIX REAL DE DESPLAZAMIENTO: el documento no se mueve durante la sala.
+   El área de comentarios es el único panel con desplazamiento vertical. */
+@supports (height: 100dvh) {
+  body:has(#room:not(.hidden)) {
+    height:100dvh;
+    min-height:100dvh;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  #room:not(.hidden) {
+    height:calc(100dvh - 16px);
+    min-height:0;
+    overflow:hidden;
+  }
+  #room > .card {
+    height:100%;
+    max-height:100%;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  #liveStickyArea {
+    position:relative !important;
+    top:auto !important;
+    z-index:5;
+    flex:0 0 auto;
+    max-height:48dvh;
+    overflow:hidden;
+  }
+  #stage {
+    position:relative !important;
+    top:auto !important;
+    max-height:42dvh;
+    min-height:120px;
+    overflow:hidden;
+  }
+  #stage .person video {
+    height:min(38dvh,360px) !important;
+    max-height:38dvh !important;
+    object-fit:contain;
+  }
+  #room > .card > h3,
+  #room > .card > #videos,
+  #room > .card > div:not(.card):not(#liveStickyArea) {
+    flex:0 0 auto;
+  }
+  #videos {
+    max-height:13dvh;
+    overflow-x:auto;
+    overflow-y:hidden;
+  }
+  #room > .card > .card:last-child {
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    margin-bottom:0;
+  }
+  #room > .card > .card:last-child #comments {
+    flex:1 1 auto;
+    min-height:48px;
+    height:auto !important;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+}
+@media(max-width:600px) {
+  #room > .card {padding:9px}
+  #liveStickyArea {max-height:46dvh}
+  #stage .person video {height:min(36dvh,330px) !important;max-height:36dvh !important}
+  #videos {max-height:11dvh}
+}
+
+
+/* Reacciones como stickers visuales, no como texto plano */
+#reactionBar{display:flex;gap:9px;overflow-x:auto;padding:10px 2px 13px;white-space:nowrap;scrollbar-width:thin}
+#reactionBar button{flex:0 0 76px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;white-space:normal;border:1px solid #b99135;background:linear-gradient(145deg,#211a0d,#080808);color:#fff;border-radius:15px;padding:7px 5px;font-size:11px;font-weight:700;box-shadow:0 3px 9px #0008}
+#reactionBar button .sticker-face{font-size:30px;line-height:1.1}
+#reactionBar button .sticker-caption{font-size:10px;line-height:1.15;text-align:center}
+.chat-sticker{display:inline-flex;align-items:center;gap:10px;max-width:92%;margin:7px 0;padding:10px 14px;border:2px solid #d5ad43;border-radius:20px 20px 20px 5px;background:linear-gradient(135deg,#fff8dc,#f4e4b4);color:#211707;box-shadow:0 4px 12px #0005}
+.chat-sticker .sticker-face{font-size:46px;line-height:1}
+.chat-sticker .sticker-copy{display:flex;flex-direction:column;gap:3px;white-space:normal}
+.chat-sticker .sticker-copy strong{font-size:12px;color:#78550b}
+.chat-sticker .sticker-copy span{font-size:14px;font-weight:900;line-height:1.15}
+.chat-sticker .sticker-sender{font-size:10px;font-weight:600;opacity:.75}
+.chat-bubble.chat-sticker-float{background:#fff4d0;color:#231805;border:2px solid #d5ad43;border-radius:18px;padding:8px 12px}
+.chat-bubble.chat-sticker-float span{font-size:25px}
+
+
+#liveLikeBtn{display:inline-flex;align-items:center;gap:6px;margin-right:7px;border:1px solid #d8ad37;border-radius:22px;padding:7px 12px;background:linear-gradient(145deg,#173e83,#071a3c);color:#fff;font-weight:900;box-shadow:0 0 10px #d8ad3750}
+#liveLikeBtn span{font-size:11px;letter-spacing:.5px}
+#liveLikeBtn b{background:#fff;color:#14356b;border-radius:12px;padding:2px 7px;font-size:12px}
+#liveLikeBtn:active{transform:scale(.94)}
+.chat-sticker .sticker-copy span{font-size:16px;font-weight:900;line-height:1.15}
+
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
-<div id="viewerBar"><button id="viewerToggle" type="button" onclick="toggleViewerList()">👁️ <span id="viewerCount">1</span> mirando</button><div id="viewerList" class="hidden"></div></div>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><button id="hostReturnTop" class="host-return-top hidden" type="button" onclick="returnToHost()">👑 VOLVER A MI PANTALLA</button></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div><button class="primary hidden" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button id="flipBtn" onclick="flipCamera()">🔄 Girar cámara</button><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
-<div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')">👍 Like</button>
-<button type="button" onclick="sendReaction('❤️ Me gusta')">❤️ Me gusta</button>
-<button type="button" onclick="sendReaction('😂 Sí')">😂 Sí</button>
-<button type="button" onclick="sendReaction('🙅 No')">🙅 No</button>
-<button type="button" onclick="sendReaction('🚶 Paso')">🚶 Paso</button>
-<button type="button" onclick="sendReaction('🗣️ Trae')">🗣️ Trae</button>
-<button type="button" onclick="sendReaction('🤣 Evolea')">🤣 Evolea</button>
-<button type="button" onclick="sendReaction('😜 Erupa')">😜 Erupa</button>
-<button type="button" onclick="sendReaction('🐎 Aviador tembo')">🐎 Aviador tembo</button>
-<button type="button" onclick="sendReaction('🤪 Aviador plaga')">🤪 Aviador plaga</button>
-<button type="button" onclick="sendReaction('🐎 Aviador solo hohoho')">🐎 Aviador solo hohoho</button>
-<button type="button" onclick="sendReaction('🤣 Ñde rete vai che socio')">🤣 Ñde rete vai che socio</button>
-<button type="button" onclick="sendReaction('🍷 Vino mamá')">🍷 Vino mamá</button>
-<button type="button" onclick="sendReaction('😂 Eladio Maidana')">😂 Eladio Maidana</button>
-<button type="button" onclick="sendReaction('😎 Sotelo')">😎 Sotelo</button>
-<button type="button" onclick="sendReaction('🍀 El trébol llama al trébol')">🍀 El trébol llama al trébol</button>
-<button type="button" onclick="sendReaction('🤣 Tereho ejapiro nde plaga')">🤣 Tereho ejapiro nde plaga</button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></div></section>
+<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="liveLikeBtn" type="button" onclick="sendLiveLike()" aria-label="Dar Me gusta">👍 <span>LIKE</span> <b id="liveLikeCount">0</b></button><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><button id="hostReturnTop" class="host-return-top hidden" type="button" onclick="returnToHost()">👑 VOLVER A MI PANTALLA</button></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div><button class="primary hidden" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button id="flipBtn" onclick="flipCamera()">🔄 Girar cámara</button><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
+<button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
+<button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
+<button type="button" onclick="sendReaction('🙅 No')"><span class="sticker-face">🙅</span><span class="sticker-caption">No</span></button>
+<button type="button" onclick="sendReaction('🚶 Paso')"><span class="sticker-face">🚶</span><span class="sticker-caption">Paso</span></button>
+<button type="button" onclick="sendReaction('🗣️ Trae')"><span class="sticker-face">🗣️</span><span class="sticker-caption">Trae</span></button>
+<button type="button" onclick="sendReaction('🤣 Evolea')"><span class="sticker-face">🤣</span><span class="sticker-caption">Evolea</span></button>
+<button type="button" onclick="sendReaction('😜 Erupa')"><span class="sticker-face">😜</span><span class="sticker-caption">Erupa</span></button>
+<button type="button" onclick="sendReaction('🐎 Aviador tembo')"><span class="sticker-face">🐎</span><span class="sticker-caption">Aviador tembo</span></button>
+<button type="button" onclick="sendReaction('🤪 Aviador plaga')"><span class="sticker-face">🤪</span><span class="sticker-caption">Aviador plaga</span></button>
+<button type="button" onclick="sendReaction('🐎 Aviador solo hohoho')"><span class="sticker-face">🐎</span><span class="sticker-caption">Aviador solo hohoho</span></button>
+<button type="button" onclick="sendReaction('🤣 Ñde rete vai che socio')"><span class="sticker-face">🤣</span><span class="sticker-caption">Ñde rete vai che socio</span></button>
+<button type="button" onclick="sendReaction('🍷 Vino mamá')"><span class="sticker-face">🍷</span><span class="sticker-caption">Vino mamá</span></button>
+<button type="button" onclick="sendReaction('😂 Eladio Maidana')"><span class="sticker-face">😂</span><span class="sticker-caption">Eladio Maidana</span></button>
+<button type="button" onclick="sendReaction('😎 Sotelo')"><span class="sticker-face">😎</span><span class="sticker-caption">Sotelo</span></button>
+<button type="button" onclick="sendReaction('🍀 El trébol llama al trébol')"><span class="sticker-face">🍀</span><span class="sticker-caption">El trébol llama al trébol</span></button>
+<button type="button" onclick="sendReaction('🤣 Tereho ejapiro nde plaga')"><span class="sticker-face">🤣</span><span class="sticker-caption">Tereho ejapiro nde plaga</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -254,7 +354,7 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='live-like'){liveLikeCount++;renderLiveLikeCount()}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
 window.createRoom=async()=>{isHostSession=true;roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
 window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
@@ -383,12 +483,54 @@ function renderViewerList(){
  people.forEach(p=>{const row=document.createElement('div');row.textContent='👤 '+p.name;row.style.padding='6px 2px';box.append(row)});
  if(!people.length){const row=document.createElement('div');row.textContent='Todavía no hay espectadores conectados';box.append(row)}
 }
-window.sendReaction=(value)=>{
- const input=$('message');if(!input)return;
- input.value=value;
- window.sendComment();
+let liveLikeCount=0;
+function renderLiveLikeCount(){
+ const el=$('liveLikeCount');if(el)el.textContent=String(liveLikeCount);
+}
+window.sendLiveLike=async()=>{
+ if(!room?.localParticipant){setStatus('Conectate a la sala para dar Like.');return}
+ liveLikeCount++;renderLiveLikeCount();
+ try{
+  const payload=new TextEncoder().encode(JSON.stringify({type:'live-like'}));
+  await room.localParticipant.publishData(payload,{reliable:true});
+ }catch(e){liveLikeCount=Math.max(0,liveLikeCount-1);renderLiveLikeCount();setStatus('No se pudo enviar el Like: '+e.message)}
 };
-
+const stickerCatalog=[
+ {label:'👍 Like',emoji:'👍',caption:'Like'},
+ {label:'❤️ Me gusta',emoji:'❤️',caption:'Me gusta'},
+ {label:'😂 Sí',emoji:'😂',caption:'Sí'},
+ {label:'🙅 No',emoji:'🙅',caption:'No'},
+ {label:'🚶 Paso',emoji:'🚶',caption:'Paso'},
+ {label:'🗣️ Trae',emoji:'🗣️',caption:'Trae'},
+ {label:'🤣 Evolea',emoji:'🤣',caption:'Evolea'},
+ {label:'😜 Erupa',emoji:'😜',caption:'Erupa'},
+ {label:'🐎 Aviador tembo',emoji:'🐎',caption:'Aviador tembo'},
+ {label:'🤪 Aviador plaga',emoji:'🤪',caption:'Aviador plaga'},
+ {label:'🐎 Aviador solo hohoho',emoji:'🐎',caption:'Aviador solo hohoho'},
+ {label:'🤣 Ñde rete vai che socio',emoji:'🤣',caption:'Ñde rete vai che socio'},
+ {label:'🍷 Vino mamá',emoji:'🍷',caption:'Vino mamá'},
+ {label:'😂 Eladio Maidana',emoji:'😂',caption:'Eladio Maidana'},
+ {label:'😎 Sotelo',emoji:'😎',caption:'Sotelo'},
+ {label:'🍀 El trébol llama al trébol',emoji:'🍀',caption:'El trébol llama al trébol'},
+ {label:'🤣 Tereho ejapiro nde plaga',emoji:'🤣',caption:'Tereho ejapiro nde plaga'}
+];
+function appendSticker(name,sticker){
+ const comments=$('comments');if(!comments)return;
+ const card=document.createElement('div');card.className='chat-sticker';
+ const face=document.createElement('span');face.className='sticker-face';face.textContent=sticker.emoji;
+ const copy=document.createElement('span');copy.className='sticker-copy';
+ const sender=document.createElement('strong');sender.className='sticker-sender';sender.textContent=name+' envió un sticker';
+ const caption=document.createElement('span');caption.textContent=sticker.caption;
+ copy.append(sender,caption);card.append(face,copy);comments.append(card);comments.scrollTop=comments.scrollHeight;
+ const layer=$('chatBubbles');if(layer){const bubble=document.createElement('div');bubble.className='chat-bubble chat-sticker-float';const who=document.createElement('strong');who.textContent=name;const msg=document.createElement('span');msg.textContent=sticker.emoji+' '+sticker.caption;bubble.append(who,msg);layer.append(bubble);while(layer.children.length>4)layer.firstElementChild.remove();setTimeout(()=>bubble.remove(),7000)}
+}
+window.sendReaction=async(value)=>{
+ const sticker=stickerCatalog.find(item=>item.label===value);
+ if(!sticker)return;
+ if(!room?.localParticipant){appendSticker(myName||'Vos',sticker);return}
+ try{const payload=new TextEncoder().encode(JSON.stringify({type:'sticker',name:myName,sticker}));await room.localParticipant.publishData(payload,{reliable:true});appendSticker('Vos',sticker)}
+ catch(e){alert('No se pudo enviar el sticker. '+e.message)}
+};
 function appendComment(name,text){let p=document.createElement('p');p.textContent=name+': '+text;$('comments').append(p);$('comments').scrollTop=$('comments').scrollHeight;const layer=$('chatBubbles');if(layer){const bubble=document.createElement('div');bubble.className='chat-bubble';const who=document.createElement('strong');who.textContent=name;const msg=document.createElement('span');msg.textContent=text;bubble.append(who,msg);layer.append(bubble);while(layer.children.length>4)layer.firstElementChild.remove();setTimeout(()=>bubble.remove(),7000)}}
 window.sendComment=async()=>{const i=$('message'),text=i.value.trim();if(!text)return;if(!room?.localParticipant){appendComment(myName,text+' (solo en este dispositivo: sala desconectada)');i.value='';return}try{const payload=new TextEncoder().encode(JSON.stringify({type:'chat',name:myName,text}));await room.localParticipant.publishData(payload,{reliable:true});appendComment('Vos',text);i.value=''}catch(e){alert('No se pudo enviar el comentario. '+e.message)}};
 window.shareRoom=async()=>{let url=location.origin+location.pathname+'?sala='+encodeURIComponent(roomCode);try{if(navigator.share)await navigator.share({title:'TÍO CUCHO LIVE',text:'Entrá a mi sala '+roomCode,url});else await navigator.clipboard.writeText(url)}catch(e){prompt('Copiá este enlace',url)}};
