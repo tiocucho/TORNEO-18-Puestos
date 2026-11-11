@@ -42,10 +42,6 @@
 .chat-bubble.chat-sticker-float span{font-size:25px}
 
 
-#liveLikeBtn{display:inline-flex;align-items:center;gap:6px;margin-right:7px;border:1px solid #d8ad37;border-radius:22px;padding:7px 12px;background:linear-gradient(145deg,#173e83,#071a3c);color:#fff;font-weight:900;box-shadow:0 0 10px #d8ad3750}
-#liveLikeBtn span{font-size:11px;letter-spacing:.5px}
-#liveLikeBtn b{background:#fff;color:#14356b;border-radius:12px;padding:2px 7px;font-size:12px}
-#liveLikeBtn:active{transform:scale(.94)}
 .chat-sticker .sticker-copy span{font-size:16px;font-weight:900;line-height:1.15}
 
 
@@ -68,13 +64,64 @@
  #stage .person .name{min-height:46px}
 }
 
+/* Controles agrupados y un solo botón de retorno */
+#stage .person .local-controls{display:flex!important;align-items:center;gap:6px;flex-wrap:nowrap}
+#stage .person .local-controls button{width:42px;height:40px;min-width:42px;padding:4px;display:inline-flex!important;align-items:center;justify-content:center;border-radius:9px;background:#f5d575;color:#15100a;border:1px solid #b58d2d;font-size:18px;line-height:1}
+#stage .person .local-controls #camBtn{display:inline-flex!important;font-size:19px;padding:4px}
+#soundControls{margin:8px 0}
+#hostReturnTop{display:none!important}
+@media(max-width:600px){#stage .person .name{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}#stage .person .local-controls{margin-left:auto;gap:5px}#stage .person .local-controls button{width:40px;height:40px;min-width:40px}}
+
+/* Stickers Tío Cucho: acabado tipo calcomanía negro, rojo, blanco y dorado */
+#reactionBar{display:flex;gap:10px;overflow-x:auto;padding:12px 4px 16px;white-space:nowrap;scrollbar-width:thin}
+#reactionBar button{
+ flex:0 0 104px;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+ white-space:normal;overflow:visible;padding:8px 6px;border:2px solid #f4c64f;border-radius:16px;
+ background:radial-gradient(ellipse at 50% 15%,#4a1010 0%,#170707 55%,#050505 100%);
+ color:#fff;box-shadow:0 0 0 2px #4a0909,0 3px 0 #8a5b12,0 5px 12px #000b;
+}
+#reactionBar button .sticker-face{
+ display:block;font-size:42px;line-height:1.05;filter:drop-shadow(0 2px 2px #000) drop-shadow(0 0 5px #f5c54a);
+}
+#reactionBar button .sticker-caption{
+ display:block;max-width:100%;font-size:12px;line-height:1.05;text-align:center;font-weight:1000;font-style:italic;
+ text-transform:uppercase;letter-spacing:.1px;color:#fff;
+ -webkit-text-stroke:.45px #290606;
+ text-shadow:1px 1px 0 #8d0909,-1px -1px 0 #8d0909,2px 2px 0 #8d0909,0 0 5px #f5c54a;
+}
+.chat-sticker{
+ display:inline-flex;align-items:center;gap:12px;max-width:96%;margin:9px 0;padding:12px 16px;
+ border:3px solid #f4c64f;border-radius:22px 22px 22px 7px;
+ background:linear-gradient(145deg,#3b0909 0%,#170606 48%,#030303 100%);
+ color:#fff;box-shadow:0 0 0 2px #8c1111,0 4px 0 #9b701f,0 7px 16px #000b;
+}
+.chat-sticker .sticker-face{
+ flex:0 0 auto;font-size:58px;line-height:1;filter:drop-shadow(0 2px 2px #000) drop-shadow(0 0 7px #e7b640);
+}
+.chat-sticker .sticker-copy{display:flex;flex-direction:column;gap:5px;min-width:0;white-space:normal}
+.chat-sticker .sticker-copy strong{font-size:11px;color:#f5d47d;text-transform:none}
+.chat-sticker .sticker-copy span{
+ display:block;font-size:clamp(15px,4vw,22px);font-weight:1000;font-style:italic;line-height:1.08;
+ color:#fff;text-transform:uppercase;overflow-wrap:anywhere;
+ -webkit-text-stroke:.5px #300707;
+ text-shadow:1px 1px 0 #a20b0b,-1px -1px 0 #a20b0b,2px 2px 0 #a20b0b,0 0 7px #f3c64b;
+}
+.chat-bubble.chat-sticker-float{
+ background:linear-gradient(145deg,#3b0909,#080303);color:#fff;border:2px solid #f4c64f;border-radius:18px;padding:9px 13px;
+ box-shadow:0 0 0 2px #8c1111,0 4px 12px #000b;
+}
+.chat-bubble.chat-sticker-float span{
+ display:block;font-size:22px;font-weight:1000;font-style:italic;color:#fff;
+ text-shadow:1px 1px 0 #a20b0b,0 0 5px #f3c64b;
+}
+
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="liveLikeBtn" type="button" onclick="sendLiveLike()" aria-label="Dar Me gusta">👍 <span>LIKE</span> <b id="liveLikeCount">0</b></button><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><button id="hostReturnTop" class="host-return-top hidden" type="button" onclick="returnToHost()">👑 VOLVER A MI PANTALLA</button></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div><button class="primary hidden" id="camBtn" onclick="toggleCamera()">📷 Activar cámara</button><button id="flipBtn" onclick="flipCamera()">🔄 Girar cámara</button><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
 <button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
 <button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
@@ -254,7 +301,20 @@ function addLocalCard(){
  camButton.type='button';camButton.className='local-cam-control';camButton.textContent='📷';
  camButton.setAttribute('aria-label','Activar cámara');camButton.title='Activar o apagar mi cámara';
  camButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleCamera();});
- controls.append(micButton,camButton);card.querySelector('.name').append(controls);
+ const cameraToggle=$('camBtn');
+ const flipButton=document.createElement('button');
+ flipButton.type='button';flipButton.id='flipBtn';flipButton.className='local-flip-control';
+ flipButton.textContent='🔄';flipButton.title='Girar cámara';flipButton.setAttribute('aria-label','Girar cámara');
+ flipButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();flipCamera();});
+ if(cameraToggle){
+  cameraToggle.classList.remove('hidden');
+  cameraToggle.classList.add('local-camera-toggle');
+  cameraToggle.textContent='📷';
+  cameraToggle.title='Encender o apagar cámara';
+  cameraToggle.setAttribute('aria-label','Encender o apagar cámara');
+  controls.append(micButton,cameraToggle,flipButton);
+ }else{controls.append(micButton,camButton,flipButton);}
+ card.querySelector('.name').append(controls);
  if(isHostSession){
   $('hostReturnTop')?.classList.remove('hidden');
   const backButton=document.createElement('button');
@@ -298,7 +358,7 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='live-like'){liveLikeCount++;renderLiveLikeCount()}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
 window.createRoom=async()=>{isHostSession=true;roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
 window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
@@ -310,18 +370,18 @@ window.toggleCamera=async()=>{
  cameraStarting=true;
  $('camBtn').disabled=true;
  if(cameraOn){
-  $('camBtn').textContent='⏳ Apagando cámara…';
+  $('camBtn').textContent='⏳';
   try{
    await room.localParticipant.setCameraEnabled(false);
    cameraOn=false;
    
-   $('camBtn').textContent='📷 Activar cámara';document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='📷';b.setAttribute('aria-label','Activar cámara');});
+   $('camBtn').textContent='📷';document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='📷';b.setAttribute('aria-label','Activar cámara');});
    setStatus('Cámara apagada.');
-  }catch(e){$('camBtn').textContent='📷 Apagar cámara';document.querySelectorAll('.local-camera-control').forEach(b=>b.textContent='📷');document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='🔴';b.setAttribute('aria-label','Apagar cámara');});setStatus('No se pudo apagar la cámara: '+e.message)}
+  }catch(e){$('camBtn').textContent='🔴';document.querySelectorAll('.local-camera-control').forEach(b=>b.textContent='📷');document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='🔴';b.setAttribute('aria-label','Apagar cámara');});setStatus('No se pudo apagar la cámara: '+e.message)}
   finally{cameraStarting=false;$('camBtn').disabled=false}
   return;
  }
- $('camBtn').textContent='⏳ Iniciando cámara…';
+ $('camBtn').textContent='⏳';
  setStatus('Iniciando cámara frontal… Permití el acceso si Safari lo solicita.');
  try{
   // Solicitar frontal al iniciar, evitando que el usuario tenga que girar varias veces.
@@ -335,12 +395,12 @@ window.toggleCamera=async()=>{
    try{await video.play()}catch(e){}
   }
   cameraOn=true;
-  $('camBtn').textContent='📷 Apagar cámara';document.querySelectorAll('.local-camera-control').forEach(b=>b.textContent='📷');document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='🔴';b.setAttribute('aria-label','Apagar cámara');});
+  $('camBtn').textContent='🔴';document.querySelectorAll('.local-camera-control').forEach(b=>b.textContent='📷');document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='🔴';b.setAttribute('aria-label','Apagar cámara');});
   setStatus('Cámara encendida.');
  }catch(e){
   cameraOn=false;
   try{await room.localParticipant.setCameraEnabled(false)}catch(_){}
-  $('camBtn').textContent='📷 Activar cámara';document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='📷';b.setAttribute('aria-label','Activar cámara');});
+  $('camBtn').textContent='📷';document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='📷';b.setAttribute('aria-label','Activar cámara');});
   setStatus('No se pudo iniciar la cámara: '+e.message+'. Revisá el permiso de cámara de Safari.');
  }finally{
   cameraStarting=false;$('camBtn').disabled=false;
@@ -427,18 +487,6 @@ function renderViewerList(){
  people.forEach(p=>{const row=document.createElement('div');row.textContent='👤 '+p.name;row.style.padding='6px 2px';box.append(row)});
  if(!people.length){const row=document.createElement('div');row.textContent='Todavía no hay espectadores conectados';box.append(row)}
 }
-let liveLikeCount=0;
-function renderLiveLikeCount(){
- const el=$('liveLikeCount');if(el)el.textContent=String(liveLikeCount);
-}
-window.sendLiveLike=async()=>{
- if(!room?.localParticipant){setStatus('Conectate a la sala para dar Like.');return}
- liveLikeCount++;renderLiveLikeCount();
- try{
-  const payload=new TextEncoder().encode(JSON.stringify({type:'live-like'}));
-  await room.localParticipant.publishData(payload,{reliable:true});
- }catch(e){liveLikeCount=Math.max(0,liveLikeCount-1);renderLiveLikeCount();setStatus('No se pudo enviar el Like: '+e.message)}
-};
 const stickerCatalog=[
  {label:'👍 Like',emoji:'👍',caption:'Like'},
  {label:'❤️ Me gusta',emoji:'❤️',caption:'Me gusta'},
