@@ -316,13 +316,20 @@ function addLocalCard(){
  }else{controls.append(micButton,camButton,flipButton);}
  card.querySelector('.name').append(controls);
  if(isHostSession){
-  $('hostReturnTop')?.classList.remove('hidden');
+  $('hostReturnTop')?.classList.add('hidden');
   const backButton=document.createElement('button');
   backButton.type='button';
   backButton.className='host-return-control';
   backButton.textContent='👑 VOLVER A MI PANTALLA';
   backButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();showFeatured(lp.identity);});
   card.append(backButton);
+  const cleanNullText=()=>{
+   card.childNodes.forEach(node=>{
+    if(node.nodeType===Node.TEXT_NODE && node.textContent.trim()==='null') node.remove();
+   });
+  };
+  cleanNullText();
+  new MutationObserver(cleanNullText).observe(card,{childList:true,subtree:true});
   showFeatured(lp.identity);
  }
  updateViewerList();
@@ -388,11 +395,15 @@ window.toggleCamera=async()=>{
   await room.localParticipant.setCameraEnabled(true,{facingMode:'user'});
   const pub=[...room.localParticipant.trackPublications.values()].find(p=>p.source===Track.Source.Camera);
   if(!pub?.track)throw new Error('La cámara se activó pero no se encontró la pista de video publicada.');
-  const video=$('p-'+room.localParticipant.identity)?.querySelector('video');
-  if(video){
-   video.muted=true;video.autoplay=true;video.playsInline=true;
-   pub.track.attach(video);
-   try{await video.play()}catch(e){}
+  const localCard=$('p-'+room.localParticipant.identity);
+  const video=localCard?.querySelector('video');
+  if(!video)throw new Error('No se encontró el espacio de video del anfitrión.');
+  video.muted=true;video.autoplay=true;video.playsInline=true;
+  video.setAttribute('playsinline','');
+  video.setAttribute('autoplay','');
+  pub.track.attach(video);
+  try{await video.play()}catch(e){
+   setStatus('La cámara está encendida. Tocá el video para permitir la reproducción.');
   }
   cameraOn=true;
   $('camBtn').textContent='🔴';document.querySelectorAll('.local-camera-control').forEach(b=>b.textContent='📷');document.querySelectorAll('.local-cam-control').forEach(b=>{b.textContent='🔴';b.setAttribute('aria-label','Apagar cámara');});
