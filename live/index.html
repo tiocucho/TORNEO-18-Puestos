@@ -24,83 +24,7 @@
 #reactionBar button{flex:0 0 auto;border:1px solid #9d7b2b;background:#17120a;color:#fff;border-radius:18px;padding:7px 10px;font-size:12px}
 
 
-/* FIX REAL DE DESPLAZAMIENTO: el documento no se mueve durante la sala.
-   El área de comentarios es el único panel con desplazamiento vertical. */
-@supports (height: 100dvh) {
-  body:has(#room:not(.hidden)) {
-    height:100dvh;
-    min-height:100dvh;
-    overflow:hidden;
-    overscroll-behavior:none;
-  }
-  #room:not(.hidden) {
-    height:calc(100dvh - 16px);
-    min-height:0;
-    overflow:hidden;
-  }
-  #room > .card {
-    height:100%;
-    max-height:100%;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    overscroll-behavior:none;
-  }
-  #liveStickyArea {
-    position:relative !important;
-    top:auto !important;
-    z-index:5;
-    flex:0 0 auto;
-    max-height:48dvh;
-    overflow:hidden;
-  }
-  #stage {
-    position:relative !important;
-    top:auto !important;
-    max-height:42dvh;
-    min-height:120px;
-    overflow:hidden;
-  }
-  #stage .person video {
-    height:min(38dvh,360px) !important;
-    max-height:38dvh !important;
-    object-fit:contain;
-  }
-  #room > .card > h3,
-  #room > .card > #videos,
-  #room > .card > div:not(.card):not(#liveStickyArea) {
-    flex:0 0 auto;
-  }
-  #videos {
-    max-height:13dvh;
-    overflow-x:auto;
-    overflow-y:hidden;
-  }
-  #room > .card > .card:last-child {
-    flex:1 1 auto;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    margin-bottom:0;
-  }
-  #room > .card > .card:last-child #comments {
-    flex:1 1 auto;
-    min-height:48px;
-    height:auto !important;
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    -webkit-overflow-scrolling:touch;
-    touch-action:pan-y;
-  }
-}
-@media(max-width:600px) {
-  #room > .card {padding:9px}
-  #liveStickyArea {max-height:46dvh}
-  #stage .person video {height:min(36dvh,330px) !important;max-height:36dvh !important}
-  #videos {max-height:11dvh}
-}
+
 
 
 /* Reacciones como stickers visuales, no como texto plano */
@@ -123,6 +47,26 @@
 #liveLikeBtn b{background:#fff;color:#14356b;border-radius:12px;padding:2px 7px;font-size:12px}
 #liveLikeBtn:active{transform:scale(.94)}
 .chat-sticker .sticker-copy span{font-size:16px;font-weight:900;line-height:1.15}
+
+
+/* Restauración de escenario grande y controles visibles */
+#liveStickyArea{position:sticky;top:0;z-index:30;max-height:none;overflow:visible;background:linear-gradient(180deg,rgba(5,3,3,.98),rgba(12,5,4,.96))}
+#stage{position:relative;top:auto;max-height:none;min-height:180px;overflow:visible}
+#stage .person{overflow:visible}
+#stage .person video{height:min(52vh,460px);max-height:52vh;object-fit:contain}
+#stage .person .name{display:flex;align-items:center;min-height:42px;overflow:visible}
+#stage .person .local-controls{display:flex!important;visibility:visible!important;opacity:1!important;position:relative;z-index:35}
+#stage .person .local-controls button{width:44px;height:42px;min-width:44px;display:inline-flex!important;align-items:center;justify-content:center;visibility:visible!important}
+#camBtn{display:inline-flex!important;visibility:visible!important}
+#videos{max-height:none;overflow-x:auto;overflow-y:visible}
+#comments{height:150px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){
+ body{overflow-x:hidden}
+ #liveStickyArea{max-height:none;overflow:visible}
+ #stage{max-height:none;overflow:visible}
+ #stage .person video{height:min(52vh,430px);max-height:52vh}
+ #stage .person .name{min-height:46px}
+}
 
 </style>
 </head>
