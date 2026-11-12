@@ -115,6 +115,28 @@
  text-shadow:1px 1px 0 #a20b0b,0 0 5px #f3c64b;
 }
 
+
+/* Corrección móvil: el chat acompaña al teclado sin mover el escenario sobre el texto */
+#chatComposer{display:flex;gap:8px;align-items:center;width:100%;padding:8px 0}
+#chatComposer #message{flex:1;min-width:0;margin:0;font-size:16px}
+#chatComposer button{flex:0 0 auto;margin:0}
+body.chat-composing{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.chat-composing #liveStickyArea,
+body.chat-composing #stage{position:relative!important;top:auto!important}
+body.chat-composing #chatComposer{
+ position:fixed;left:0;right:0;bottom:var(--tc-keyboard-bottom,0px);z-index:9999;
+ padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+ background:linear-gradient(180deg,#100d08,#050505);border-top:1px solid #b99135;
+ box-shadow:0 -5px 18px #000b
+}
+body.chat-composing #chatComposer #message{height:44px}
+body.chat-composing #chatComposer button{height:44px;min-width:76px}
+@media(max-width:600px){
+ #chatComposer{gap:6px}
+ #chatComposer #message{font-size:16px}
+ body.chat-composing #comments{scroll-margin-bottom:100px}
+}
+
 </style>
 </head>
 <body>
@@ -141,7 +163,8 @@
 <button type="button" onclick="sendReaction('🤣 Tereho ejapiro nde plaga')"><span class="sticker-face">🤣</span><span class="sticker-caption">Tereho ejapiro nde plaga</span></button>
 <button type="button" onclick="sendReaction('🟢 PUESTOS DISPONIBLES')"><span class="sticker-face">🟢</span><span class="sticker-caption">PUESTOS DISPONIBLES</span></button>
 <button type="button" onclick="sendReaction('👉 ELIJAN PUESTOS')"><span class="sticker-face">👉</span><span class="sticker-caption">ELIJAN PUESTOS</span></button>
-<button type="button" onclick="sendReaction('🔓 PUESTOS LIBERADOS')"><span class="sticker-face">🔓</span><span class="sticker-caption">PUESTOS LIBERADOS</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" onclick="sendComment()">Enviar</button></div></div></section>
+<button type="button" onclick="sendReaction('🔓 PUESTOS LIBERADOS')"><span class="sticker-face">🔓</span><span class="sticker-caption">PUESTOS LIBERADOS</span></button>
+<button type="button" onclick="sendReaction('🏆 MÁXIMO')"><span class="sticker-face">🏆</span><span class="sticker-caption">MÁXIMO</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><div id="chatComposer"><input id="message" placeholder="Escribí un comentario" maxlength="300" autocomplete="off"><button class="primary" onclick="sendComment()">Enviar</button></div></div></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -522,7 +545,8 @@ const stickerCatalog=[
  {label:'🤣 Tereho ejapiro nde plaga',emoji:'🤣',caption:'Tereho ejapiro nde plaga'},
  {label:'🟢 PUESTOS DISPONIBLES',emoji:'🟢',caption:'PUESTOS DISPONIBLES'},
  {label:'👉 ELIJAN PUESTOS',emoji:'👉',caption:'ELIJAN PUESTOS'},
- {label:'🔓 PUESTOS LIBERADOS',emoji:'🔓',caption:'PUESTOS LIBERADOS'}
+ {label:'🔓 PUESTOS LIBERADOS',emoji:'🔓',caption:'PUESTOS LIBERADOS'},
+ {label:'🏆 MÁXIMO',emoji:'🏆',caption:'MÁXIMO'}
 ];
 function appendSticker(name,sticker){
  const comments=$('comments');if(!comments)return;
@@ -586,6 +610,44 @@ history.replaceState({},'',location.pathname+'?anfitrion=1');
 $('message').addEventListener('keydown',e=>{
 if(e.key==='Enter')window.sendComment();
 });
+
+// En iPhone, seguir el viewport visible cuando aparece/desaparece el teclado.
+(function setupMobileChatKeyboard(){
+ const input=$('message'), composer=$('chatComposer');
+ if(!input||!composer)return;
+ const vv=window.visualViewport;
+ let blurTimer=null;
+ function syncKeyboard(){
+   if(!document.body.classList.contains('chat-composing'))return;
+   const bottom=vv ? Math.max(0,window.innerHeight-(vv.height+vv.offsetTop)) : 0;
+   document.documentElement.style.setProperty('--tc-keyboard-bottom',bottom+'px');
+   requestAnimationFrame(()=>{
+     const r=composer.getBoundingClientRect();
+     if(r.bottom>(vv?vv.offsetTop+vv.height:window.innerHeight)-4){
+       window.scrollTo({top:window.scrollY+(r.bottom-(vv?vv.offsetTop+vv.height:window.innerHeight))+12,behavior:'auto'});
+     }
+   });
+ }
+ input.addEventListener('focus',()=>{
+   if(blurTimer)clearTimeout(blurTimer);
+   document.body.classList.add('chat-composing');
+   syncKeyboard();
+   setTimeout(syncKeyboard,100);
+   setTimeout(syncKeyboard,300);
+ });
+ input.addEventListener('blur',()=>{
+   blurTimer=setTimeout(()=>{
+     document.body.classList.remove('chat-composing');
+     document.documentElement.style.removeProperty('--tc-keyboard-bottom');
+   },180);
+ });
+ if(vv){
+   vv.addEventListener('resize',syncKeyboard);
+   vv.addEventListener('scroll',syncKeyboard);
+ }
+ window.addEventListener('orientationchange',()=>setTimeout(syncKeyboard,250));
+})();
+
 
 const params=new URLSearchParams(location.search);
 if(params.get('anfitrion')==='1'){
