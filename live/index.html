@@ -116,20 +116,21 @@
 }
 
 
-/* Corrección móvil: el chat acompaña al teclado sin mover el escenario sobre el texto */
+/* Chat móvil: el compositor se ancla al BORDE INFERIOR del viewport visible de iOS */
 #chatComposer{display:flex;gap:8px;align-items:center;width:100%;padding:8px 0}
 #chatComposer #message{flex:1;min-width:0;margin:0;font-size:16px}
 #chatComposer button{flex:0 0 auto;margin:0}
-body.chat-composing{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.chat-composing{padding-bottom:0!important}
 body.chat-composing #liveStickyArea,
-body.chat-composing #stage{position:relative!important;top:auto!important}
+body.chat-composing #stage{position:static!important;top:auto!important}
 body.chat-composing #chatComposer{
- position:fixed;left:0;right:0;bottom:var(--tc-keyboard-bottom,0px);z-index:9999;
+ position:fixed!important;left:0!important;right:0!important;top:var(--tc-composer-top,auto)!important;bottom:auto!important;
+ width:100%;z-index:2147483000!important;
  padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
  background:linear-gradient(180deg,#100d08,#050505);border-top:1px solid #b99135;
- box-shadow:0 -5px 18px #000b
+ box-shadow:0 -5px 18px #000b;transform:translateZ(0)
 }
-body.chat-composing #chatComposer #message{height:44px}
+body.chat-composing #chatComposer #message{height:44px;min-height:44px}
 body.chat-composing #chatComposer button{height:44px;min-width:76px}
 @media(max-width:600px){
  #chatComposer{gap:6px}
@@ -611,20 +612,24 @@ $('message').addEventListener('keydown',e=>{
 if(e.key==='Enter')window.sendComment();
 });
 
-// En iPhone, seguir el viewport visible cuando aparece/desaparece el teclado.
+// iPhone/iPad: posicionar el campo dentro del viewport visible, encima del teclado.
 (function setupMobileChatKeyboard(){
  const input=$('message'), composer=$('chatComposer');
  if(!input||!composer)return;
  const vv=window.visualViewport;
- let blurTimer=null;
+ let blurTimer=null, raf=0;
  function syncKeyboard(){
    if(!document.body.classList.contains('chat-composing'))return;
-   const bottom=vv ? Math.max(0,window.innerHeight-(vv.height+vv.offsetTop)) : 0;
-   document.documentElement.style.setProperty('--tc-keyboard-bottom',bottom+'px');
-   requestAnimationFrame(()=>{
-     const r=composer.getBoundingClientRect();
-     if(r.bottom>(vv?vv.offsetTop+vv.height:window.innerHeight)-4){
-       window.scrollTo({top:window.scrollY+(r.bottom-(vv?vv.offsetTop+vv.height:window.innerHeight))+12,behavior:'auto'});
+   cancelAnimationFrame(raf);
+   raf=requestAnimationFrame(()=>{
+     const visibleBottom=vv ? vv.offsetTop+vv.height : window.innerHeight;
+     const top=Math.max(0,visibleBottom-composer.offsetHeight);
+     document.documentElement.style.setProperty('--tc-composer-top',top+'px');
+     // Mantener el cursor y el campo dentro de la zona visible sin desplazar el escenario.
+     const r=input.getBoundingClientRect();
+     const visibleTop=vv ? vv.offsetTop : 0;
+     if(r.top<visibleTop+4){
+       window.scrollTo(0,Math.max(0,window.scrollY-(visibleTop+4-r.top)));
      }
    });
  }
@@ -632,20 +637,22 @@ if(e.key==='Enter')window.sendComment();
    if(blurTimer)clearTimeout(blurTimer);
    document.body.classList.add('chat-composing');
    syncKeyboard();
-   setTimeout(syncKeyboard,100);
-   setTimeout(syncKeyboard,300);
+   setTimeout(syncKeyboard,80);
+   setTimeout(syncKeyboard,250);
+   setTimeout(syncKeyboard,500);
  });
  input.addEventListener('blur',()=>{
    blurTimer=setTimeout(()=>{
      document.body.classList.remove('chat-composing');
-     document.documentElement.style.removeProperty('--tc-keyboard-bottom');
-   },180);
+     document.documentElement.style.removeProperty('--tc-composer-top');
+   },220);
  });
  if(vv){
    vv.addEventListener('resize',syncKeyboard);
    vv.addEventListener('scroll',syncKeyboard);
  }
- window.addEventListener('orientationchange',()=>setTimeout(syncKeyboard,250));
+ window.addEventListener('resize',syncKeyboard);
+ window.addEventListener('orientationchange',()=>setTimeout(syncKeyboard,300));
 })();
 
 
