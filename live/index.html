@@ -138,6 +138,18 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
  body.chat-composing #comments{scroll-margin-bottom:100px}
 }
 
+
+/* Control de stickers: no deben cubrir el video ni llenar el historial */
+#chatBubbles{gap:5px;bottom:12px}
+#chatBubbles .chat-sticker-float{max-width:min(68%,280px);padding:5px 8px;border-width:1px;border-radius:12px;font-size:11px;line-height:1.15}
+#chatBubbles .chat-sticker-float strong{font-size:10px;margin-right:3px}
+#chatBubbles .chat-sticker-float span{font-size:13px;line-height:1.15;overflow-wrap:anywhere}
+#comments .chat-sticker{max-width:78%;margin:3px 0;padding:5px 8px;gap:6px;border-width:1px;border-radius:12px}
+#comments .chat-sticker .sticker-face{font-size:25px}
+#comments .chat-sticker .sticker-copy{gap:2px}
+#comments .chat-sticker .sticker-sender{font-size:9px}
+#comments .chat-sticker .sticker-copy span{font-size:11px;line-height:1.1}
+
 </style>
 </head>
 <body>
@@ -556,8 +568,11 @@ function appendSticker(name,sticker){
  const copy=document.createElement('span');copy.className='sticker-copy';
  const sender=document.createElement('strong');sender.className='sticker-sender';sender.textContent=name+' envió un sticker';
  const caption=document.createElement('span');caption.textContent=sticker.caption;
- copy.append(sender,caption);card.append(face,copy);comments.append(card);comments.scrollTop=comments.scrollHeight;
- const layer=$('chatBubbles');if(layer){const bubble=document.createElement('div');bubble.className='chat-bubble chat-sticker-float';const who=document.createElement('strong');who.textContent=name;const msg=document.createElement('span');msg.textContent=sticker.emoji+' '+sticker.caption;bubble.append(who,msg);layer.append(bubble);while(layer.children.length>4)layer.firstElementChild.remove();setTimeout(()=>bubble.remove(),7000)}
+ copy.append(sender,caption);card.append(face,copy);comments.append(card);
+ while(comments.querySelectorAll('.chat-sticker').length>3){comments.querySelector('.chat-sticker')?.remove()}
+ comments.scrollTop=comments.scrollHeight;
+ setTimeout(()=>card.remove(),8000);
+ const layer=$('chatBubbles');if(layer){const bubble=document.createElement('div');bubble.className='chat-bubble chat-sticker-float';const who=document.createElement('strong');who.textContent=name;const msg=document.createElement('span');msg.textContent=sticker.emoji+' '+sticker.caption;bubble.append(who,msg);layer.append(bubble);while(layer.children.length>3)layer.firstElementChild.remove();setTimeout(()=>bubble.remove(),5000)}
 }
 window.sendReaction=async(value)=>{
  const sticker=stickerCatalog.find(item=>item.label===value);
