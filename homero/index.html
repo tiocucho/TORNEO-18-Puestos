@@ -98,7 +98,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <section id="authGate">
 <h2>🔐 Ingresar a HOMERO LIVE</h2>
 <p class="note">Entrá con el correo y la contraseña que te entregó el administrador.</p>
-<form id="loginForm"><label for="loginEmail">Correo electrónico</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="tu correo"><label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="tu contraseña"><button class="primary" type="submit">Ingresar</button></form>
+<form id="loginForm"><label for="loginEmail">Usuario</label><input id="loginEmail" type="text" autocomplete="username" autocapitalize="none" required placeholder="Tu usuario"><label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="tu contraseña"><button class="primary" type="submit">Ingresar</button></form>
 <p id="authMessage" aria-live="polite"></p>
 </section>
 <header>👑 HOMERO LIVE</header>
@@ -145,10 +145,10 @@ const ADMIN_EMAIL='joalalir@gmail.com';let currentUser=null,isAdmin=false;
 const TOKEN_SERVER_ID='homerolive-1yj5wz';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHostSession=false;
 const $=id=>document.getElementById(id);
-$('loginForm').addEventListener('submit',async ev=>{ev.preventDefault();$('authMessage').textContent='Verificando acceso…';try{await signInWithEmailAndPassword(auth,$('loginEmail').value.trim(),$('loginPassword').value)}catch(err){$('authMessage').textContent='No se pudo ingresar. Revisá el correo y la contraseña.';console.error(err)}});
+$('loginForm').addEventListener('submit',async ev=>{ev.preventDefault();$('authMessage').textContent='Verificando acceso…';try{const usuario=$('loginEmail').value.trim();const loginEmail=usuario.toLowerCase()==='ANFITRION'.toLowerCase()?ADMIN_EMAIL:usuario;await signInWithEmailAndPassword(auth,loginEmail,$('loginPassword').value)}catch(err){$('authMessage').textContent='No se pudo ingresar. Revisá el usuario y la contraseña.';console.error(err)}});
 onAuthStateChanged(auth,async user=>{
  currentUser=user;isAdmin=!!user&&user.email?.toLowerCase()===ADMIN_EMAIL;
- if(!user){document.body.classList.remove('authenticated');$('authMessage').textContent='Ingresá con tus credenciales.';return;}
+ if(!user){document.body.classList.remove('authenticated');$('authMessage').textContent='Ingresá con tu usuario y contraseña.';return;}
  try{const profileRef=doc(db,'usuarios',user.uid),profileSnap=await getDoc(profileRef);if(!profileSnap.exists()){const alias=(user.displayName||user.email.split('@')[0]).slice(0,40);await setDoc(profileRef,{alias,correo:user.email});myName=alias}else{myName=profileSnap.data().alias||user.email.split('@')[0]}}
  catch(err){$('authMessage').textContent='No se pudo leer el perfil. Revisá las reglas de Firestore.';console.error(err);return;}
  $('name').value=myName;document.body.classList.add('authenticated');$('authGate').classList.add('hidden');$('logoutBtn').classList.remove('hidden');
