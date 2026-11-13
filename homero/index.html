@@ -355,7 +355,11 @@ function addPerson(participant,track=null){
   $('videos').append(card);
  }
 
- if(isHostParticipant(participant) && !featuredIdentity){
+ // En el dispositivo de cada invitado, el anfitrión siempre ocupa la pantalla grande
+ // al entrar o reconectarse. La selección manual del anfitrión se replica con spotlight.
+ if(isHostParticipant(participant) && !isHostSession){
+  showFeatured(identity,false);
+ }else if(isHostParticipant(participant) && !featuredIdentity){
   showFeatured(identity,false);
  }
 
@@ -481,7 +485,18 @@ async function connectRoom(){
   room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});
   room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});
   room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});
-  room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}}catch(e){}});
+  room.on(RoomEvent.DataReceived,async(payload,participant)=>{
+   try{
+    const data=JSON.parse(new TextDecoder().decode(payload));
+    if(data.type==='chat'){
+     appendComment(data.name,data.text);
+    }else if(data.type==='sticker'&&data.sticker){
+     appendSticker(data.name||participant?.name||'Participante',data.sticker);
+    }else if(data.type==='spotlight' && data.identity && isHostParticipant(participant)){
+     showFeatured(data.identity,false);
+    }
+   }catch(e){console.warn('No se pudo procesar el evento de sala:',e);}
+  });
   room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));
   const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);
   const hostIdentity=isHostSession?(localStorage.getItem('homero_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;
