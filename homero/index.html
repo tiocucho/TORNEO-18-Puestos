@@ -278,6 +278,11 @@ function isHostParticipant(p){
  return !!p?.identity?.startsWith('host-');
 }
 
+// El anfitrión se reconoce tanto por la sesión local como por su identidad LiveKit.
+function isHostController(){
+ return isHostSession || isHostParticipant(room?.localParticipant);
+}
+
 function showFeatured(identity,broadcast=true){
  const card=document.getElementById('p-'+identity);
  if(!card){pendingFeaturedIdentity=identity;return false;}
@@ -291,7 +296,7 @@ function showFeatured(identity,broadcast=true){
  stage.replaceChildren(card,$('chatBubbles'));
 
  // El anfitrión comunica a toda la sala qué participante debe verse en grande.
- if(broadcast && isHostSession && room?.localParticipant){
+ if(broadcast && isHostController() && room?.localParticipant){
   const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
   room.localParticipant.publishData(payload,{reliable:true}).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
  }
@@ -326,12 +331,16 @@ function addPerson(participant,track=null){
   name.append(nameLabel);
   card.append(video,name);
 
-  // El anfitrión puede ampliar cualquier participante y compartir la selección.
-  if(isHostSession && !isHostParticipant(participant)){
-   const enlarge=document.createElement('button');
+ }
+
+ // El anfitrión siempre tiene un control visible en cada invitado, incluso
+ // si la tarjeta ya existía antes de que LiveKit terminara de identificarlo.
+ if(isHostController() && !isHostParticipant(participant)){
+  let enlarge=card.querySelector('.enlarge-person');
+  if(!enlarge){
+   enlarge=document.createElement('button');
    enlarge.type='button';
    enlarge.className='enlarge-person';
-   enlarge.textContent='⛶ AMPLIAR EN PANTALLA PRINCIPAL';
    enlarge.addEventListener('click',ev=>{
     ev.preventDefault();
     ev.stopPropagation();
@@ -339,20 +348,17 @@ function addPerson(participant,track=null){
    });
    card.append(enlarge);
   }
- }
-
- // Asegurar el control también en tarjetas creadas antes de que el anfitrión quedara identificado.
- if(isHostSession && !isHostParticipant(participant) && !card.querySelector('.enlarge-person')){
-  const enlarge=document.createElement('button');
-  enlarge.type='button';
-  enlarge.className='enlarge-person';
-  enlarge.textContent='⛶ AMPLIAR EN PANTALLA PRINCIPAL';
-  enlarge.addEventListener('click',ev=>{
-   ev.preventDefault();
-   ev.stopPropagation();
-   showFeatured(identity,true);
-  });
-  card.append(enlarge);
+  enlarge.textContent='⛶ AMPLIAR A ESTE INVITADO';
+  enlarge.style.display='block';
+  // También permite tocar directamente la tarjeta/cámara del invitado.
+  if(!card.dataset.hostEnlargeBound){
+   card.addEventListener('click',ev=>{
+    if(!isHostController() || isHostParticipant(participant)) return;
+    if(ev.target.closest('button')) return;
+    showFeatured(identity,true);
+   });
+   card.dataset.hostEnlargeBound='1';
+  }
  }
 
  if(card.parentElement!==$('stage') && card.parentElement!==$('videos')){
@@ -422,7 +428,7 @@ function addLocalCard(){
   controls.append(micButton,cameraToggle,flipButton);
  }else{controls.append(micButton,camButton,flipButton);}
  card.querySelector('.name').append(controls);
- if(isHostSession){
+ if(isHostController()){
   $('hostReturnTop')?.classList.add('hidden');
   const backButton=document.createElement('button');
   backButton.type='button';
