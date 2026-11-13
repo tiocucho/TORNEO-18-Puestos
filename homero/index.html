@@ -82,6 +82,11 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #authGate h2{color:#f5d575;margin-top:0}#authGate input,#aliasAdmin input{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #80672f;background:#17130b;color:#fff;font-size:16px}
 #authMessage{min-height:22px;color:#f5d575;font-size:13px}body:not(.authenticated)>header,body:not(.authenticated)>#home,body:not(.authenticated)>#room,body:not(.authenticated)>p.note{display:none!important}
 #aliasAdmin{margin:12px 0;padding:12px;border:1px solid #80672f;border-radius:12px;background:#090807}#aliasAdmin .alias-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #302719;font-size:12px}#aliasAdmin button{margin:0;padding:8px;font-size:12px}
+.admin-panel,.bank-public{margin:12px 0;padding:14px;border:1px solid #b58d32;border-radius:12px;background:#100d08;color:#fff}
+#hostAdmin input{width:100%;padding:12px;margin:6px 0 10px;border-radius:8px;border:1px solid #80672f;background:#17130b;color:#fff;font-size:16px}
+.bank-public{background:#171208;border:2px solid #d4af37}
+.bank-public p{margin:8px 0;overflow-wrap:anywhere}
+#hostAdmin button,.bank-public button{padding:9px 12px;border-radius:8px}
 #stageFullscreenBtn{padding:7px 10px;background:#f5d575;color:#111;border:1px solid #d4af37;border-radius:8px;font-weight:800}
 #stage.fullscreen-mode{position:fixed!important;inset:0!important;z-index:99999!important;width:100vw!important;height:100dvh!important;max-height:none!important;border-radius:0!important;background:#000!important;display:flex!important;align-items:center!important;justify-content:center!important}
 #stage.fullscreen-mode .person{width:100%!important;height:100%!important}#stage.fullscreen-mode .person video{width:100%!important;height:100%!important;max-height:100dvh!important;object-fit:contain!important}
@@ -102,8 +107,23 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <p id="authMessage" aria-live="polite"></p>
 </section>
 <header>👑 HOMERO LIVE</header>
-<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Homero"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div><div id="aliasAdmin" class="hidden"><h3 class="gold">👑 Administración de alias</h3><p class="note">Solo el administrador puede cambiar los alias de los participantes.</p><div id="aliasUsers">Cargando usuarios…</div></div><button id="logoutBtn" class="hidden" type="button" onclick="logoutHomero()">Cerrar sesión</button></section>
-<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala HOMERO</h2>
+<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Homero"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div><div id="hostAdmin" class="hidden">
+<h3 class="gold">👑 Administración de HOMERO</h3>
+<section class="admin-panel"><h3>👥 Crear invitado</h3>
+<p class="note">Solo HOMERO crea las cuentas. Los invitados no pueden registrarse.</p>
+<label for="guestUsername">Nombre de usuario</label><input id="guestUsername" maxlength="32" autocomplete="off" placeholder="Ej.: jugador01">
+<label for="guestAlias">Alias visible</label><input id="guestAlias" maxlength="40" placeholder="Nombre que aparecerá en el LIVE">
+<label for="guestPassword">Contraseña</label><input id="guestPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+<button id="createGuestBtn" type="button" class="primary">Crear usuario invitado</button><p id="guestMessage" class="note"></p>
+</section>
+<section class="admin-panel"><h3>💳 Datos para transferencias</h3>
+<label for="bankHolder">Nombre del titular</label><input id="bankHolder" maxlength="100" placeholder="Nombre y apellido">
+<label for="bankName">Banco</label><input id="bankName" maxlength="100" placeholder="Nombre del banco">
+<label for="bankAlias">Alias / teléfono / cédula / correo</label><input id="bankAlias" maxlength="120" placeholder="Dato para realizar la transferencia">
+<button id="saveBankBtn" type="button" class="primary">Guardar datos bancarios</button><p id="bankMessage" class="note"></p>
+</section></div>
+<div id="bankPublic" class="bank-public hidden"><h3 class="gold">💳 ¿Dónde transferir?</h3><p><b>Titular:</b> <span id="bankHolderView">Sin configurar</span></p><p><b>Banco:</b> <span id="bankNameView">Sin configurar</span></p><p><b>Alias:</b> <span id="bankAliasView">Sin configurar</span> <button type="button" id="copyBankAlias">Copiar</button></p></div><button id="logoutBtn" class="hidden" type="button" onclick="logoutHomero()">Cerrar sesión</button></section>
+<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala HOMERO</h2><div id="bankPublicRoom" class="bank-public hidden"><h3 class="gold">💳 Datos para transferencias</h3><p><b>Titular:</b> <span id="bankHolderRoom">Sin configurar</span></p><p><b>Banco:</b> <span id="bankNameRoom">Sin configurar</span></p><p><b>Alias:</b> <span id="bankAliasRoom">Sin configurar</span> <button type="button" id="copyBankAliasRoom">Copiar</button></p></div>
 <p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><button id="stageFullscreenBtn" type="button" onclick="toggleStageFullscreen()">⛶ Ampliar</button><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="comments" aria-live="polite"><p>Bienvenido a HOMERO LIVE.</p></div>
 <div id="reactionBar" aria-label="Stickers de Homero">
@@ -137,7 +157,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <script type="module">
 import {Room, RoomEvent, Track, TokenSource} from 'https://esm.sh/livekit-client@2.22.4';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyBFFlXMlsQvEAXu-GM69jGH8l1vAF7np5A',authDomain:'homero-live.firebaseapp.com',projectId:'homero-live',storageBucket:'homero-live.firebasestorage.app',messagingSenderId:'1009669708876',appId:'1:1009669708876:web:db1aa3c3355a320f86e8e9',measurementId:'G-3SJ79SQC96'};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp);
@@ -145,15 +165,56 @@ const ADMIN_EMAIL='homero@homero-live.app';let currentUser=null,isAdmin=false;
 const TOKEN_SERVER_ID='homerolive-1yj5wz';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHostSession=false;
 const $=id=>document.getElementById(id);
-$('loginForm').addEventListener('submit',async ev=>{ev.preventDefault();$('authMessage').textContent='Verificando acceso…';try{const enteredUser=$('loginEmail').value.trim();const loginEmail=enteredUser.toLowerCase()==='homero'?'homero@homero-live.app':enteredUser;await signInWithEmailAndPassword(auth,loginEmail,$('loginPassword').value)}catch(err){$('authMessage').textContent='No se pudo ingresar. Revisá el correo y la contraseña.';console.error(err)}});
+const secondaryApp=initializeApp(firebaseConfig,'homero-user-creator');
+const secondaryAuth=getAuth(secondaryApp);
+let bankDetails={holder:'',bank:'',alias:''};
+function usernameEmail(username){return username.trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')+'@homero-live.app';}
+async function loadBankDetails(){
+ try{
+  const snap=await getDoc(doc(db,'configuracion','transferencias'));
+  if(snap.exists()) bankDetails=snap.data();
+ }catch(e){console.warn('Datos bancarios aún no disponibles según reglas:',e);}
+ const set=(id,val)=>{const el=$(id);if(el)el.textContent=val||'Sin configurar';};
+ set('bankHolderView',bankDetails.holder);set('bankNameView',bankDetails.bank);set('bankAliasView',bankDetails.alias);
+ set('bankHolderRoom',bankDetails.holder);set('bankNameRoom',bankDetails.bank);set('bankAliasRoom',bankDetails.alias);
+ if(isAdmin){$('bankHolder').value=bankDetails.holder||'';$('bankName').value=bankDetails.bank||'';$('bankAlias').value=bankDetails.alias||'';}
+ $('bankPublicRoom')?.classList.remove('hidden');
+}
+$('createGuestBtn')?.addEventListener('click',async()=>{
+ if(!isAdmin){alert('Solo HOMERO puede crear invitados.');return;}
+ const username=$('guestUsername').value.trim(),alias=$('guestAlias').value.trim(),password=$('guestPassword').value;
+ if(!/^[a-zA-Z0-9._-]{3,32}$/.test(username)){ $('guestMessage').textContent='Usá 3 a 32 caracteres: letras, números, punto, guion o guion bajo.';return;}
+ if(password.length<6){$('guestMessage').textContent='La contraseña debe tener al menos 6 caracteres.';return;}
+ const email=usernameEmail(username);
+ $('createGuestBtn').disabled=true;$('guestMessage').textContent='Creando usuario…';
+ try{
+  const cred=await createUserWithEmailAndPassword(secondaryAuth,email,password);
+  await setDoc(doc(db,'usuarios',cred.user.uid),{alias:alias||username,correo:email,usuario:username,creadoPor:'HOMERO'});
+  await signOut(secondaryAuth);
+  $('guestMessage').textContent='Usuario '+username+' creado correctamente. Compartile el usuario y la contraseña.';
+  $('guestUsername').value='';$('guestAlias').value='';$('guestPassword').value='';
+ }catch(e){$('guestMessage').textContent=e.code==='auth/email-already-in-use'?'Ese usuario ya existe.':('No se pudo crear: '+(e.message||e));console.error(e);}
+ finally{$('createGuestBtn').disabled=false;}
+});
+$('saveBankBtn')?.addEventListener('click',async()=>{
+ if(!isAdmin){alert('Solo HOMERO puede editar los datos bancarios.');return;}
+ const next={holder:$('bankHolder').value.trim(),bank:$('bankName').value.trim(),alias:$('bankAlias').value.trim()};
+ if(!next.holder||!next.bank||!next.alias){$('bankMessage').textContent='Completá titular, banco y alias.';return;}
+ try{await setDoc(doc(db,'configuracion','transferencias'),next);bankDetails=next;await loadBankDetails();$('bankMessage').textContent='Datos bancarios guardados.';}
+ catch(e){$('bankMessage').textContent='No se pudo guardar. Falta autorizar configuracion/transferencias en Firestore.';console.error(e);}
+});
+$('copyBankAlias')?.addEventListener('click',()=>navigator.clipboard?.writeText(bankDetails.alias||''));
+$('copyBankAliasRoom')?.addEventListener('click',()=>navigator.clipboard?.writeText(bankDetails.alias||''));
+
+$('loginForm').addEventListener('submit',async ev=>{ev.preventDefault();$('authMessage').textContent='Verificando acceso…';try{const enteredUser=$('loginEmail').value.trim();const loginEmail=enteredUser.includes('@')?enteredUser:usernameEmail(enteredUser);await signInWithEmailAndPassword(auth,loginEmail,$('loginPassword').value)}catch(err){$('authMessage').textContent='No se pudo ingresar. Revisá el correo y la contraseña.';console.error(err)}});
 onAuthStateChanged(auth,async user=>{
  currentUser=user;isAdmin=!!user&&user.email?.toLowerCase()===ADMIN_EMAIL;
  if(!user){document.body.classList.remove('authenticated');$('authMessage').textContent='Ingresá con tus credenciales.';return;}
  try{const profileRef=doc(db,'usuarios',user.uid),profileSnap=await getDoc(profileRef);if(!profileSnap.exists()){const alias=(user.displayName||user.email.split('@')[0]).slice(0,40);await setDoc(profileRef,{alias,correo:user.email});myName=alias}else{myName=profileSnap.data().alias||user.email.split('@')[0]}}
  catch(err){$('authMessage').textContent='No se pudo leer el perfil. Revisá las reglas de Firestore.';console.error(err);return;}
- $('name').value=myName;document.body.classList.add('authenticated');$('authGate').classList.add('hidden');$('logoutBtn').classList.remove('hidden');
- if(isAdmin){$('createRoomBtn').classList.remove('hidden');$('endLiveBtn').classList.remove('hidden');$('aliasAdmin').classList.remove('hidden');await loadAliasUsers();if(localStorage.getItem('homero_host_room'))$('recoverRoomBtn').classList.remove('hidden');}
- else{$('createRoomBtn').classList.add('hidden');$('recoverRoomBtn').classList.add('hidden');$('endLiveBtn').classList.add('hidden');$('aliasAdmin').classList.add('hidden');}
+ $('name').value=myName;await loadBankDetails();document.body.classList.add('authenticated');$('authGate').classList.add('hidden');$('logoutBtn').classList.remove('hidden');
+ if(isAdmin){$('createRoomBtn').classList.remove('hidden');$('endLiveBtn').classList.remove('hidden');$('hostAdmin').classList.remove('hidden');$('bankPublic').classList.remove('hidden');await loadBankDetails();if(localStorage.getItem('homero_host_room'))$('recoverRoomBtn').classList.remove('hidden');}
+ else{$('createRoomBtn').classList.add('hidden');$('recoverRoomBtn').classList.add('hidden');$('endLiveBtn').classList.add('hidden');$('hostAdmin').classList.add('hidden');$('bankPublic').classList.remove('hidden');await loadBankDetails();}
  const params=new URLSearchParams(location.search);if(params.get('anfitrion')==='1'&&!isAdmin){history.replaceState({},'',location.pathname);}
 });
 window.logoutHomero=async()=>{if(room)await room.disconnect().catch(()=>{});room=null;await signOut(auth);location.href=location.pathname;};
