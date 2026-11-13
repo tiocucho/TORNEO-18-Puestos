@@ -77,6 +77,19 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #comments .homero-sticker span:last-child{font-size:12px;font-weight:900}
 @media(max-width:600px){#chatComposer{gap:6px}#chatComposer #message{font-size:16px}body.chat-composing #comments{scroll-margin-bottom:100px}}
 
+/* Diseño solicitado: solo el video principal queda fijo; comentarios y participantes siguen debajo */
+#liveStickyArea{position:sticky!important;top:0!important;z-index:30!important;display:block!important}
+#stage{position:relative!important;top:auto!important;max-height:none!important;overflow:visible!important}
+#stage .person{width:100%!important}
+#stage .person video{display:block;width:100%!important;height:clamp(260px,52vh,560px)!important;max-height:560px!important;aspect-ratio:16/9!important;object-fit:contain!important;background:#000}
+#commentsCard{position:relative;z-index:1;margin-top:10px}
+#comments{height:150px}
+#soundControls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px;border:1px solid #80672f;border-radius:10px;background:#100d08}
+#soundControls label{color:#f5d575;font-size:13px;font-weight:700}
+#participantVolume{flex:1 1 160px;min-width:130px;accent-color:#d4af37}
+#soundControls #soundBtn{margin:0}
+
+
 
 #authGate{max-width:430px;margin:12vh auto 24px;padding:22px;background:rgba(8,8,8,.96);border:1px solid #d4af37;border-radius:16px;color:#fff}
 #authGate h2{color:#f5d575;margin-top:0}#authGate input,#aliasAdmin input{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #80672f;background:#17130b;color:#fff;font-size:16px}
@@ -124,7 +137,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 </section></div>
 <div id="bankPublic" class="bank-public hidden"><h3 class="gold">💳 ¿Dónde transferir?</h3><p><b>Titular:</b> <span id="bankHolderView">Sin configurar</span></p><p><b>Banco:</b> <span id="bankNameView">Sin configurar</span></p><p><b>Alias:</b> <span id="bankAliasView">Sin configurar</span> <button type="button" id="copyBankAlias">Copiar</button></p></div><button id="logoutBtn" class="hidden" type="button" onclick="logoutHomero()">Cerrar sesión</button></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala HOMERO</h2><div id="bankPublicRoom" class="bank-public hidden"><h3 class="gold">💳 Datos para transferencias</h3><p><b>Titular:</b> <span id="bankHolderRoom">Sin configurar</span></p><p><b>Banco:</b> <span id="bankNameRoom">Sin configurar</span></p><p><b>Alias:</b> <span id="bankAliasRoom">Sin configurar</span> <button type="button" id="copyBankAliasRoom">Copiar</button></p></div>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><button id="stageFullscreenBtn" type="button" onclick="toggleStageFullscreen()">⛶ Ampliar</button><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><button id="stageFullscreenBtn" type="button" onclick="toggleStageFullscreen()">⛶ Ampliar</button><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><div class="card" id="commentsCard"><h3>💬 Comentarios de la sala</h3>
 <div id="comments" aria-live="polite"><p>Bienvenido a HOMERO LIVE.</p></div>
 <div id="reactionBar" aria-label="Stickers de Homero">
 <button type="button" onclick="sendReaction('7/11 LA CLAVADA')"><span class="sticker-face">🎲🎲</span><span>7/11 LA CLAVADA</span></button>
@@ -134,7 +147,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <button type="button" onclick="sendReaction('MONO')"><span class="sticker-face">⚀ ⚁</span><span>MONO</span></button>
 </div>
 <div id="chatComposer"><input id="message" placeholder="Escribí un comentario" maxlength="300"><button class="primary" type="button" onclick="sendComment()">Enviar</button></div>
-</div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div></div></section>
+</div><h3 class="gold">🃏 Participantes</h3><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button><label for="participantVolume">Volumen de participantes: <output id="participantVolumeValue">50%</output></label><input id="participantVolume" type="range" min="0" max="100" value="50" step="1" aria-label="Volumen de participantes"></div></section>
 <p class="note">HOMERO LIVE usa el servidor de desarrollo de LiveKit. Para producción, se debe sustituir por un servidor seguro de tokens.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -164,6 +177,9 @@ const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=get
 const ADMIN_EMAIL='homero@homero-live.app';let currentUser=null,isAdmin=false;
 const TOKEN_SERVER_ID='homerolive-1yj5wz';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHostSession=false;
+let participantAudioVolume=0.5;
+function applyParticipantVolume(){document.querySelectorAll('audio[data-remote-participant]').forEach(audio=>{audio.volume=participantAudioVolume;});}
+function setupParticipantVolume(){const slider=$('participantVolume'),value=$('participantVolumeValue');if(!slider)return;participantAudioVolume=Number(slider.value)/100;if(value)value.textContent=slider.value+'%';slider.addEventListener('input',()=>{participantAudioVolume=Number(slider.value)/100;if(value)value.textContent=slider.value+'%';applyParticipantVolume();});}
 const $=id=>document.getElementById(id);
 const secondaryApp=initializeApp(firebaseConfig,'homero-user-creator');
 const secondaryAuth=getAuth(secondaryApp);
@@ -299,19 +315,7 @@ function addPerson(participant,track=null){
   name.append(nameLabel);
   card.append(video,name);
 
-  // Solo el anfitrión puede ampliar a los invitados.
-  if(isHostSession && !isHostParticipant(participant)){
-   const btn=document.createElement('button');
-   btn.type='button';
-   btn.textContent='⛶ AMPLIAR';
-   btn.style.cssText='display:block;width:100%;padding:12px;margin-top:5px;background:#f5d575;color:#111;font-weight:bold;border-radius:8px;touch-action:manipulation';
-   btn.addEventListener('click',function(ev){
-    ev.preventDefault();
-    ev.stopPropagation();
-    showFeatured(identity);
-   });
-   card.append(btn);
-  }
+  // La pantalla principal queda reservada al anfitrión.
  }
 
  if(card.parentElement!==$('stage') && card.parentElement!==$('videos')){
@@ -401,6 +405,7 @@ function addLocalCard(){
  updateViewerList();
 }
 // Reproducir audio remoto en un elemento separado del video (Safari/iPhone).
+document.addEventListener('DOMContentLoaded',setupParticipantVolume);
 function attachRemoteMedia(track,participant){
  const card=addPerson(participant);
  if(track.kind==='video'){
@@ -413,7 +418,7 @@ function attachRemoteMedia(track,participant){
   audio.autoplay=true;
   audio.playsInline=true;
   audio.muted=false;
-  audio.volume=1;
+  audio.volume=participantAudioVolume;
   audio.dataset.remoteParticipant=participant.identity;
   document.body.appendChild(audio);
   audio.play?.().catch(()=>{const b=$('soundBtn');if(b)b.textContent='🔊 Tocar para escuchar';});
@@ -425,13 +430,14 @@ window.activateSound=async()=>{
   await room.startAudio();
   for(const audio of document.querySelectorAll('audio[data-remote-participant]')){
    audio.muted=false;
+   audio.volume=participantAudioVolume;
    await audio.play().catch(()=>{});
   }
   $('soundBtn').textContent='🔊 Sonido activado';
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='spotlight'&&!isHostSession){showFeatured(data.identity,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('homero_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('homero_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('homero_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('homero_host_identity',hostIdentity);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:(isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10))});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
 window.createRoom=async()=>{if(!isAdmin){alert('Solo el administrador puede crear una sala.');return}isHostSession=true;roomCode='HO'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('homero_host_room',roomCode);localStorage.setItem('homero_host_identity','host-'+Math.random().toString(36).slice(2,10));try{await setDoc(doc(db,'configuracion','salaActiva'),{codigo:roomCode,activa:true,actualizada:Date.now()});showRoom();await connectRoom()}catch(e){setStatus('No se pudo crear/publicar la sala: '+e.message);console.error(e)}};
 window.recoverHostRoom=async()=>{if(!isAdmin){alert('Acceso exclusivo del administrador.');return}const savedRoom=localStorage.getItem('homero_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;await setDoc(doc(db,'configuracion','salaActiva'),{codigo:roomCode,activa:true,actualizada:Date.now()});showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
