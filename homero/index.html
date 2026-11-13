@@ -91,6 +91,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 
 
 
+body.guest-link #authGate{display:none!important}
 #authGate{max-width:430px;margin:12vh auto 24px;padding:22px;background:rgba(8,8,8,.96);border:1px solid #d4af37;border-radius:16px;color:#fff}
 #authGate h2{color:#f5d575;margin-top:0}#authGate input,#aliasAdmin input{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #80672f;background:#17130b;color:#fff;font-size:16px}
 #authMessage{min-height:22px;color:#f5d575;font-size:13px}
@@ -147,7 +148,8 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 (function () {
   const params = new URLSearchParams(window.location.search);
   if (params.has('sala')) {
-    ['createRoomBtn','recoverRoomBtn','endLiveBtn'].forEach(id => {
+    document.body.classList.add('guest-link');
+    ['authGate','createRoomBtn','recoverRoomBtn','endLiveBtn','hostAdmin','logoutBtn'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('hidden');
     });
@@ -196,6 +198,21 @@ onAuthStateChanged(auth,async user=>{
  isAdmin=!!user&&!user.isAnonymous&&user.email?.toLowerCase()===ADMIN_EMAIL;
  if(!user){
   document.body.classList.remove('authenticated');
+  const params=new URLSearchParams(location.search);
+  const requestedRoom=params.get('sala');
+  if(requestedRoom){
+   document.body.classList.add('guest-link');
+   ['authGate','createRoomBtn','recoverRoomBtn','endLiveBtn','hostAdmin','logoutBtn'].forEach(id=>$(id)?.classList.add('hidden'));
+   roomCode=requestedRoom.trim().toUpperCase();
+   myName=safeName(params.get('nombre')||$('name').value||'Invitado');
+   $('name').value=myName;
+   $('code').value=roomCode;
+   showRoom();
+   try{await connectRoom();}
+   catch(e){setStatus('No se pudo conectar a la sala: '+e.message+' · Revisá el enlace.');console.error(e);}
+  }else{
+   $('authGate').classList.remove('hidden');
+  }
   return;
  }
  if(isAdmin){
@@ -222,10 +239,9 @@ onAuthStateChanged(auth,async user=>{
   }
   return;
  }
- // Participante: acceso anónimo, sin usuario ni contraseña.
+ // Participante: nunca mostrar el formulario de acceso del anfitrión.
  document.body.classList.add('authenticated');
- $('authGate').classList.remove('hidden');
- $('authMessage').textContent='Los participantes no necesitan iniciar sesión. Usá el enlace o código de la sala.';
+ $('authGate').classList.add('hidden');
  $('logoutBtn').classList.add('hidden');
  $('createRoomBtn').classList.add('hidden');
  $('recoverRoomBtn').classList.add('hidden');
@@ -236,6 +252,7 @@ onAuthStateChanged(auth,async user=>{
  const params=new URLSearchParams(location.search);
  const requestedRoom=params.get('sala');
  if(requestedRoom){
+  document.body.classList.add('guest-link');
   roomCode=requestedRoom.trim().toUpperCase();
   $('code').value=roomCode;
   $('name').value=safeName(params.get('nombre')||$('name').value||'Invitado');
@@ -483,7 +500,7 @@ async function connectRoom(){if(room)return;myName=safeName($('name').value);roo
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
 window.createRoom=async()=>{if(!isAdmin){alert('Solo el administrador puede crear una sala.');return}isHostSession=true;roomCode='HO'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('homero_host_room',roomCode);localStorage.setItem('homero_host_identity','host-'+Math.random().toString(36).slice(2,10));try{await setDoc(doc(db,'configuracion','salaActiva'),{codigo:roomCode,activa:true,actualizada:Date.now()});showRoom();await connectRoom()}catch(e){setStatus('No se pudo crear/publicar la sala: '+e.message);console.error(e)}};
 window.recoverHostRoom=async()=>{if(!isAdmin){alert('Acceso exclusivo del administrador.');return}const savedRoom=localStorage.getItem('homero_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;await setDoc(doc(db,'configuracion','salaActiva'),{codigo:roomCode,activa:true,actualizada:Date.now()});showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
-window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}myName=safeName($('name').value||'Invitado');if(!auth.currentUser){try{await signInAnonymously(auth)}catch(e){setStatus('No se pudo habilitar el acceso de participante: '+e.message);return}}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
+window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}myName=safeName($('name').value||'Invitado');document.body.classList.add('guest-link');$('authGate').classList.add('hidden');showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
 let cameraStarting=false;
 const cameraControl=()=>document.querySelector('.local-cam-control');
 window.toggleCamera=async()=>{
