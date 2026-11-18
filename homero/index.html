@@ -399,10 +399,6 @@ function addPerson(participant,track=null){
  }
  ensureHostGuestControl(participant);
 
- if(isHostParticipant(participant) && !featuredIdentity){
-  showFeatured(identity,false);
- }
-
  if(pendingFeaturedIdentity===identity){
   showFeatured(identity,false);
  }
@@ -425,12 +421,11 @@ function removePerson(participant){
  if(el)el.remove();
 
  if(featuredIdentity===id){
+  // Si se desconecta quien estaba destacado, no elegir otra persona automáticamente.
+  // El anfitrión conserva el control y debe seleccionar manualmente la siguiente pantalla.
   featuredIdentity=null;
-  returnToHost();
-  if(!featuredIdentity){
-   const next=$('videos').querySelector('.person');
-   if(next)showFeatured(next.id.slice(2));
-  }
+  pendingFeaturedIdentity=null;
+  $('stage').replaceChildren($('chatBubbles'));
  }
 }
 
@@ -477,7 +472,7 @@ function addLocalCard(){
   };
   cleanNullText();
   new MutationObserver(cleanNullText).observe(card,{childList:true,subtree:true});
-  showFeatured(lp.identity);
+  if(!featuredIdentity) showFeatured(lp.identity);
  }
  updateViewerList();
 }
