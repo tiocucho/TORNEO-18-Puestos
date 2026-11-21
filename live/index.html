@@ -262,7 +262,7 @@ function applyMirrorPreview(){
  const video=$('p-'+room?.localParticipant?.identity)?.querySelector('video');
  if(video)video.style.transform=mirrorPreview?'scaleX(-1)':'scaleX(1)';
  const btn=$('mirrorPreviewBtn');
- if(btn){btn.textContent=mirrorPreview?'🪞 ESPEJO':'↔ NORMAL';btn.title=mirrorPreview?'Cambiar a imagen normal':'Cambiar a modo espejo';}
+ if(btn){btn.textContent=mirrorPreview?'🪞 MODO ESPEJO: ACTIVADO':'↔ MODO NORMAL: ACTIVADO';btn.title=mirrorPreview?'Cambiar a imagen normal':'Cambiar a modo espejo';btn.setAttribute('aria-pressed',String(mirrorPreview));}
 }
 window.toggleMirrorPreview=()=>{
  mirrorPreview=!mirrorPreview;
@@ -429,6 +429,7 @@ function addLocalCard(){
  flipButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();flipCamera();});
  const mirrorButton=document.createElement('button');
  mirrorButton.type='button';mirrorButton.id='mirrorPreviewBtn';mirrorButton.className='local-mirror-control';
+ mirrorButton.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:42px;margin:7px 0 0;padding:9px 12px;background:#f5d575;color:#15100a;border:2px solid #d4af37;border-radius:10px;font-weight:900;font-size:14px;line-height:1.2;position:relative;z-index:50;touch-action:manipulation';
  mirrorButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleMirrorPreview();});
  if(cameraToggle){
   cameraToggle.classList.remove('hidden');
@@ -436,9 +437,10 @@ function addLocalCard(){
   cameraToggle.textContent='📷';
   cameraToggle.title='Encender o apagar cámara';
   cameraToggle.setAttribute('aria-label','Encender o apagar cámara');
-  controls.append(micButton,cameraToggle,flipButton,mirrorButton);
- }else{controls.append(micButton,camButton,flipButton,mirrorButton);}
+  controls.append(micButton,cameraToggle,flipButton);
+ }else{controls.append(micButton,camButton,flipButton);}
  card.querySelector('.name').append(controls);
+ card.append(mirrorButton);
  applyMirrorPreview();
  if(isHostSession){
   $('hostReturnTop')?.classList.add('hidden');
