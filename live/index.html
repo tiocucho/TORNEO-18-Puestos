@@ -152,14 +152,23 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 
 
 /* Cronómetro de turno: integrado sin alterar el diseño existente */
-#turnTimer{margin:10px 0 14px;padding:12px;border:1px solid #d4af37;border-radius:13px;background:linear-gradient(145deg,#17130b,#080808);text-align:center}
-#turnTimer h3{margin:2px 0 8px;color:#f5d575}
-#timerPlayer{width:100%;max-width:320px;margin:5px auto;padding:9px;border:1px solid #80672f;border-radius:8px;background:#080808;color:#fff}
-#timerDisplay{font-size:42px;font-weight:900;letter-spacing:2px;color:#f5d575;font-variant-numeric:tabular-nums;line-height:1.2}
+#turnTimer{width:calc(100% - 18px);max-width:520px;margin:8px auto 10px;padding:7px 10px;border:1px solid #d4af37;border-radius:11px;background:linear-gradient(145deg,#17130b,#080808);text-align:center}
+#turnTimer h3{margin:1px 0 4px;color:#f5d575;font-size:15px;line-height:1.2}
+#timerPlayerLabel{font-size:13px;line-height:1.2;margin:2px 0}
+#timerPlayer{width:100%;max-width:260px;margin:4px auto;padding:7px;border:1px solid #80672f;border-radius:8px;background:#080808;color:#fff}
+#timerDisplay{font-size:28px;font-weight:900;letter-spacing:1px;color:#f5d575;font-variant-numeric:tabular-nums;line-height:1.05;margin:2px 0}
 #timerDisplay.warning{color:#ff3939;animation:timerPulse .7s infinite alternate}
-#timerStatus{font-size:12px;color:#c8b98e;margin:4px 0 8px}
-#timerHostControls button{margin:3px;padding:9px 12px;font-size:12px}
+#timerStatus{font-size:11px;color:#c8b98e;margin:3px 0 4px;line-height:1.2}
+#timerHostControls button{margin:2px;padding:6px 9px;font-size:11px}
 @keyframes timerPulse{from{opacity:1}to{opacity:.55}}
+
+@media(max-width:600px){
+ #turnTimer{width:calc(100% - 24px);margin:7px auto 9px;padding:6px 8px}
+ #turnTimer h3{font-size:14px}
+ #timerDisplay{font-size:26px}
+ #timerStatus{font-size:10px}
+}
+
 
 
 /* Indicador de voz activa y mano levantada */
@@ -170,13 +179,94 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #handRaiseBtn.active{background:#f5d575;color:#111}
 
 
+
+/* Cronómetro compacto en el espacio libre junto al nombre de sala */
+#roomHeaderTimerRow{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) minmax(155px,205px);
+ align-items:start;
+ gap:10px;
+ width:100%;
+ margin:2px 0 8px;
+}
+#roomHeaderTimerRow #roomName{
+ min-width:0;
+ margin:10px 0 0;
+ font-size:clamp(19px,4.5vw,27px);
+ overflow-wrap:anywhere;
+}
+#roomHeaderTimerRow #turnTimer{
+ width:100%;
+ max-width:205px;
+ min-width:0;
+ margin:0;
+ padding:6px 7px;
+ border:1px solid #d4af37;
+ border-radius:10px;
+ background:linear-gradient(145deg,#17130b,#080808);
+ text-align:center;
+}
+#roomHeaderTimerRow #turnTimer h3{
+ margin:0 0 2px;
+ font-size:11px;
+ line-height:1.15;
+}
+#roomHeaderTimerRow #timerPlayerLabel,
+#roomHeaderTimerRow #timerStatus{
+ margin:1px 0;
+ font-size:10px;
+ line-height:1.15;
+}
+#roomHeaderTimerRow #timerDisplay{
+ margin:1px 0;
+ font-size:25px;
+ line-height:1;
+ letter-spacing:1px;
+}
+#roomHeaderTimerRow #timerHostControls input{
+ width:100%;
+ margin:3px 0;
+ padding:5px;
+ font-size:11px;
+}
+#roomHeaderTimerRow #timerHostControls>div{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:3px;
+}
+#roomHeaderTimerRow #timerHostControls button{
+ margin:0;
+ padding:5px 6px;
+ font-size:10px;
+ line-height:1.1;
+}
+@media(max-width:600px){
+ #roomHeaderTimerRow{
+  grid-template-columns:minmax(0,1fr) minmax(145px,44%);
+  gap:7px;
+  align-items:start;
+ }
+ #roomHeaderTimerRow #roomName{
+  font-size:clamp(18px,5vw,23px);
+  line-height:1.15;
+ }
+ #roomHeaderTimerRow #turnTimer{
+  padding:5px;
+ }
+ #roomHeaderTimerRow #turnTimer h3{font-size:10px}
+ #roomHeaderTimerRow #timerDisplay{font-size:23px}
+ #roomHeaderTimerRow #timerPlayerLabel,
+ #roomHeaderTimerRow #timerStatus{font-size:9px}
+}
+
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
-<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO DEL JUGADOR</h3><div id="timerPlayerLabel">Turno sin iniciar</div><div id="timerDisplay">01:00</div><div id="timerStatus">Cada jugador tiene 60 segundos</div><div id="timerHostControls" class="hidden"><input id="timerPlayer" maxlength="40" placeholder="Nombre del jugador (opcional)"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ Iniciar 1 minuto</button><button type="button" id="timerPauseBtn" onclick="pauseTurnTimer()">⏸️ Pausar</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ Reiniciar</button></div></div></section><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><div id="roomHeaderTimerRow"><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO DEL JUGADOR</h3><div id="timerPlayerLabel">Turno sin iniciar</div><div id="timerDisplay">01:00</div><div id="timerStatus">Cada jugador tiene 60 segundos</div><div id="timerHostControls" class="hidden"><input id="timerPlayer" maxlength="40" placeholder="Nombre del jugador (opcional)"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ Iniciar 1 minuto</button><button type="button" id="timerPauseBtn" onclick="pauseTurnTimer()">⏸️ Pausar</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ Reiniciar</button></div></div></section></div>
+<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
 <button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
 <button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
@@ -275,24 +365,6 @@ function isHostParticipant(p){
  return !!p?.identity?.startsWith('host-');
 }
 
-// Publica la selección actual, a toda la sala o a un invitado concreto.
-function publishSpotlight(identity,destinationIdentity=null){
- if(!identity || !room?.localParticipant)return;
- const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
- const options={reliable:true};
- if(destinationIdentity)options.destinationIdentities=[destinationIdentity];
- room.localParticipant.publishData(payload,options).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
-}
-
-// El anfitrión reenvía la pantalla elegida al recién llegado, incluso si su video tarda en cargarse.
-function sendCurrentSpotlightTo(participant){
- if(!isHostSession || !participant?.identity || !room?.localParticipant)return;
- const selected=featuredIdentity || localStorage.getItem('tc_featured_identity_'+roomCode) || room.localParticipant.identity;
- [0,500,1400].forEach(delay=>setTimeout(()=>{
-  if(room?.state==='connected')publishSpotlight(selected,participant.identity);
- },delay));
-}
-
 function showFeatured(identity,broadcast=true){
  const card=document.getElementById('p-'+identity);
  if(!card){pendingFeaturedIdentity=identity;return false;}
@@ -304,11 +376,11 @@ function showFeatured(identity,broadcast=true){
 
  featuredIdentity=identity;
  stage.replaceChildren(card,$('chatBubbles'));
- if(isHostSession){try{localStorage.setItem('tc_featured_identity_'+roomCode,identity)}catch(e){}}
 
  // El anfitrión comunica a toda la sala qué participante debe verse en grande.
  if(broadcast && isHostSession && room?.localParticipant){
-  publishSpotlight(identity);
+  const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
+  room.localParticipant.publishData(payload,{reliable:true}).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
  }
  return true;
 }
@@ -447,7 +519,7 @@ function addLocalCard(){
  flipButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();flipCamera();});
  const mirrorButton=document.createElement('button');
  mirrorButton.type='button';mirrorButton.id='mirrorPreviewBtn';mirrorButton.className='local-mirror-control';
- mirrorButton.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:42px;margin:7px 0 0;padding:9px 12px;background:#f5d575;color:#15100a;border:2px solid #d4af37;border-radius:10px;font-weight:900;font-size:14px;line-height:1.2;position:relative;z-index:50;touch-action:manipulation';
+ mirrorButton.style.cssText='display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;width:58px;min-width:58px;height:58px;min-height:58px;margin:0 4px;padding:4px;background:#f5d575;color:#15100a;border:2px solid #d4af37;border-radius:12px;font-weight:900;font-size:10px;line-height:1.05;text-align:center;white-space:normal;position:relative;z-index:5;touch-action:manipulation';
  mirrorButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleMirrorPreview();});
  if(cameraToggle){
   cameraToggle.classList.remove('hidden');
@@ -455,10 +527,9 @@ function addLocalCard(){
   cameraToggle.textContent='📷';
   cameraToggle.title='Encender o apagar cámara';
   cameraToggle.setAttribute('aria-label','Encender o apagar cámara');
-  controls.append(micButton,cameraToggle,flipButton);
- }else{controls.append(micButton,camButton,flipButton);}
+  controls.append(micButton,cameraToggle,flipButton,mirrorButton);
+ }else{controls.append(micButton,camButton,flipButton,mirrorButton);}
  card.querySelector('.name').append(controls);
- card.append(mirrorButton);
  applyMirrorPreview();
  if(isHostSession){
   $('hostReturnTop')?.classList.add('hidden');
@@ -475,8 +546,7 @@ function addLocalCard(){
   };
   cleanNullText();
   new MutationObserver(cleanNullText).observe(card,{childList:true,subtree:true});
-  const savedFeatured=isHostSession?localStorage.getItem('tc_featured_identity_'+roomCode):null;
-  showFeatured(savedFeatured||lp.identity,false);
+  showFeatured(lp.identity);
  }
  updateViewerList();
 }
@@ -511,13 +581,17 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();if(isHostSession)sendCurrentSpotlightTo(p);setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
  await room.localParticipant.setMicrophoneEnabled(false);
  micOn=false;
  document.querySelectorAll('.local-mic-control').forEach(button=>{button.textContent='🎙️';button.setAttribute('aria-label','Activar mi micrófono');button.title='Activar mi micrófono';});
  setStatus('El anfitrión te pidió silenciar el micrófono. Podés volver a encenderlo cuando quieras.');
 }else if(data.type==='spotlightRequest'&&isHostSession&&participant?.identity){
- sendCurrentSpotlightTo(participant);
+ const selected=featuredIdentity||room?.localParticipant?.identity;
+ if(selected){
+  const reply=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity:selected}));
+  room.localParticipant.publishData(reply,{reliable:true,destinationIdentities:[participant.identity]}).catch(err=>console.error('No se pudo enviar la pantalla principal al nuevo invitado:',err));
+ }
 }else if(data.type==='spotlight'&&!isHostSession&&isHostParticipant(participant)){showFeatured(data.identity,false)}else if(data.type==='handRaise'){setHandState(data.identity,!!data.raised);if(data.raised)appendComment(data.name||participant?.name||'Participante','✋ levantó la mano');}else if(data.type==='turnTimer'&&isHostParticipant(participant)){applyTurnTimerState(data.state,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const identity=isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:identity});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();
 if(!isHostSession){
  const request=new TextEncoder().encode(JSON.stringify({type:'spotlightRequest'}));
