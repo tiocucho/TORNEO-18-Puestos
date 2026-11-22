@@ -275,6 +275,24 @@ function isHostParticipant(p){
  return !!p?.identity?.startsWith('host-');
 }
 
+// Publica la selección actual, a toda la sala o a un invitado concreto.
+function publishSpotlight(identity,destinationIdentity=null){
+ if(!identity || !room?.localParticipant)return;
+ const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
+ const options={reliable:true};
+ if(destinationIdentity)options.destinationIdentities=[destinationIdentity];
+ room.localParticipant.publishData(payload,options).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
+}
+
+// El anfitrión reenvía la pantalla elegida al recién llegado, incluso si su video tarda en cargarse.
+function sendCurrentSpotlightTo(participant){
+ if(!isHostSession || !participant?.identity || !room?.localParticipant)return;
+ const selected=featuredIdentity || localStorage.getItem('tc_featured_identity_'+roomCode) || room.localParticipant.identity;
+ [0,500,1400].forEach(delay=>setTimeout(()=>{
+  if(room?.state==='connected')publishSpotlight(selected,participant.identity);
+ },delay));
+}
+
 function showFeatured(identity,broadcast=true){
  const card=document.getElementById('p-'+identity);
  if(!card){pendingFeaturedIdentity=identity;return false;}
@@ -286,11 +304,11 @@ function showFeatured(identity,broadcast=true){
 
  featuredIdentity=identity;
  stage.replaceChildren(card,$('chatBubbles'));
+ if(isHostSession){try{localStorage.setItem('tc_featured_identity_'+roomCode,identity)}catch(e){}}
 
  // El anfitrión comunica a toda la sala qué participante debe verse en grande.
  if(broadcast && isHostSession && room?.localParticipant){
-  const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
-  room.localParticipant.publishData(payload,{reliable:true}).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
+  publishSpotlight(identity);
  }
  return true;
 }
@@ -457,7 +475,8 @@ function addLocalCard(){
   };
   cleanNullText();
   new MutationObserver(cleanNullText).observe(card,{childList:true,subtree:true});
-  showFeatured(lp.identity);
+  const savedFeatured=isHostSession?localStorage.getItem('tc_featured_identity_'+roomCode):null;
+  showFeatured(savedFeatured||lp.identity,false);
  }
  updateViewerList();
 }
@@ -492,17 +511,13 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();if(isHostSession)sendCurrentSpotlightTo(p);setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
  await room.localParticipant.setMicrophoneEnabled(false);
  micOn=false;
  document.querySelectorAll('.local-mic-control').forEach(button=>{button.textContent='🎙️';button.setAttribute('aria-label','Activar mi micrófono');button.title='Activar mi micrófono';});
  setStatus('El anfitrión te pidió silenciar el micrófono. Podés volver a encenderlo cuando quieras.');
 }else if(data.type==='spotlightRequest'&&isHostSession&&participant?.identity){
- const selected=featuredIdentity||room?.localParticipant?.identity;
- if(selected){
-  const reply=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity:selected}));
-  room.localParticipant.publishData(reply,{reliable:true,destinationIdentities:[participant.identity]}).catch(err=>console.error('No se pudo enviar la pantalla principal al nuevo invitado:',err));
- }
+ sendCurrentSpotlightTo(participant);
 }else if(data.type==='spotlight'&&!isHostSession&&isHostParticipant(participant)){showFeatured(data.identity,false)}else if(data.type==='handRaise'){setHandState(data.identity,!!data.raised);if(data.raised)appendComment(data.name||participant?.name||'Participante','✋ levantó la mano');}else if(data.type==='turnTimer'&&isHostParticipant(participant)){applyTurnTimerState(data.state,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const identity=isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:identity});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();
 if(!isHostSession){
  const request=new TextEncoder().encode(JSON.stringify({type:'spotlightRequest'}));
