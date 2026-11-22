@@ -238,7 +238,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
-<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
+<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Escribí tu nombre" required autocomplete="name"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><div id="roomHeaderTimerRow"><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO</h3><div id="timerDisplay">01:00</div><div id="timerPlayerLabel" hidden></div><div id="timerStatus" hidden></div><div id="timerHostControls" class="hidden"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ INICIAR</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ REINICIAR</button></div></div></section></div>
 <p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
@@ -293,7 +293,20 @@ const TOKEN_SERVER_ID='tiocucholive-1x4ggu';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHostSession=false;
 const $=id=>document.getElementById(id);
 function setStatus(s){$('status').textContent=s}
-function safeName(s){return (s||'Invitado').trim().slice(0,40)||'Invitado'}
+function safeName(s){return (s||'').trim().slice(0,40)}
+function requireName(){
+ const field=$('name');
+ const value=(field?.value||'').trim();
+ if(!value){
+  alert('Tu nombre es obligatorio. Escribí tu nombre para continuar.');
+  field?.focus();
+  field?.setAttribute('aria-invalid','true');
+  return null;
+ }
+ field?.removeAttribute('aria-invalid');
+ myName=value.slice(0,40);
+ return myName;
+}
 function updateViewerList(){
  const list=$('viewerList'),btn=$('viewerCountBtn');
  if(!list||!btn)return;
@@ -563,7 +576,7 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{
+async function connectRoom(){if(room)return;if(!myName&&!requireName())throw new Error('El nombre es obligatorio.');myName=safeName(myName||$('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{
  addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió');
  if(isHostSession){
   // El estado destacado pertenece al anfitrión; reenviarlo a cada invitado nuevo.
@@ -594,11 +607,11 @@ if(!isHostSession){
  room.localParticipant.publishData(request,{reliable:true}).catch(err=>console.error('No se pudo solicitar la pantalla principal:',err));
  setTimeout(()=>room?.localParticipant?.publishData(request,{reliable:true}).catch(()=>{}),700);
 }
-if(isHostSession){$('timerHostControls')?.classList.remove('hidden');$('timerStatus').textContent='Control exclusivo del anfitrión · 60 segundos por turno';}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+if(isHostSession){$('timerHostControls')?.classList.remove('hidden');const timerStatus=$('timerStatus');if(timerStatus)timerStatus.textContent='Control exclusivo del anfitrión · 60 segundos por turno';}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
-window.createRoom=async()=>{isHostSession=true;$('endLiveBtn')?.classList.remove('hidden');roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
-window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
-window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
+window.createRoom=async()=>{if(!requireName())return;isHostSession=true;$('endLiveBtn')?.classList.remove('hidden');roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
+window.recoverHostRoom=async()=>{if(!requireName())return;const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
+window.enterRoom=async()=>{if(!requireName())return;isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
 let cameraStarting=false;
 const cameraControl=()=>document.querySelector('.local-cam-control');
 window.toggleCamera=async()=>{
