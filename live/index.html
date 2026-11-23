@@ -234,13 +234,38 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
  #roomHeaderTimerRow #timerStatus{font-size:9px}
 }
 
+
+/* TÍO CUCHO LIVE: ventanitas laterales, conservando el video principal */
+#stage{width:100%;min-height:180px;max-height:none;overflow:visible;background:#050505}
+#stageGrid{display:grid;grid-template-columns:minmax(48px,clamp(58px,12vw,92px)) minmax(0,1fr) minmax(48px,clamp(58px,12vw,92px));gap:5px;align-items:stretch;width:100%;min-height:180px}
+#featuredSlot{min-width:0;width:100%;display:flex;align-items:stretch;justify-content:center}
+#featuredSlot>.person{width:100%;min-width:0}
+#featuredSlot .person video{width:100%;height:min(52vh,460px);max-height:52vh;aspect-ratio:3/4;object-fit:contain}
+.stage-rail{display:flex;flex-direction:column;gap:6px;min-width:0;max-height:min(52vh,460px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;overscroll-behavior:contain;padding:2px 0}
+.stage-rail .person{width:100%;min-width:0;padding:2px;border-radius:7px;overflow:hidden}
+.stage-rail .person video{display:block;width:100%;height:auto;aspect-ratio:3/4;max-height:100px;object-fit:cover;border-radius:5px}
+.stage-rail .person .name{display:block;min-height:0;padding:2px 1px;font-size:8px;line-height:1.1;overflow-wrap:anywhere;text-align:center}
+.stage-rail .person .name-label{display:block;max-height:2.2em;overflow:hidden}
+.stage-rail .person button{width:100%;min-width:0;padding:3px 1px!important;margin-top:2px!important;font-size:8px!important;line-height:1.1}
+.stage-rail .person .local-controls{display:flex!important;gap:2px;flex-wrap:wrap;justify-content:center;margin:2px 0!important}
+.stage-rail .person .local-controls button{width:22px!important;height:22px!important;min-width:22px!important;padding:1px!important;font-size:12px!important}
+#videos{display:none!important}
+@media(max-width:600px){
+ #stageGrid{grid-template-columns:minmax(45px,14vw) minmax(0,1fr) minmax(45px,14vw);gap:4px}
+ #featuredSlot .person video{height:min(49vh,390px);max-height:49vh}
+ .stage-rail{max-height:min(49vh,390px);gap:4px}
+ .stage-rail .person video{max-height:76px}
+ .stage-rail .person .name{font-size:7px}
+ .stage-rail .person button{font-size:7px!important}
+}
+
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Escribí tu nombre" required autocomplete="name"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><div id="roomHeaderTimerRow"><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO</h3><div id="timerDisplay">01:00</div><div id="timerPlayerLabel" hidden></div><div id="timerStatus" hidden></div><div id="timerHostControls" class="hidden"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ INICIAR</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ REINICIAR</button></div></div></section></div>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><div id="stageGrid"><div id="stageSideLeft" class="stage-rail" aria-label="Participantes"></div><div id="featuredSlot" class="featured-slot"><p class="note">La pantalla principal aparece al conectarse.</p></div><div id="stageSideRight" class="stage-rail" aria-label="Participantes"></div></div><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
 <button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
 <button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
@@ -361,16 +386,31 @@ function sendCurrentSpotlight(targetIdentity){
  if(targetIdentity) options.destinationIdentities=[targetIdentity];
  room.localParticipant.publishData(packet,options).catch(err=>console.error('No se pudo enviar la pantalla principal:',err));
 }
+function renderStageLayout(){
+ const stage=$('stage'),main=$('featuredSlot'),left=$('stageSideLeft'),right=$('stageSideRight');
+ if(!stage||!main||!left||!right)return;
+ const cards=[...document.querySelectorAll('#videos .person, #stage .person')];
+ const selected=cards.find(card=>card.id==='p-'+featuredIdentity);
+ main.replaceChildren();left.replaceChildren();right.replaceChildren();
+ if(selected)main.append(selected);
+ let sideIndex=0;
+ cards.forEach(card=>{
+  if(card===selected)return;
+  (sideIndex++%2===0?left:right).append(card);
+ });
+}
+function resetStageMarkup(){
+ featuredIdentity=null;
+ pendingFeaturedIdentity=null;
+ $('stage').innerHTML='<div id="stageGrid"><div id="stageSideLeft" class="stage-rail" aria-label="Participantes"></div><div id="featuredSlot" class="featured-slot"><p class="note">La pantalla principal aparece al conectarse.</p></div><div id="stageSideRight" class="stage-rail" aria-label="Participantes"></div></div><div id="chatBubbles" aria-live="polite"></div>';
+}
 function showFeatured(identity,broadcast=true){
  if(!identity) return false;
  const card=document.getElementById('p-'+identity);
  if(!card){pendingFeaturedIdentity=identity;return false;}
  pendingFeaturedIdentity=null;
- const stage=$('stage');
- const previous=stage.querySelector('.person');
- if(previous && previous!==card) $('videos').append(previous);
  featuredIdentity=identity;
- stage.replaceChildren(card,$('chatBubbles'));
+ renderStageLayout();
  if(isHostSession){
   try{localStorage.setItem('tc_featured_identity',identity)}catch(e){}
   if(broadcast) sendCurrentSpotlight();
@@ -379,7 +419,7 @@ function showFeatured(identity,broadcast=true){
 }
 
 function returnToHost(){
- const host=document.querySelector('#videos .person[id^="p-host-"]') || document.querySelector('#stage .person[id^="p-host-"]');
+ const host=document.querySelector('#stage .person[id^="p-host-"]') || document.querySelector('#videos .person[id^="p-host-"]');
  if(host) showFeatured(host.id.slice(2));
 }
 window.returnToHost=returnToHost;
@@ -449,7 +489,7 @@ function addPerson(participant,track=null){
   }
  }
 
- if(card.parentElement!==$('stage') && card.parentElement!==$('videos')){
+ if(!$('stage').contains(card) && card.parentElement!==$('videos')){
   $('videos').append(card);
  }
 
@@ -471,6 +511,7 @@ function addPerson(participant,track=null){
   video.play?.().catch(()=>{});
  }
 
+ if(featuredIdentity)renderStageLayout();
  return card;
 }
 
@@ -485,9 +526,11 @@ function removePerson(participant){
   featuredIdentity=null;
   returnToHost();
   if(!featuredIdentity){
-   const next=$('videos').querySelector('.person');
+   const next=document.querySelector('#stage .person, #videos .person');
    if(next)showFeatured(next.id.slice(2));
   }
+ }else{
+  renderStageLayout();
  }
 }
 
@@ -861,7 +904,7 @@ if(room)await room.disconnect();
 }catch(e){}
 room=null;cameraOn=false;micOn=false;if(turnTimerInterval){clearInterval(turnTimerInterval);turnTimerInterval=null;}turnTimerState={running:false,remainingMs:TURN_TIME_MS,endAt:null,player:''};renderTurnTimer();$('hostReturnTop')?.classList.add('hidden');$('viewerList')?.classList.add('hidden');updateViewerList();
 $('videos').replaceChildren();
-$('stage').replaceChildren();
+resetStageMarkup();
 $('room').classList.add('hidden');
 $('home').classList.remove('hidden');
 if(isHostSession){$('recoverRoomBtn').classList.remove('hidden');history.replaceState({},'',location.pathname+'?anfitrion=1');}
@@ -879,7 +922,7 @@ if(room)await room.disconnect();
 }catch(e){}
 room=null;cameraOn=false;micOn=false;if(turnTimerInterval){clearInterval(turnTimerInterval);turnTimerInterval=null;}turnTimerState={running:false,remainingMs:TURN_TIME_MS,endAt:null,player:''};renderTurnTimer();$('hostReturnTop')?.classList.add('hidden');$('viewerList')?.classList.add('hidden');updateViewerList();
 $('videos').replaceChildren();
-$('stage').replaceChildren();
+resetStageMarkup();
 $('room').classList.add('hidden');
 $('home').classList.remove('hidden');
 localStorage.removeItem('tc_host_room');
