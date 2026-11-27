@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#090806">
-<title>TÍO CUCHO LIVE — Prototipo</title>
+<title>TÍO CUCHO LIVE</title>
 <style>
 :root{--bg:#090806;--panel:#15120d;--gold:#e8bd4d;--gold2:#f7d978;--muted:#a69b83;--line:#5b4820;--white:#fff8e8}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -14,62 +14,58 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;bo
 .status{font-size:12px;color:var(--gold);border:1px solid var(--line);padding:6px 10px;border-radius:20px}
 .stage{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;flex:1;min-height:0}
 .main{background:#050505;border:1px solid var(--line);border-radius:18px;overflow:hidden;position:relative;min-height:380px;display:flex;align-items:center;justify-content:center}
-.host-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:radial-gradient(ellipse at 50% 35%,#41341c,#100e0b 60%,#050505)}
-.placeholder{position:relative;text-align:center;color:#d9c99f;padding:25px;z-index:1}.placeholder .cam{font-size:54px}.placeholder strong{display:block;font-size:20px;color:var(--gold2)}
-.host-label{position:absolute;left:12px;top:12px;background:#090806d9;border:1px solid var(--gold);border-radius:20px;padding:7px 12px;font-size:12px;z-index:2}
+.placeholder{position:relative;text-align:center;color:#d9c99f;padding:25px}.placeholder .cam{font-size:54px}.placeholder strong{display:block;font-size:20px;color:var(--gold2)}
+.host-label{position:absolute;left:12px;top:12px;background:#090806d9;border:1px solid var(--gold);border-radius:20px;padding:7px 12px;font-size:12px}
 .side{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:10px;display:flex;flex-direction:column;gap:9px;min-height:0}
 .side h3{font-size:12px;color:var(--gold2);margin:0}.people{overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.person{text-align:center;min-width:0;position:relative}.person-actions{display:flex;flex-direction:column;gap:4px;margin-top:5px}.person-actions button{font-size:9px;padding:5px 6px;border-radius:12px}.avatar{width:58px;height:58px;border-radius:50%;margin:auto;background:linear-gradient(145deg,#6a5527,#17130c);border:2px solid var(--gold);display:grid;place-items:center;font-weight:800;color:#fff2c7}.person small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#e9dfc9;margin-top:4px}
+.person{text-align:center;min-width:0;position:relative}.person-actions{display:flex;flex-direction:column;gap:4px;margin-top:5px}.person-actions button{font-size:9px;padding:5px 6px;border-radius:12px}
+.avatar{width:58px;height:58px;border-radius:50%;margin:auto;background:linear-gradient(145deg,#6a5527,#17130c);border:2px solid var(--gold);display:grid;place-items:center;font-weight:800;color:#fff2c7}
+.person small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#e9dfc9;margin-top:4px}
 .chat{border:1px solid var(--line);border-radius:16px;background:var(--panel);display:flex;flex-direction:column;min-height:170px;max-height:240px}
 .chathead{padding:8px 12px;color:var(--gold2);font-size:12px;border-bottom:1px solid #3b3019}.messages{padding:9px 12px;overflow:auto;flex:1;font-size:13px}.msg{margin:4px 0}.msg b{color:var(--gold2)}
-.composer{display:flex;gap:7px;padding:9px;border-top:1px solid #3b3019}.composer input{min-width:0;flex:1;background:#090806;border:1px solid var(--line);border-radius:22px;padding:11px 14px;color:white;font-size:14px}.btn{border:1px solid var(--gold);background:var(--gold);color:#171106;font-weight:800;border-radius:22px;padding:10px 14px;cursor:pointer}.btn.secondary{background:#17130c;color:var(--gold2)}.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.note{text-align:center;color:var(--muted);font-size:11px;padding:4px}
-.panel{border:1px solid var(--line);background:#100d08;border-radius:16px;padding:12px;display:none}.panel.show{display:block}.panel h3{margin:0 0 8px;color:var(--gold2);font-size:14px}.request{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid #3b3019;font-size:13px}.request button{padding:7px 10px;font-size:11px}
+.composer{display:flex;gap:7px;padding:9px;border-top:1px solid #3b3019}.composer input{min-width:0;flex:1;background:#090806;border:1px solid var(--line);border-radius:22px;padding:11px 14px;color:white;font-size:14px}
+.btn{border:1px solid var(--gold);background:var(--gold);color:#171106;font-weight:800;border-radius:22px;padding:10px 14px;cursor:pointer}.btn.secondary{background:#17130c;color:var(--gold2)}
+.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.note{text-align:center;color:var(--muted);font-size:11px;padding:4px}
+.panel{border:1px solid var(--line);background:#100d08;border-radius:16px;padding:12px;display:none}.panel.show{display:block}.panel h3{margin:0 0 8px;color:var(--gold2);font-size:14px}
 @media(max-width:650px){.app{padding:8px}.stage{grid-template-columns:minmax(0,1fr) 92px;gap:7px}.side{padding:7px}.side h3{font-size:10px}.people{grid-template-columns:1fr;gap:7px}.avatar{width:48px;height:48px}.main{min-height:390px}.chat{min-height:155px}.btn{padding:9px 11px;font-size:12px}.host-label{font-size:10px}}
 </style>
 </head>
 <body>
 <div class="app">
-<header><div><div class="brand">🖤 TÍO CUCHO LIVE 💛</div><div class="sub">Sala de conversación · hasta 30 participantes</div></div><div class="status" id="roomStatus">PROTOTIPO VISUAL</div></header>
+<header><div><div class="brand">🖤 TÍO CUCHO LIVE 💛</div><div class="sub">Sala de conversación · hasta 30 participantes</div></div><div class="status" id="roomStatus">VISTA DE PRUEBA</div></header>
 <section class="stage">
 <div class="main">
-<div class="host-label">👑 ANFITRIÓN · PANTALLA PRINCIPAL</div>
-<div class="placeholder"><div class="cam">🎥</div><strong id="hostState">Vista del anfitrión</strong><span id="hostHint">La cámara real se conectará al servidor de videollamada.</span></div>
+<div class="host-label">👑 ANFITRIÓN DE TURNO · ÚNICA CÁMARA</div>
+<div class="placeholder"><div class="cam">🎥</div><strong id="hostState">Cámara del anfitrión</strong><span id="hostHint">La transmisión en vivo se habilitará al conectar el servidor.</span></div>
 </div>
 <aside class="side"><h3>PARTICIPANTES · <span id="count">8</span>/30</h3><div class="people" id="people"></div></aside>
 </section>
-<section class="panel" id="hostPanel"><h3>Solicitudes para subir a ventana · máximo 20</h3><div id="requests"><div class="sub">No hay solicitudes pendientes.</div></div><div class="sub" style="margin-top:10px">Control del anfitrión: en cada participante podés quitar o devolver permiso de video y expulsarlo de esta sala.</div><div id="blockedList" class="sub" style="margin-top:8px"></div></section>
-<section class="chat"><div class="chathead">💬 COMENTARIOS DE LA SALA</div><div class="messages" id="messages"><div class="msg"><b>Sistema:</b> Bienvenidos a la sala de prueba.</div></div><div class="composer"><input id="comment" placeholder="Escribí un comentario…" maxlength="250"><button class="btn" id="send">Enviar</button></div></section>
+<section class="panel" id="hostPanel"><h3>Administración de sala</h3><div class="sub">Solo el anfitrión de turno puede transmitir video. Los participantes únicamente usan micrófono y comentarios.</div><div id="blockedList" class="sub" style="margin-top:8px"></div></section>
+<section class="chat"><div class="chathead">💬 COMENTARIOS DE LA SALA</div><div class="messages" id="messages"><div class="msg"><b>Sistema:</b> Bienvenidos a la sala.</div></div><div class="composer"><input id="comment" placeholder="Escribí un comentario…" maxlength="250"><button class="btn" id="send">Enviar</button></div></section>
 <div class="controls">
 <button class="btn secondary" id="mic">🎙️ Micrófono: apagado</button>
-<button class="btn secondary" id="request">✋ Solicitar subir</button>
 <button class="btn secondary" id="host">👑 Modo anfitrión (demo)</button>
 </div>
-<div class="note">DEMO VISUAL: expulsión, bloqueo por sala, permisos de video y solicitudes son simulados. Todavía no conecta cámaras, micrófonos ni salas reales.</div>
+<div class="note">VISTA DE PRUEBA: todavía no conecta una sala real ni transmite audio o video. Esta versión refleja los permisos definitivos.</div>
 </div>
 <script>
 const initialNames=["María","Carlos","Sofi","Dani","Emanuel","Pablo","Lucía","Miguel"];
-let participants=initialNames.map((name,i)=>({id:i+1,name,video:false,mic:true}));
-let isHost=false,mic=false,nextId=9,accepted=0,req=0;
-const requests=[];
+let participants=initialNames.map((name,i)=>({id:i+1,name,mic:true}));
+let isHost=false,mic=false;
 const blocked=new Set();
 const people=document.getElementById('people');
-
 function renderPeople(){
   people.innerHTML='';
   participants.forEach(p=>{
     const el=document.createElement('div');el.className='person';
     const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=p.name[0].toUpperCase();
-    if(p.video) avatar.style.boxShadow='0 0 0 3px #f7d978,0 0 14px #e8bd4d';
-    const label=document.createElement('small');label.textContent=p.name+' · '+(p.mic?'🎙️':'🔇')+(p.video?' · 📹':'');
+    const label=document.createElement('small');label.textContent=p.name+' · '+(p.mic?'🎙️':'🔇');
     el.append(avatar,label);
     if(isHost){
       const actions=document.createElement('div');actions.className='person-actions';
-      const videoBtn=document.createElement('button');videoBtn.className='btn secondary';
-      videoBtn.textContent=p.video?'Quitar video':'Dar video';
-      videoBtn.onclick=()=>toggleVideo(p.id);
       const kickBtn=document.createElement('button');kickBtn.className='btn secondary';
       kickBtn.textContent='⛔ Expulsar';kickBtn.onclick=()=>kick(p.id);
-      actions.append(videoBtn,kickBtn);el.append(actions);
+      actions.append(kickBtn);el.append(actions);
     }
     people.append(el);
   });
@@ -79,64 +75,25 @@ function addMsg(name,msg){
   const el=document.createElement('div');el.className='msg';
   const b=document.createElement('b');b.textContent=name+': ';
   el.append(b,document.createTextNode(msg));
-  document.getElementById('messages').appendChild(el);
-  document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight;
-}
-function toggleVideo(id){
-  const p=participants.find(x=>x.id===id);if(!p)return;
-  if(p.video){p.video=false;accepted=Math.max(0,accepted-1);addMsg('Sistema','El anfitrión retiró el permiso de video a '+p.name+'.');}
-  else {if(accepted>=20){alert('Ya hay 20 ventanas de video ocupadas. Primero liberá un lugar.');return;}
-    p.video=true;accepted++;addMsg('Sistema',p.name+' recibió permiso para activar su video.');}
-  renderPeople();
+  const box=document.getElementById('messages');box.appendChild(el);box.scrollTop=box.scrollHeight;
 }
 function kick(id){
   const p=participants.find(x=>x.id===id);if(!p)return;
-  if(!confirm('¿Seguro que querés expulsar a '+p.name+'?\\n\\nSe desconectará de esta sala y quedará bloqueado para volver a entrar a esta misma sala.'))return;
-  blocked.add(p.name.toLowerCase());
-  if(p.video)accepted=Math.max(0,accepted-1);
-  participants=participants.filter(x=>x.id!==id);
-  renderPeople();renderBlocked();
-  addMsg('Sistema',p.name+' fue expulsado y bloqueado para esta sala.');
+  if(!confirm('¿Seguro que querés expulsar a '+p.name+'?\n\nSe desconectará y quedará bloqueado para volver a entrar a esta sala.'))return;
+  blocked.add(p.name.toLowerCase());participants=participants.filter(x=>x.id!==id);
+  renderPeople();renderBlocked();addMsg('Sistema',p.name+' fue expulsado y bloqueado para esta sala.');
 }
 function renderBlocked(){
-  const box=document.getElementById('blockedList');
-  box.textContent=blocked.size?'Bloqueados en esta sala: '+[...blocked].join(', '):'No hay participantes bloqueados.';
+  document.getElementById('blockedList').textContent=blocked.size?'Bloqueados en esta sala: '+[...blocked].join(', '):'No hay participantes bloqueados.';
 }
 document.getElementById('host').onclick=()=>{
-  isHost=!isHost;
-  document.getElementById('hostPanel').classList.toggle('show',isHost);
+  isHost=!isHost;document.getElementById('hostPanel').classList.toggle('show',isHost);
   document.getElementById('host').textContent=isHost?'👑 Salir de modo anfitrión':'👑 Modo anfitrión (demo)';
   renderPeople();
 };
 document.getElementById('mic').onclick=()=>{
   mic=!mic;document.getElementById('mic').textContent='🎙️ Micrófono: '+(mic?'encendido':'apagado');
 };
-document.getElementById('request').onclick=()=>{
-  if(isHost){alert('Salí del modo anfitrión para simular una solicitud como participante.');return;}
-  req++;const name='Participante '+req;
-  if(blocked.has(name.toLowerCase())){alert('No podés volver a entrar a esta sala: fuiste bloqueado.');return;}
-  requests.push({id:req,name});addMsg('Sistema',name+' solicitó permiso para subir a una ventana de video.');renderRequests();
-};
-function renderRequests(){
-  const box=document.getElementById('requests');
-  if(!requests.length){box.innerHTML='<div class="sub">No hay solicitudes pendientes.</div>';return;}
-  box.innerHTML='';
-  requests.forEach((r,i)=>{
-    const row=document.createElement('div');row.className='request';
-    const label=document.createElement('span');label.textContent=r.name;
-    const actions=document.createElement('span');
-    const yes=document.createElement('button');yes.className='btn';yes.textContent='Aceptar';
-    const no=document.createElement('button');no.className='btn secondary';no.textContent='Rechazar';
-    yes.onclick=()=>{
-      if(accepted>=20){alert('Ya hay 20 ventanas de video ocupadas.');return;}
-      accepted++;participants.push({id:nextId++,name:r.name,video:true,mic:true});
-      requests.splice(i,1);renderRequests();renderPeople();
-      addMsg('Sistema',r.name+' fue aceptado para una ventana de video (simulación).');
-    };
-    no.onclick=()=>{requests.splice(i,1);renderRequests();addMsg('Sistema',r.name+' continúa por audio y comentarios.');};
-    actions.append(yes,no);row.append(label,actions);box.append(row);
-  });
-}
 document.getElementById('send').onclick=()=>{
   const inp=document.getElementById('comment');
   if(inp.value.trim()){addMsg('Vos',inp.value.trim());inp.value='';}
