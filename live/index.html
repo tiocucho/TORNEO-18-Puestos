@@ -275,7 +275,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #participantRail #videos .person>button:first-of-type{top:2px;left:2px;}
 #participantRail #videos .person>button:last-of-type{top:2px;right:2px;}
 #chatComposer{display:flex;align-items:center;gap:6px;}
-#chatComposer #chatMicButton{flex:0 0 42px;width:42px;min-width:42px!important;height:42px;padding:0;font-size:18px;}
+#chatComposer .local-mic-control{flex:0 0 42px;width:42px;min-width:42px!important;height:42px;padding:0;font-size:18px;}
 #chatComposer #message{flex:1;min-width:0;}
 @media(max-width:520px){#stageLayout{grid-template-columns:minmax(0,1fr) 78px;gap:6px;}#participantRail #videos .person{flex-basis:64px;width:64px;min-width:64px;max-width:64px;height:64px;min-height:64px;}#participantRail{max-height:65vh;}#participantRail #videos{gap:6px;}}
 @media(min-width:900px){#stageLayout{grid-template-columns:minmax(0,1fr) 118px;}}
@@ -343,7 +343,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <button type="button" onclick="sendReaction('🏦 LLEVA MI BANCA AVIADOR')"><span class="sticker-face">🏦</span><span class="sticker-caption">LLEVA MI BANCA AVIADOR</span></button>
 <button type="button" onclick="sendReaction('👨‍✈️ LLEVA 5’i AVIADOR')"><span class="sticker-face">👨‍✈️</span><span class="sticker-caption">LLEVA 5’i AVIADOR</span></button>
 <button type="button" onclick="sendReaction('🚨 QUE EMPIECE EL LLORO')"><span class="sticker-face">🚨</span><span class="sticker-caption">QUE EMPIECE EL LLORO 🚨🚨🚨</span></button>
-<button type="button" onclick="sendReaction('🤣 PIUUUM!!! BAJORE')"><span class="sticker-face">🤣</span><span class="sticker-caption">PIUUUM!!! BAJORE</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><div id="chatComposer"><button type="button" id="chatMicButton" class="local-mic-control" onclick="toggleMic()" aria-label="Activar o silenciar micrófono">🎙️</button><input id="message" placeholder="Escribí un comentario" maxlength="300" autocomplete="off"><button class="primary" onclick="sendComment()">Enviar</button></div></div></div></section>
+<button type="button" onclick="sendReaction('🤣 PIUUUM!!! BAJORE')"><span class="sticker-face">🤣</span><span class="sticker-caption">PIUUUM!!! BAJORE</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><div id="chatComposer"><input id="message" placeholder="Escribí un comentario" maxlength="300" autocomplete="off"><button class="primary" onclick="sendComment()">Enviar</button></div></div></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -577,8 +577,11 @@ function addLocalCard(){
   cameraToggle.textContent='📷';
   cameraToggle.title='Encender o apagar cámara';
   cameraToggle.setAttribute('aria-label','Encender o apagar cámara');
-  controls.append(micButton,cameraToggle,flipButton,mirrorButton);
- }else{controls.append(micButton,camButton,flipButton,mirrorButton);}
+  controls.append(cameraToggle,flipButton,mirrorButton);
+ }else{controls.append(camButton,flipButton,mirrorButton);}
+ const composer=$('chatComposer');
+ const messageInput=$('message');
+ if(composer&&messageInput)composer.insertBefore(micButton,messageInput);
  card.querySelector('.name').append(controls);
  applyMirrorPreview();
  if(isHostSession){
