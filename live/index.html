@@ -152,12 +152,14 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 
 
 /* Cronómetro de turno: integrado sin alterar el diseño existente */
-#turnTimer{width:100%;max-width:205px;margin:0;padding:6px 7px;border:1px solid #d4af37;border-radius:10px;background:linear-gradient(145deg,#17130b,#080808);text-align:center}
-#turnTimer h3{margin:0 0 3px;color:#f5d575;font-size:11px;line-height:1.15}
-#timerDisplay{font-size:25px;font-weight:900;letter-spacing:1px;color:#f5d575;font-variant-numeric:tabular-nums;line-height:1;margin:3px 0}
+#turnTimer{width:calc(100% - 18px);max-width:520px;margin:8px auto 10px;padding:7px 10px;border:1px solid #d4af37;border-radius:11px;background:linear-gradient(145deg,#17130b,#080808);text-align:center}
+#turnTimer h3{margin:1px 0 4px;color:#f5d575;font-size:15px;line-height:1.2}
+#timerPlayerLabel{font-size:13px;line-height:1.2;margin:2px 0}
+#timerPlayer{width:100%;max-width:260px;margin:4px auto;padding:7px;border:1px solid #80672f;border-radius:8px;background:#080808;color:#fff}
+#timerDisplay{font-size:28px;font-weight:900;letter-spacing:1px;color:#f5d575;font-variant-numeric:tabular-nums;line-height:1.05;margin:2px 0}
 #timerDisplay.warning{color:#ff3939;animation:timerPulse .7s infinite alternate}
-#timerHostControls>div{display:flex;justify-content:center;gap:4px;flex-wrap:nowrap}
-#timerHostControls button{margin:0;padding:5px 7px;font-size:10px;line-height:1.1;white-space:nowrap}
+#timerStatus{font-size:11px;color:#c8b98e;margin:3px 0 4px;line-height:1.2}
+#timerHostControls button{margin:2px;padding:6px 9px;font-size:11px}
 @keyframes timerPulse{from{opacity:1}to{opacity:.55}}
 
 @media(max-width:600px){
@@ -209,11 +211,35 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
  font-size:11px;
  line-height:1.15;
 }
+#roomHeaderTimerRow #timerPlayerLabel,
+#roomHeaderTimerRow #timerStatus{
+ margin:1px 0;
+ font-size:10px;
+ line-height:1.15;
+}
 #roomHeaderTimerRow #timerDisplay{
  margin:1px 0;
  font-size:25px;
  line-height:1;
  letter-spacing:1px;
+}
+#roomHeaderTimerRow #timerHostControls input{
+ width:100%;
+ margin:3px 0;
+ padding:5px;
+ font-size:11px;
+}
+#roomHeaderTimerRow #timerHostControls>div{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:3px;
+}
+#roomHeaderTimerRow #timerHostControls button{
+ margin:0;
+ padding:5px 6px;
+ font-size:10px;
+ line-height:1.1;
 }
 @media(max-width:600px){
  #roomHeaderTimerRow{
@@ -234,13 +260,32 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
  #roomHeaderTimerRow #timerStatus{font-size:9px}
 }
 
+
+/* TIO CUCHO LIVE: escenario amplio y participantes en columna lateral */
+#stageLayout{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:10px;align-items:start;width:100%;}
+#liveStickyArea{min-width:0;width:100%;}
+#participantRail{min-width:0;max-height:72vh;overflow-y:auto;position:sticky;top:8px;text-align:center;}
+#participantRail h3{font-size:12px;line-height:1.2;margin:4px 0 8px;}
+#participantRail #handRaiseBtn{width:100%;min-width:0;padding:6px 2px;font-size:11px;}
+#participantRail #videos{display:flex;flex-direction:column;gap:8px;width:100%;}
+#participantRail #videos .person{position:relative;width:100%;min-width:0;aspect-ratio:1/1;height:auto;margin:0;padding:0;border-radius:50%;overflow:hidden;}
+#participantRail #videos .person video{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+#participantRail #videos .person .name{position:absolute;left:0;right:0;bottom:0;padding:3px 1px;font-size:9px;line-height:1.1;background:#000b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#participantRail #videos .person>button{position:absolute;z-index:3;min-width:0;padding:2px 4px;font-size:9px;line-height:1.1;}
+#participantRail #videos .person>button:first-of-type{top:2px;left:2px;}
+#participantRail #videos .person>button:last-of-type{top:2px;right:2px;}
+#chatComposer{display:flex;align-items:center;gap:6px;}
+#chatComposer #chatMicButton{flex:0 0 42px;width:42px;min-width:42px!important;height:42px;padding:0;font-size:18px;}
+#chatComposer #message{flex:1;min-width:0;}
+@media(max-width:520px){#stageLayout{grid-template-columns:minmax(0,1fr) 78px;gap:6px;}#participantRail{max-height:65vh;}#participantRail #videos{gap:6px;}}
+@media(min-width:900px){#stageLayout{grid-template-columns:minmax(0,1fr) 118px;}}
 </style>
 </head>
 <body>
 <header>👑 TÍO CUCHO LIVE</header>
-<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Escribí tu nombre" required autocomplete="name"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
-<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><div id="roomHeaderTimerRow"><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO</h3><div id="timerDisplay">01:00</div><div id="timerPlayerLabel" hidden></div><div id="timerStatus" hidden></div><div id="timerHostControls" class="hidden"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ INICIAR</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ REINICIAR</button></div></div></section></div>
-<p id="status" class="status">Preparando conexión…</p><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()">✋ LEVANTAR LA MANO</button><div id="videos" class="videos"></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
+<section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><div id="roomHeaderTimerRow"><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO DEL JUGADOR</h3><div id="timerPlayerLabel">Turno sin iniciar</div><div id="timerDisplay">01:00</div><div id="timerStatus">Cada jugador tiene 60 segundos</div><div id="timerHostControls" class="hidden"><input id="timerPlayer" maxlength="40" placeholder="Nombre del jugador (opcional)"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ Iniciar 1 minuto</button><button type="button" id="timerPauseBtn" onclick="pauseTurnTimer()">⏸️ Pausar</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ Reiniciar</button></div></div></section></div>
+<p id="status" class="status">Preparando conexión…</p><div id="stageLayout"><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div><aside id="participantRail"><h3 class="gold">🃏 Participantes</h3><button type="button" id="handRaiseBtn" onclick="toggleHandRaise()" aria-label="Levantar la mano">✋</button><div id="videos" class="videos"></div></aside></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
 <button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
 <button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
@@ -267,7 +312,7 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 <button type="button" onclick="sendReaction('🏦 LLEVA MI BANCA AVIADOR')"><span class="sticker-face">🏦</span><span class="sticker-caption">LLEVA MI BANCA AVIADOR</span></button>
 <button type="button" onclick="sendReaction('👨‍✈️ LLEVA 5’i AVIADOR')"><span class="sticker-face">👨‍✈️</span><span class="sticker-caption">LLEVA 5’i AVIADOR</span></button>
 <button type="button" onclick="sendReaction('🚨 QUE EMPIECE EL LLORO')"><span class="sticker-face">🚨</span><span class="sticker-caption">QUE EMPIECE EL LLORO 🚨🚨🚨</span></button>
-<button type="button" onclick="sendReaction('🤣 PIUUUM!!! BAJORE')"><span class="sticker-face">🤣</span><span class="sticker-caption">PIUUUM!!! BAJORE</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><div id="chatComposer"><input id="message" placeholder="Escribí un comentario" maxlength="300" autocomplete="off"><button class="primary" onclick="sendComment()">Enviar</button></div></div></div></section>
+<button type="button" onclick="sendReaction('🤣 PIUUUM!!! BAJORE')"><span class="sticker-face">🤣</span><span class="sticker-caption">PIUUUM!!! BAJORE</span></button></div><div id="comments" aria-live="polite"><p>Bienvenido a TÍO CUCHO LIVE.</p></div><div id="chatComposer"><button type="button" id="chatMicButton" class="local-mic-control" onclick="toggleMic()" aria-label="Activar o silenciar micrófono">🎙️</button><input id="message" placeholder="Escribí un comentario" maxlength="300" autocomplete="off"><button class="primary" onclick="sendComment()">Enviar</button></div></div></div></section>
 <p class="note">Versión de prueba: usa el servidor de desarrollo de LiveKit. No la uses como sistema público definitivo; antes de publicar para todo el mundo hay que configurar acceso seguro y moderación.</p>
 <script>
 /* Mostrar el acceso de anfitrión aunque falle la carga del módulo de video */
@@ -293,20 +338,7 @@ const TOKEN_SERVER_ID='tiocucholive-1x4ggu';
 let room=null, roomCode='', cameraOn=false, micOn=false, myName='Invitado', isHostSession=false;
 const $=id=>document.getElementById(id);
 function setStatus(s){$('status').textContent=s}
-function safeName(s){return (s||'').trim().slice(0,40)}
-function requireName(){
- const field=$('name');
- const value=(field?.value||'').trim();
- if(!value){
-  alert('Tu nombre es obligatorio. Escribí tu nombre para continuar.');
-  field?.focus();
-  field?.setAttribute('aria-invalid','true');
-  return null;
- }
- field?.removeAttribute('aria-invalid');
- myName=value.slice(0,40);
- return myName;
-}
+function safeName(s){return (s||'Invitado').trim().slice(0,40)||'Invitado'}
 function updateViewerList(){
  const list=$('viewerList'),btn=$('viewerCountBtn');
  if(!list||!btn)return;
@@ -339,7 +371,7 @@ function applyMirrorPreview(){
  const video=$('p-'+room?.localParticipant?.identity)?.querySelector('video');
  if(video)video.style.transform=mirrorPreview?'scaleX(-1)':'scaleX(1)';
  const btn=$('mirrorPreviewBtn');
- if(btn){btn.textContent='🪞';btn.title=mirrorPreview?'Modo espejo activado · tocar para modo normal':'Modo normal · tocar para modo espejo';btn.setAttribute('aria-label',btn.title);btn.setAttribute('aria-pressed',String(mirrorPreview));}
+ if(btn){btn.textContent=mirrorPreview?'🪞 MODO ESPEJO: ACTIVADO':'↔ MODO NORMAL: ACTIVADO';btn.title=mirrorPreview?'Cambiar a imagen normal':'Cambiar a modo espejo';btn.setAttribute('aria-pressed',String(mirrorPreview));}
 }
 window.toggleMirrorPreview=()=>{
  mirrorPreview=!mirrorPreview;
@@ -352,28 +384,22 @@ function isHostParticipant(p){
  return !!p?.identity?.startsWith('host-');
 }
 
-function sendCurrentSpotlight(targetIdentity){
- if(!isHostSession || !room?.localParticipant) return;
- const selected=featuredIdentity || room.localParticipant.identity;
- if(!selected) return;
- const packet=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity:selected}));
- const options={reliable:true};
- if(targetIdentity) options.destinationIdentities=[targetIdentity];
- room.localParticipant.publishData(packet,options).catch(err=>console.error('No se pudo enviar la pantalla principal:',err));
-}
 function showFeatured(identity,broadcast=true){
- if(!identity) return false;
  const card=document.getElementById('p-'+identity);
  if(!card){pendingFeaturedIdentity=identity;return false;}
  pendingFeaturedIdentity=null;
+
  const stage=$('stage');
  const previous=stage.querySelector('.person');
  if(previous && previous!==card) $('videos').append(previous);
+
  featuredIdentity=identity;
  stage.replaceChildren(card,$('chatBubbles'));
- if(isHostSession){
-  try{localStorage.setItem('tc_featured_identity',identity)}catch(e){}
-  if(broadcast) sendCurrentSpotlight();
+
+ // El anfitrión comunica a toda la sala qué participante debe verse en grande.
+ if(broadcast && isHostSession && room?.localParticipant){
+  const payload=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity}));
+  room.localParticipant.publishData(payload,{reliable:true}).catch(err=>console.error('No se pudo sincronizar la pantalla principal:',err));
  }
  return true;
 }
@@ -512,10 +538,7 @@ function addLocalCard(){
  flipButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();flipCamera();});
  const mirrorButton=document.createElement('button');
  mirrorButton.type='button';mirrorButton.id='mirrorPreviewBtn';mirrorButton.className='local-mirror-control';
- mirrorButton.textContent='🪞';
- mirrorButton.style.cssText='display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;flex:0 0 48px!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;margin:0 3px!important;padding:0!important;background:#f5d575;color:#15100a;border:2px solid #d4af37;border-radius:10px;font-weight:900;font-size:21px;line-height:1;white-space:nowrap;position:relative;z-index:5;touch-action:manipulation';
- mirrorButton.title=mirrorPreview?'Modo espejo activado':'Modo normal activado';
- mirrorButton.setAttribute('aria-label','Alternar modo espejo');
+ mirrorButton.style.cssText='display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;width:58px;min-width:58px;height:58px;min-height:58px;margin:0 4px;padding:4px;background:#f5d575;color:#15100a;border:2px solid #d4af37;border-radius:12px;font-weight:900;font-size:10px;line-height:1.05;text-align:center;white-space:normal;position:relative;z-index:5;touch-action:manipulation';
  mirrorButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleMirrorPreview();});
  if(cameraToggle){
   cameraToggle.classList.remove('hidden');
@@ -542,6 +565,7 @@ function addLocalCard(){
   };
   cleanNullText();
   new MutationObserver(cleanNullText).observe(card,{childList:true,subtree:true});
+  showFeatured(lp.identity);
  }
  updateViewerList();
 }
@@ -576,42 +600,27 @@ window.activateSound=async()=>{
   setStatus('Sonido habilitado. Ya podés escuchar a los participantes que tengan el micrófono encendido.');
  }catch(e){setStatus('No se pudo activar el sonido: '+e.message);}
 };
-async function connectRoom(){if(room)return;if(!myName&&!requireName())throw new Error('El nombre es obligatorio.');myName=safeName(myName||$('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{
- addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió');
- if(isHostSession){
-  // El estado destacado pertenece al anfitrión; reenviarlo a cada invitado nuevo.
-  sendCurrentSpotlight(p.identity);
-  setTimeout(()=>sendCurrentSpotlight(p.identity),350);
-  setTimeout(()=>sendCurrentSpotlight(p.identity),1100);
- }
-});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
+async function connectRoom(){if(room)return;myName=safeName($('name').value);room=new Room({adaptiveStream:true,dynacast:true});room.on(RoomEvent.ActiveSpeakersChanged,speakers=>{const active=new Set((speakers||[]).map(p=>p.identity));document.querySelectorAll('.person').forEach(card=>{const identity=card.id.slice(2);card.classList.toggle('speaking',active.has(identity));});});room.on(RoomEvent.TrackSubscribed,(track,publication,participant)=>attachRemoteMedia(track,participant));room.on(RoomEvent.TrackUnsubscribed,(track)=>{for(const el of track.detach())el.remove();});room.on(RoomEvent.ParticipantConnected,p=>{addPerson(p);updateViewerList();setStatus((p.name||p.identity)+' se unió')});room.on(RoomEvent.ParticipantDisconnected,p=>{removePerson(p);updateViewerList();setStatus((p.name||p.identity)+' salió')});room.on(RoomEvent.DataReceived,async(payload,participant)=>{try{const data=JSON.parse(new TextDecoder().decode(payload));if(data.type==='chat'){appendComment(data.name,data.text)}else if(data.type==='sticker'&&data.sticker){appendSticker(data.name||participant?.name||'Participante',data.sticker)}else if(data.type==='hostMuteMic'&&!isHostSession&&isHostParticipant(participant)&&data.target===room?.localParticipant?.identity){
  await room.localParticipant.setMicrophoneEnabled(false);
  micOn=false;
  document.querySelectorAll('.local-mic-control').forEach(button=>{button.textContent='🎙️';button.setAttribute('aria-label','Activar mi micrófono');button.title='Activar mi micrófono';});
  setStatus('El anfitrión te pidió silenciar el micrófono. Podés volver a encenderlo cuando quieras.');
 }else if(data.type==='spotlightRequest'&&isHostSession&&participant?.identity){
- sendCurrentSpotlight(participant.identity);
- setTimeout(()=>sendCurrentSpotlight(participant.identity),350);
- setTimeout(()=>sendCurrentSpotlight(participant.identity),1100);
-}else if(data.type==='spotlight'&&!isHostSession&&isHostParticipant(participant)){
- showFeatured(data.identity,false);
-}else if(data.type==='handRaise'){setHandState(data.identity,!!data.raised);if(data.raised)appendComment(data.name||participant?.name||'Participante','✋ levantó la mano');}else if(data.type==='turnTimer'&&isHostParticipant(participant)){applyTurnTimerState(data.state,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const identity=isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:identity});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();
-if(isHostSession){
- let savedSpotlight=null;try{savedSpotlight=localStorage.getItem('tc_featured_identity')}catch(e){}
- const restoreIdentity=savedSpotlight&&document.getElementById('p-'+savedSpotlight)?savedSpotlight:room.localParticipant.identity;
- showFeatured(restoreIdentity,false);
- sendCurrentSpotlight();
-}
+ const selected=featuredIdentity||room?.localParticipant?.identity;
+ if(selected){
+  const reply=new TextEncoder().encode(JSON.stringify({type:'spotlight',identity:selected}));
+  room.localParticipant.publishData(reply,{reliable:true,destinationIdentities:[participant.identity]}).catch(err=>console.error('No se pudo enviar la pantalla principal al nuevo invitado:',err));
+ }
+}else if(data.type==='spotlight'&&!isHostSession&&isHostParticipant(participant)){showFeatured(data.identity,false)}else if(data.type==='handRaise'){setHandState(data.identity,!!data.raised);if(data.raised)appendComment(data.name||participant?.name||'Participante','✋ levantó la mano');}else if(data.type==='turnTimer'&&isHostParticipant(participant)){applyTurnTimerState(data.state,false)}}catch(e){}});room.on(RoomEvent.Disconnected,()=>setStatus('Desconectado de la sala.'));const source=TokenSource.developmentTokenServer(TOKEN_SERVER_ID);const hostIdentity=isHostSession?(localStorage.getItem('tc_host_identity')||('host-'+Math.random().toString(36).slice(2,10))):null;if(isHostSession)localStorage.setItem('tc_host_identity',hostIdentity);const identity=isHostSession?hostIdentity:'u-'+Math.random().toString(36).slice(2,10);const creds=await source.fetch({roomName:roomCode,participantName:myName,participantIdentity:identity});await room.connect(creds.serverUrl,creds.participantToken);addLocalCard();renderViewerList();for(const p of room.remoteParticipants.values()){addPerson(p);for(const pub of p.trackPublications.values()){if(pub.track&&pub.isSubscribed)attachRemoteMedia(pub.track,p)}}updateViewerList();
 if(!isHostSession){
  const request=new TextEncoder().encode(JSON.stringify({type:'spotlightRequest'}));
  room.localParticipant.publishData(request,{reliable:true}).catch(err=>console.error('No se pudo solicitar la pantalla principal:',err));
- setTimeout(()=>room?.localParticipant?.publishData(request,{reliable:true}).catch(()=>{}),700);
 }
-if(isHostSession){$('timerHostControls')?.classList.remove('hidden');const timerStatus=$('timerStatus');if(timerStatus)timerStatus.textContent='Control exclusivo del anfitrión · 60 segundos por turno';}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
+if(isHostSession){$('timerHostControls')?.classList.remove('hidden');$('timerStatus').textContent='Control exclusivo del anfitrión · 60 segundos por turno';}setStatus('Conectado a la sala. Activá cámara y micrófono.');}
 function showRoom(){ $('home').classList.add('hidden');$('room').classList.remove('hidden');$('roomName').textContent='Sala '+roomCode;history.replaceState({},'', '?sala='+encodeURIComponent(roomCode));}
-window.createRoom=async()=>{if(!requireName())return;isHostSession=true;$('endLiveBtn')?.classList.remove('hidden');roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
-window.recoverHostRoom=async()=>{if(!requireName())return;const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
-window.enterRoom=async()=>{if(!requireName())return;isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
+window.createRoom=async()=>{isHostSession=true;$('endLiveBtn')?.classList.remove('hidden');roomCode='TC'+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem('tc_host_room',roomCode);localStorage.setItem('tc_host_identity','host-'+Math.random().toString(36).slice(2,10));showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el ID del servidor de prueba y la conexión.');console.error(e)}};
+window.recoverHostRoom=async()=>{const savedRoom=localStorage.getItem('tc_host_room');if(!savedRoom){alert('No hay una sala anterior guardada en este teléfono.');return}isHostSession=true;roomCode=savedRoom;showRoom();$('endLiveBtn').classList.remove('hidden');try{await connectRoom()}catch(e){setStatus('No se pudo recuperar la sala: '+e.message);console.error(e)}};
+window.enterRoom=async()=>{isHostSession=false;roomCode=$('code').value.trim().toUpperCase();if(!roomCode){alert('Escribí el código de sala.');return}showRoom();try{await connectRoom()}catch(e){setStatus('No se pudo conectar: '+e.message+' · Revisá el código y el servidor de prueba.');console.error(e)}};
 let cameraStarting=false;
 const cameraControl=()=>document.querySelector('.local-cam-control');
 window.toggleCamera=async()=>{
@@ -753,6 +762,11 @@ function renderTurnTimer(){
  const display=$('timerDisplay');if(!display)return;
  display.textContent=formatTimer(remaining);
  display.classList.toggle('warning',remaining<=10000);
+ $('timerPlayerLabel').textContent=turnTimerState.player?('Turno de: '+turnTimerState.player):(turnTimerState.running?'Turno en curso':'Turno sin iniciar');
+ if(turnTimerState.running){$('timerStatus').textContent=remaining<=0?'¡TIEMPO AGOTADO!':(remaining<=10000?'¡Últimos segundos!':'Tiempo restante del jugador');}
+ else if(remaining===0){$('timerStatus').textContent='Tiempo agotado';}
+ else if(remaining<TURN_TIME_MS){$('timerStatus').textContent='Cronómetro pausado';}
+ else{$('timerStatus').textContent='Cada jugador tiene 60 segundos';}
 }
 function timerBeep(){
  try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;const ctx=new Ctx();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=880;gain.gain.setValueAtTime(.001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+.03);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.45);osc.start();osc.stop(ctx.currentTime+.46);osc.onended=()=>ctx.close();}catch(e){}
@@ -782,7 +796,8 @@ function tickTurnTimer(){
 }
 window.startTurnTimer=()=>{
  if(!isHostSession)return;
- applyTurnTimerState({running:true,remainingMs:TURN_TIME_MS,endAt:Date.now()+TURN_TIME_MS,player:''},true);
+ const player=$('timerPlayer')?.value.trim()||'';
+ applyTurnTimerState({running:true,remainingMs:TURN_TIME_MS,endAt:Date.now()+TURN_TIME_MS,player},true);
  timerLastSecond=60;
 };
 window.pauseTurnTimer=()=>{
@@ -792,7 +807,7 @@ window.pauseTurnTimer=()=>{
 };
 window.resetTurnTimer=()=>{
  if(!isHostSession)return;
- applyTurnTimerState({running:false,remainingMs:TURN_TIME_MS,endAt:null,player:''},true);
+ applyTurnTimerState({running:false,remainingMs:TURN_TIME_MS,endAt:null,player:$('timerPlayer')?.value.trim()||''},true);
  timerLastSecond=60;
 };
 renderTurnTimer();
