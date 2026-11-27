@@ -279,6 +279,37 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #chatComposer #message{flex:1;min-width:0;}
 @media(max-width:520px){#stageLayout{grid-template-columns:minmax(0,1fr) 78px;gap:6px;}#participantRail #videos .person{flex-basis:64px;width:64px;min-width:64px;max-width:64px;height:64px;min-height:64px;}#participantRail{max-height:65vh;}#participantRail #videos{gap:6px;}}
 @media(min-width:900px){#stageLayout{grid-template-columns:minmax(0,1fr) 118px;}}
+
+/* AJUSTE DEFINITIVO: escenario ancho con miniaturas superpuestas al lateral */
+#stageLayout{display:block!important;position:relative!important;width:100%!important;max-width:100%!important;}
+#liveStickyArea{display:block!important;width:100%!important;min-width:0!important;}
+#liveStickyArea .live-topline{width:100%!important;}
+#liveStickyArea .stage{width:100%!important;max-width:100%!important;min-width:0!important;}
+#participantRail{position:absolute!important;z-index:20!important;top:112px!important;right:5px!important;width:68px!important;max-width:68px!important;max-height:calc(100vh - 190px)!important;overflow-y:auto!important;overflow-x:hidden!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;pointer-events:auto!important;}
+#participantRail h3{display:none!important;}
+#participantRail #handRaiseBtn{display:block!important;flex:0 0 28px!important;width:28px!important;height:28px!important;min-width:28px!important;padding:0!important;margin:0 auto 4px!important;border-radius:50%!important;font-size:14px!important;line-height:1!important;}
+#participantRail #videos{display:flex!important;flex-direction:column!important;align-items:center!important;gap:7px!important;width:100%!important;min-width:0!important;padding:0!important;margin:0!important;overflow:visible!important;}
+#participantRail #videos .person{position:relative!important;display:block!important;flex:0 0 78px!important;width:62px!important;min-width:62px!important;max-width:62px!important;height:78px!important;min-height:78px!important;aspect-ratio:auto!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;overflow:visible!important;background:transparent!important;box-sizing:border-box!important;}
+#participantRail #videos .person video{position:absolute!important;top:0!important;left:2px!important;width:58px!important;height:58px!important;min-height:58px!important;max-height:58px!important;aspect-ratio:1/1!important;object-fit:cover!important;border:2px solid #d4af37!important;border-radius:50%!important;background:#111!important;}
+#participantRail #videos .person .name{position:absolute!important;left:0!important;right:0!important;bottom:0!important;height:17px!important;min-height:17px!important;display:block!important;padding:2px 1px!important;margin:0!important;border:0!important;border-radius:0!important;background:#000c!important;color:#fff!important;font-size:9px!important;line-height:13px!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+#participantRail #videos .person>button{position:absolute!important;z-index:4!important;top:2px!important;width:20px!important;height:18px!important;min-width:20px!important;max-width:20px!important;padding:0!important;margin:0!important;border:1px solid #d4af37!important;border-radius:6px!important;background:#f5d575!important;color:#111!important;font-size:10px!important;line-height:16px!important;overflow:hidden!important;}
+#participantRail #videos .person>button:first-of-type{left:1px!important;right:auto!important;}
+#participantRail #videos .person>button:last-of-type{right:1px!important;left:auto!important;}
+#chatComposer{display:flex!important;align-items:center!important;gap:6px!important;width:100%!important;}
+#chatComposer #message{flex:1 1 auto!important;min-width:0!important;}
+#chatComposer #chatMicButton{flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;padding:0!important;font-size:18px!important;}
+@media(max-width:520px){
+ #participantRail{top:112px!important;right:3px!important;width:62px!important;max-width:62px!important;max-height:calc(100vh - 175px)!important;}
+ #participantRail #videos .person{flex-basis:74px!important;width:58px!important;min-width:58px!important;max-width:58px!important;height:74px!important;min-height:74px!important;}
+ #participantRail #videos .person video{left:1px!important;width:56px!important;height:56px!important;min-height:56px!important;max-height:56px!important;}
+ #participantRail #videos .person .name{font-size:8px!important;}
+}
+
+
+/* Mantener intacta la zona inferior de comentarios y stickers: el rail termina dentro del escenario */
+#stageLayout{position:relative!important;}
+#participantRail{top:112px!important;bottom:14px!important;max-height:none!important;height:auto!important;overflow-y:auto!important;}
+@media(max-width:520px){#participantRail{top:112px!important;bottom:12px!important;max-height:none!important;height:auto!important;}}
 </style>
 </head>
 <body>
