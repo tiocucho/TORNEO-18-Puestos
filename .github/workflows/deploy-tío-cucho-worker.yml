@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - cloudflare/worker.js
-      - .github/workflows/deploy-tio-cucho-worker.yml
+      - .github/workflows/deploy-tío-cucho-worker.yml
   workflow_dispatch:
 
 jobs:
