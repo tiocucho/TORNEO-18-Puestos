@@ -159,9 +159,8 @@ body.chat-composing #chatComposer button{height:44px;min-width:76px}
 #timerDisplay.warning{color:#ff3939;animation:timerPulse .7s infinite alternate}
 #timerStatus{font-size:10px;color:#c8b98e;margin:0;flex-basis:100%;order:3}
 #timerHostControls{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-#timerPlayer{width:145px;max-width:42vw;margin:0;padding:6px 7px;border:1px solid #80672f;border-radius:7px;background:#080808;color:#fff;font-size:11px}
 #timerHostControls button{margin:0;padding:6px 8px;font-size:10px}
-@media(max-width:480px){#turnTimer{gap:6px}#timerDisplay{font-size:22px}#timerPlayer{width:112px}#timerHostControls button{padding:6px;font-size:9px}}
+@media(max-width:480px){#turnTimer{gap:6px}#timerDisplay{font-size:22px}#timerHostControls button{padding:7px 10px;font-size:10px}}
 @keyframes timerPulse{from{opacity:1}to{opacity:.55}}
 
 /* Indicador de voz activa */
@@ -313,13 +312,21 @@ body{background:#050505;color:#f4eee0;padding:14px}
  #comments{max-height:70px!important}
 }
 
+
+/* Cronómetro simple: solo iniciar y reiniciar */
+#turnTimer{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;flex-wrap:nowrap!important;padding:6px 9px!important;margin:5px 0 7px!important}
+#turnTimer h3{font-size:11px!important;white-space:nowrap!important}
+#timerHostControls{display:flex!important;align-items:center!important;gap:6px!important;flex-wrap:nowrap!important}
+#timerHostControls button{margin:0!important;padding:7px 10px!important;font-size:10px!important;white-space:nowrap!important}
+#timerDisplay{font-size:22px!important}
+.kick-btn{font-size:12px!important}
 </style>
 </head>
 <body>
 <header class="brand-header"><div><div class="brand-title">🖤 TÍO CUCHO LIVE 💛</div><div class="brand-subtitle">Sala de conversación · hasta 30 participantes</div></div><span class="test-pill">VISTA DE PRUEBA</span></header>
 <section id="home" class="card"><p class="gold">TU SALA. TU COMUNIDAD. EN VIVO.</p><h1>Conectá a tu gente.</h1><p>Videollamada de prueba con cámara, micrófono y comentarios compartidos.</p><label for="name">Tu nombre</label><input id="name" maxlength="40" placeholder="Ej.: Tío Cucho"><button id="createRoomBtn" class="primary hidden" onclick="createRoom()">＋ Crear sala (anfitrión)</button><button id="recoverRoomBtn" class="primary hidden" onclick="recoverHostRoom()">♻️ Recuperar mi sala como anfitrión</button><button onclick="document.getElementById('joinBox').classList.toggle('hidden')">Entrar con código</button><div id="joinBox" class="hidden"><input id="code" maxlength="50" placeholder="Código de sala"><button onclick="enterRoom()">Entrar a la sala</button></div></section>
 <section id="room" class="hidden"><div class="card"><button onclick="leaveRoom()">← Salir</button><button onclick="shareRoom()">Compartir enlace</button><button onclick="whatsapp()">WhatsApp</button><button id="endLiveBtn" class="primary hidden" onclick="endLive()">🔴 Apagar LIVE</button><button id="moderationSetupBtn" class="hidden" onclick="configureModeration()">🛡️ Configurar expulsiones</button><h2 id="roomName" class="gold">Sala TÍO CUCHO</h2>
-<p id="status" class="status">Preparando conexión…</p><div id="moderationInfo" class="moderation-config hidden">Moderación del servidor: <span id="moderationState">sin configurar</span></div><section id="turnTimer" aria-live="polite"><h3>⏱️ TIEMPO DEL JUGADOR</h3><div id="timerPlayerLabel">Turno sin iniciar</div><div id="timerDisplay">01:00</div><div id="timerStatus">Cada jugador tiene 60 segundos</div><div id="timerHostControls" class="hidden"><input id="timerPlayer" maxlength="40" placeholder="Nombre del jugador (opcional)"><div><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ Iniciar 1 minuto</button><button type="button" id="timerPauseBtn" onclick="pauseTurnTimer()">⏸️ Pausar</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ Reiniciar</button></div></div></section><div class="live-layout"><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><aside class="participants-panel"><h3 class="gold">👥 PARTICIPANTES</h3><div id="videos" class="videos"></div></aside></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
+<p id="status" class="status">Preparando conexión…</p><div id="moderationInfo" class="moderation-config hidden">Moderación del servidor: <span id="moderationState">sin configurar</span></div><section id="turnTimer" aria-live="polite"><h3>⏱️ CRONÓMETRO</h3><div id="timerDisplay">01:00</div><div id="timerHostControls" class="hidden"><button type="button" class="primary" id="timerStartBtn" onclick="startTurnTimer()">▶️ INICIAR</button><button type="button" id="timerResetBtn" onclick="resetTurnTimer()">↻ REINICIAR</button></div></section><div class="live-layout"><div id="liveStickyArea"><div class="live-topline"><h3 class="gold">👑 Anfitrión / pantalla principal</h3><div class="viewer-wrap"><button id="viewerCountBtn" class="viewer-count" type="button" onclick="toggleViewerList()" aria-expanded="false">👁️ 0 mirando ▾</button><div id="viewerList" class="viewer-list hidden" aria-live="polite"></div></div></div><div id="stage" class="stage"><p class="note">La pantalla principal aparece al conectarse.</p><div id="chatBubbles" aria-live="polite"></div></div></div><aside class="participants-panel"><h3 class="gold">👥 PARTICIPANTES</h3><div id="videos" class="videos"></div></aside></div><div id="soundControls"><button class="primary" id="soundBtn" onclick="activateSound()">🔊 Activar sonido</button></div><div class="card"><h3>💬 Comentarios de la sala</h3>
 <div id="reactionBar"><button type="button" onclick="sendReaction('👍 Like')"><span class="sticker-face">👍</span><span class="sticker-caption">Like</span></button>
 <button type="button" onclick="sendReaction('❤️ Me gusta')"><span class="sticker-face">❤️</span><span class="sticker-caption">Me gusta</span></button>
 <button type="button" onclick="sendReaction('😂 Sí')"><span class="sticker-face">😂</span><span class="sticker-caption">Sí</span></button>
@@ -432,23 +439,23 @@ window.configureModeration=()=>{
  if(token===null)return;
  sessionStorage.setItem('tc_admin_token',token.trim());
  $('moderationInfo')?.classList.remove('hidden');$('moderationState').textContent='configurado en este dispositivo';
- alert('Configuración guardada en este dispositivo. Ahora podés expulsar y bloquear participantes de esta sala.');
+ alert('Configuración guardada. Ahora podés expulsar participantes de esta sala.');
 };
 async function checkRoomBan(identity,name){
  const base=moderationBase();
  if(!base)return false;
  try{const r=await fetch(base+'/moderation/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room:roomCode,identity,name})});
-  if(!r.ok)throw new Error('No se pudo verificar el bloqueo.');const d=await r.json();return !!d.blocked;
- }catch(e){throw new Error('No se pudo comprobar si estás bloqueado. El servidor de moderación no responde: '+e.message);}
+  if(!r.ok)throw new Error('No se pudo verificar el acceso a esta sala.');const d=await r.json();return !!d.blocked;
+ }catch(e){throw new Error('No se pudo comprobar el acceso a esta sala. El servidor de expulsiones no responde: '+e.message);}
 }
 window.kickParticipant=async(identity,name)=>{
  if(!isHostSession||!room)return;
- if(!confirm('¿Expulsar y bloquear definitivamente a '+(name||identity)+' de esta sala? No podrá volver a entrar con la misma identidad.'))return;
+ if(!confirm('¿Expulsar a '+(name||identity)+' de esta sala? No podrá volver a entrar a esta misma sala con el enlace.'))return;
  const base=moderationBase(),admin=sessionStorage.getItem('tc_admin_token')||'';
  if(!base||!admin){alert('Primero tocá “Configurar expulsiones” e ingresá la URL del Worker y el ADMIN_TOKEN.');return;}
  try{const r=await fetch(base+'/moderation/kick',{method:'POST',headers:moderationHeaders(),body:JSON.stringify({room:roomCode,identity,name})});const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo expulsar.');
   const participant=room.remoteParticipants.get(identity);if(participant)removePerson(participant);
-  appendComment('Sistema',(name||identity)+' fue expulsado y bloqueado por el anfitrión.');
+  appendComment('Sistema',(name||identity)+' fue expulsado de la sala.');
  }catch(e){alert('No se pudo expulsar: '+e.message);}
 };
 
@@ -475,7 +482,7 @@ function addPerson(participant,track=null){
   card.append(video,name);
   if(isHostSession && !isHostParticipant(participant)){
    const moderation=document.createElement('div');moderation.className='moderation-row';
-   const kick=document.createElement('button');kick.type='button';kick.className='kick-btn';kick.textContent='⛔ EXPULSAR Y BLOQUEAR';
+   const kick=document.createElement('button');kick.type='button';kick.className='kick-btn';kick.textContent='⛔ EXPULSAR';
    kick.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();window.kickParticipant(identity,participant.name||identity);});
    moderation.append(kick);card.append(moderation);
   }
@@ -754,11 +761,11 @@ function renderTurnTimer(){
  const display=$('timerDisplay');if(!display)return;
  display.textContent=formatTimer(remaining);
  display.classList.toggle('warning',remaining<=10000);
- $('timerPlayerLabel').textContent=turnTimerState.player?('Turno de: '+turnTimerState.player):(turnTimerState.running?'Turno en curso':'Turno sin iniciar');
+ const label=$('timerPlayerLabel');if(label)label.textContent=turnTimerState.running?'Cronómetro en marcha':'Listo para iniciar';
  if(turnTimerState.running){$('timerStatus').textContent=remaining<=0?'¡TIEMPO AGOTADO!':(remaining<=10000?'¡Últimos segundos!':'Tiempo restante del jugador');}
- else if(remaining===0){$('timerStatus').textContent='Tiempo agotado';}
- else if(remaining<TURN_TIME_MS){$('timerStatus').textContent='Cronómetro pausado';}
- else{$('timerStatus').textContent='Cada jugador tiene 60 segundos';}
+ else if(remaining===0){const status=$('timerStatus');if(status)status.textContent='Tiempo agotado';}
+ else if(remaining<TURN_TIME_MS){const status=$('timerStatus');if(status)status.textContent='';}
+ else{const status=$('timerStatus');if(status)status.textContent='';}
 }
 function timerBeep(){
  try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;const ctx=new Ctx();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=880;gain.gain.setValueAtTime(.001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+.03);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.45);osc.start();osc.stop(ctx.currentTime+.46);osc.onended=()=>ctx.close();}catch(e){}
@@ -788,18 +795,12 @@ function tickTurnTimer(){
 }
 window.startTurnTimer=()=>{
  if(!isHostSession)return;
- const player=$('timerPlayer')?.value.trim()||'';
- applyTurnTimerState({running:true,remainingMs:TURN_TIME_MS,endAt:Date.now()+TURN_TIME_MS,player},true);
+ applyTurnTimerState({running:true,remainingMs:TURN_TIME_MS,endAt:Date.now()+TURN_TIME_MS,player:''},true);
  timerLastSecond=60;
-};
-window.pauseTurnTimer=()=>{
- if(!isHostSession||!turnTimerState.running)return;
- const remaining=Math.max(0,turnTimerState.endAt-Date.now());
- applyTurnTimerState({running:false,remainingMs:remaining,endAt:null,player:turnTimerState.player},true);
 };
 window.resetTurnTimer=()=>{
  if(!isHostSession)return;
- applyTurnTimerState({running:false,remainingMs:TURN_TIME_MS,endAt:null,player:$('timerPlayer')?.value.trim()||''},true);
+ applyTurnTimerState({running:false,remainingMs:TURN_TIME_MS,endAt:null,player:''},true);
  timerLastSecond=60;
 };
 renderTurnTimer();
